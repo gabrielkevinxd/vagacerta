@@ -1,0 +1,190 @@
+import Link from "next/link";
+import { Suspense } from "react";
+import { DATA_DEMONSTRACAO } from "@/lib/demonstracao";
+import { um } from "@/lib/consulta-pagina";
+import { eCentral, eDataIso, podeGerirEquipas } from "@/lib/rules";
+import { AcoesEquipa } from "@/components/acoes-equipa";
+import { Carregamento } from "@/components/carregamento";
+import { EstadoVazio } from "@/components/estado-vazio";
+import { EtiquetaEstado, EtiquetaOperador } from "@/components/etiquetas";
+import type { Chave } from "@/lib/i18n";
+import { formatarDataLongaLocale } from "@/lib/i18n/formatacao";
+import { i18nPedido } from "@/server/idioma";
+import { exigirAtorPagina } from "@/server/sessao";
+import { listarZonas, obterEquipa } from "@/server/servicos";
+
+const DIAS: Chave[] = [
+  "diaSemana.d1",
+  "diaSemana.d1",
+  "diaSemana.d2",
+  "diaSemana.d3",
+  "diaSemana.d4",
+  "diaSemana.d5",
+  "diaSemana.d6",
+  "diaSemana.d7",
+];
+
+async function Conteudo({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const { id } = await params;
+  const consulta = await searchParams;
+  const { t, idioma } = await i18nPedido();
+  const pedida = um(consulta.data);
+  const data = eDataIso(pedida) ? pedida : DATA_DEMONSTRACAO;
+  const ator = await exigirAtorPagina();
+  const equipa = obterEquipa(ator, id, data);
+  const zonas = listarZonas();
+  const central = podeGerirEquipas(ator);
+
+  return (
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <Link href="/equipas" className="text-sm text-muted-foreground underline">
+          {t("nav.equipas")}
+        </Link>
+        <h1 className="font-heading text-3xl">{equipa.nome}</h1>
+        <p className="text-sm text-muted-foreground">
+          {t("equipas.baseEm", {
+            codigo: equipa.codigo,
+            base: equipa.base,
+            cco: equipa.cco,
+            estado: equipa.ativa ? t("comum.ativa") : t("comum.inativa"),
+          })}
+        </p>
+        <p className="max-w-2xl text-sm text-muted-foreground">{t("equipas.competenciasIntro")}</p>
+        <Link href={`/agenda?vista=dia&data=${data}`} className="inline-block text-sm underline">
+          {t("equipas.abrirDiaAgenda")}
+        </Link>
+      </div>
+      <dl className="grid gap-3 rounded-xl border border-border bg-card p-4 text-sm md:grid-cols-2">
+        <div>
+          <dt className="text-muted-foreground">{t("equipas.zonaVigor")}</dt>
+          <dd>{equipa.zona ? `${equipa.zona.codigo} · ${equipa.zona.nome}` : t("equipas.semZona")}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">{t("equipas.areas")}</dt>
+          <dd>{equipa.areas.join(", ")}</dd>
+        </div>
+        <div className="md:col-span-2">
+          <dt className="text-muted-foreground">{t("equipas.competencias")}</dt>
+          <dd>
+            <ul className="mt-1 space-y-1">
+              {equipa.competencias.map((linha) => (
+                <li key={linha.operadorId}>
+                  {t(`operador.${linha.operadorId}`)}: {linha.categorias.map((item) => t(`categoria.${item}`)).join(", ")}
+                  {linha.tecnologias.length > 0 ? ` · ${linha.tecnologias.map((item) => t(`tecnologia.${item}`)).join(", ")}` : ""}
+                </li>
+              ))}
+            </ul>
+          </dd>
+        </div>
+        <div className="md:col-span-2">
+          <dt className="text-muted-foreground">{t("equipas.horario")}</dt>
+          <dd>
+            {equipa.horarios.map((linha) => (
+              <span key={linha.diaSemana} className="mr-3 inline-block capitalize">
+                {t(DIAS[linha.diaSemana] ?? "diaSemana.d1")} {linha.inicio}–{linha.fim}
+              </span>
+            ))}
+          </dd>
+        </div>
+      </dl>
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h2 className="font-heading text-xl">{t("equipas.diaDe", { data: formatarDataLongaLocale(data, idioma) })}</h2>
+          <form action={`/equipas/${equipa.id}`} className="flex items-center gap-2">
+            <label htmlFor="data" className="text-sm">
+              {t("comum.data")}
+            </label>
+            <input id="data" name="data" type="date" defaultValue={data} className="h-9 rounded-lg border border-input bg-card px-2 text-sm" />
+            <button type="submit" className="h-9 rounded-lg border border-border px-3 text-sm">
+              {t("comum.ver")}
+            </button>
+          </form>
+        </div>
+        <p className="text-sm">
+          {t("equipas.turnoOcupacao", { turno: equipa.ocupacaoHoje.turnoMin, ocupado: equipa.ocupacaoHoje.ocupadoMin })}
+          {eCentral(ator)
+            ? ` ${t("equipas.reparticaoPainel")}`
+            : ` ${t("equipas.minutosOutrosFicha", { n: equipa.ocupacaoHoje.minutosOutros })}`}
+        </p>
+        {equipa.ocupacaoHoje.proprias.length === 0 ? (
+          <EstadoVazio titulo={t("equipas.semVisitasSuas")} detalhe={t("equipas.semVisitasSuasDetalhe")} />
+        ) : (
+          <ul className="divide-y divide-border rounded-xl border border-border bg-card">
+            {equipa.ocupacaoHoje.proprias.map((ordem) => (
+              <li key={ordem.id}>
+                <Link href={`/ordens/${ordem.id}`} className="flex flex-wrap items-center gap-2 px-4 py-3 hover:bg-muted">
+                  <span className="text-sm tabular-nums">
+                    {ordem.inicioPlaneado ?? ordem.janelaInicio}–{ordem.fimPlaneado ?? ordem.janelaFim}
+                  </span>
+                  <span className="font-medium">{ordem.referencia}</span>
+                  <EtiquetaOperador id={ordem.operadorId} nome={ordem.operadorNome} />
+                  <EtiquetaEstado estado={ordem.estado} />
+                  <span className="text-sm text-muted-foreground">
+                    {ordem.clienteNome} · {ordem.morada}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      <section className="space-y-2">
+        <h2 className="font-heading text-xl">{t("equipas.membros")}</h2>
+        <ul className="text-sm">
+          {equipa.membros.map((membro) => (
+            <li key={membro.id}>
+              {membro.nome}
+              {membro.ativo ? "" : ` ${t("comum.inativo")}`}
+            </li>
+          ))}
+        </ul>
+      </section>
+      {central ? (
+        <AcoesEquipa
+          equipaId={equipa.id}
+          ativa={equipa.ativa}
+          zonas={zonas}
+          horarios={equipa.horarios}
+          membros={equipa.membros}
+          indisponibilidades={equipa.indisponibilidades}
+        />
+      ) : (
+        <section className="space-y-2">
+          <h2 className="font-heading text-xl">{t("equipas.indisponibilidades")}</h2>
+          {equipa.indisponibilidades.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("equipas.nenhumaIndisp")}</p>
+          ) : (
+            <ul className="text-sm">
+              {equipa.indisponibilidades.map((bloco) => (
+                <li key={bloco.id}>
+                  {bloco.data.split("-").reverse().join("/")} {bloco.inicio}–{bloco.fim} · {bloco.motivo}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+    </div>
+  );
+}
+
+export default function Pagina({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  return (
+    <Suspense fallback={<Carregamento />}>
+      <Conteudo params={params} searchParams={searchParams} />
+    </Suspense>
+  );
+}
