@@ -7,18 +7,16 @@ import { COR_OPERADOR, eDataIso, hojeLisboa } from "@/lib/rules";
 import { Carregamento } from "@/components/carregamento";
 import { EstadoVazio } from "@/components/estado-vazio";
 import { EtiquetaEstado, EtiquetaOperador } from "@/components/etiquetas";
+import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
+import { GrelhaIndicadores, Indicador } from "@/components/layout/indicador";
+import { ItemListaDados, ListaDados } from "@/components/layout/lista-dados";
+import { Seccao } from "@/components/layout/superficie";
 import { LegendaOperadores } from "@/components/legenda-operadores";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 import { painel } from "@/server/servicos";
-
-function Conteudo({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  return (
-    <Suspense fallback={<Carregamento />}>
-      <Painel searchParams={searchParams} />
-    </Suspense>
-  );
-}
 
 async function Painel({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { t, idioma } = await i18nPedido();
@@ -38,43 +36,40 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-heading text-3xl">{t("painel.titulo", { data: formatarDataLongaLocale(data, idioma) })}</h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{t("painel.intro", { margem: vista.margemDeslocacaoMin })}</p>
-          <p className="mt-2">
-            <Link className="text-sm underline" href={`/agenda?vista=dia&data=${data}`}>
-              {t("painel.abrirAgenda")}
-            </Link>
-          </p>
-        </div>
-        <form className="flex flex-wrap items-center gap-2" action="/">
-          <label className="text-sm" htmlFor="data">
-            {t("comum.dia")}
-          </label>
-          <input id="data" name="data" type="date" defaultValue={data} className="h-9 rounded-lg border border-input bg-card px-2 text-sm" />
-          <button className="h-9 rounded-lg bg-primary px-3 text-sm text-primary-foreground" type="submit">
-            {t("comum.ver")}
-          </button>
-          <Link className="text-sm underline" href={`/?data=${hoje}`}>
-            {t("comum.hoje")}
-          </Link>
-          <Link className="text-sm underline" href={`/?data=${DATA_DEMONSTRACAO}`}>
-            {t("painel.demonstracao")}
-          </Link>
-        </form>
-      </div>
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 className="font-heading text-xl">{t("painel.indicadores")}</h2>
-          {ator.papel === "administrador" || ator.papel === "supervisor" ? (
-            <Link href="/gemeo" className="text-sm underline">
-              {t("painel.ligarGemeo")}
-            </Link>
-          ) : null}
-        </div>
-        <p className="max-w-3xl text-sm text-muted-foreground">{t("painel.indicadoresIntro")}</p>
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <CabecalhoPagina
+        titulo={t("painel.titulo", { data: formatarDataLongaLocale(data, idioma) })}
+        descricao={t("painel.intro", { margem: vista.margemDeslocacaoMin })}
+        accoes={
+          <form className="flex flex-wrap items-center gap-2" action="/">
+            <label className="text-xs font-medium text-muted-foreground" htmlFor="data">
+              {t("comum.dia")}
+            </label>
+            <Input id="data" name="data" type="date" defaultValue={data} className="h-8 w-auto" />
+            <Button type="submit" size="sm">
+              {t("comum.ver")}
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/?data=${hoje}`}>{t("comum.hoje")}</Link>
+            </Button>
+            <Button asChild variant="ghost" size="sm">
+              <Link href={`/?data=${DATA_DEMONSTRACAO}`}>{t("painel.demonstracao")}</Link>
+            </Button>
+          </form>
+        }
+      />
+
+      <Seccao
+        titulo={t("painel.indicadores")}
+        descricao={t("painel.indicadoresIntro")}
+        accoes={
+          ator.papel === "administrador" || ator.papel === "supervisor" ? (
+            <Button asChild variant="outline" size="sm">
+              <Link href="/gemeo">{t("painel.ligarGemeo")}</Link>
+            </Button>
+          ) : null
+        }
+      >
+        <GrelhaIndicadores>
           {(
             [
               [
@@ -96,102 +91,116 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
               ],
             ] as const
           ).map(([rotulo, valor, detalhe]) => (
-            <li key={rotulo} className="rounded-xl border border-border bg-card px-4 py-3">
-              <p className="text-sm text-muted-foreground">{rotulo}</p>
-              <p className="font-heading text-3xl">{valor}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{detalhe}</p>
-            </li>
+            <Indicador key={rotulo} rotulo={rotulo} valor={valor} detalhe={detalhe} />
           ))}
-        </ul>
-      </section>
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        {cartoes.map(([rotulo, valor]) => (
-          <li key={rotulo} className="rounded-xl border border-border bg-card px-4 py-3">
-            <p className="text-sm text-muted-foreground">{rotulo}</p>
-            <p className="font-heading text-3xl">{valor}</p>
+        </GrelhaIndicadores>
+      </Seccao>
+
+      <ul className="superficie grid overflow-hidden sm:grid-cols-5">
+        {cartoes.map(([rotulo, valor], i) => (
+          <li key={rotulo} className={`px-4 py-3 ${i > 0 ? "border-t border-border sm:border-t-0 sm:border-l" : ""}`}>
+            <p className="text-xs font-medium text-muted-foreground">{rotulo}</p>
+            <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight">{valor}</p>
           </li>
         ))}
       </ul>
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 className="font-heading text-xl">{t("painel.ocupacao")}</h2>
-          <LegendaOperadores compacta />
-        </div>
-        <p className="text-sm text-muted-foreground">{t("painel.ocupacaoIntro")}</p>
+
+      <Seccao titulo={t("painel.ocupacao")} descricao={t("painel.ocupacaoIntro")} accoes={<LegendaOperadores compacta />}>
         {vista.equipas.length === 0 ? (
           <EstadoVazio titulo={t("painel.semEquipasTitulo")} detalhe={t("painel.semEquipasDetalhe")} />
-        ) : null}
-        <ul className="space-y-3">
-          {vista.equipas.map((equipa) => (
-            <li key={equipa.equipaId} className="rounded-xl border border-border bg-card p-4">
-              <div className="flex items-baseline justify-between gap-3">
-                <Link href={`/equipas/${equipa.equipaId}?data=${data}`} className="font-medium underline-offset-2 hover:underline">
-                  {equipa.nome}
-                </Link>
-                <span className="text-sm text-muted-foreground">
-                  {equipa.ocupadoMin} / {equipa.turnoMin} {t("comum.minutos")} · {equipa.percentagem}%
-                </span>
-              </div>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted" aria-hidden>
-                <div className="h-full bg-primary" style={{ width: `${Math.min(equipa.percentagem, 100)}%` }} />
-              </div>
-              {equipa.porOperador && equipa.porOperador.length > 0 ? (
-                <ul className="mt-2 flex flex-wrap gap-2 text-xs">
-                  {equipa.porOperador.map((parte) => (
-                    <li key={parte.operadorId} className="inline-flex items-center gap-1">
-                      <span className="size-2 rounded-full" style={{ backgroundColor: COR_OPERADOR[parte.operadorId] }} />
-                      {t(`operador.${parte.operadorId}`)} {parte.minutos} {t("comum.minutos")}
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      </section>
-      <section className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="font-heading text-xl">{t("painel.visitas")}</h2>
-          {ator.papel === "tecnico" ? null : (
-            <Link href="/ordens/nova" className="text-sm underline">
-              {t("painel.novaOrdem")}
-            </Link>
-          )}
-        </div>
+        ) : (
+          <div className="superficie overflow-hidden">
+            <table className="w-full text-[13px]/5">
+              <thead className="bg-muted/50 text-left text-xs font-medium text-muted-foreground">
+                <tr className="h-9 border-b border-border">
+                  <th className="px-3 font-medium">{t("tabela.equipa")}</th>
+                  <th className="px-3 font-medium">{t("painel.ocupacao")}</th>
+                  <th className="px-3 text-right font-medium tabular-nums">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {vista.equipas.map((equipa) => (
+                  <tr key={equipa.equipaId} className="h-9 border-b border-border last:border-0 hover:bg-muted">
+                    <td className="px-3">
+                      <Link href={`/equipas/${equipa.equipaId}?data=${data}`} className="font-medium hover:text-primary">
+                        {equipa.nome}
+                      </Link>
+                    </td>
+                    <td className="px-3">
+                      <div className="flex items-center gap-2">
+                        <div className="h-1.5 min-w-[8rem] flex-1 overflow-hidden rounded-sm bg-muted">
+                          <div className="h-full bg-primary" style={{ width: `${Math.min(equipa.percentagem, 100)}%` }} />
+                        </div>
+                        <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">
+                          {equipa.ocupadoMin}/{equipa.turnoMin} {t("comum.minutos")}
+                        </span>
+                      </div>
+                      {equipa.porOperador && equipa.porOperador.length > 0 ? (
+                        <ul className="mt-1 flex flex-wrap gap-2 text-[11px]/4 text-muted-foreground">
+                          {equipa.porOperador.map((parte) => (
+                            <li key={parte.operadorId} className="inline-flex items-center gap-1">
+                              <span className="size-1.5 rounded-full" style={{ backgroundColor: COR_OPERADOR[parte.operadorId] }} />
+                              {t(`operador.${parte.operadorId}`)} {parte.minutos}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </td>
+                    <td className="px-3 text-right tabular-nums">{equipa.percentagem}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Seccao>
+
+      <Seccao
+        titulo={t("painel.visitas")}
+        accoes={
+          ator.papel === "tecnico" ? null : (
+            <Button asChild size="sm">
+              <Link href="/ordens/nova">{t("painel.novaOrdem")}</Link>
+            </Button>
+          )
+        }
+      >
         {vista.visitas.length === 0 ? (
           <EstadoVazio
             titulo={t("painel.semVisitasTitulo")}
             detalhe={t("painel.semVisitasDetalhe")}
             accao={
-              <Link className="text-sm underline" href={`/agenda?vista=dia&data=${data}`}>
-                {t("painel.verAgendaMesmo")}
-              </Link>
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/agenda?vista=dia&data=${data}`}>{t("painel.verAgendaMesmo")}</Link>
+              </Button>
             }
           />
         ) : (
-          <ul className="divide-y divide-border rounded-xl border border-border bg-card">
+          <ListaDados>
             {vista.visitas.map((ordem) => (
-              <li key={ordem.id}>
-                <Link href={`/ordens/${ordem.id}`} className="flex flex-wrap items-center gap-2 px-4 py-3 hover:bg-muted">
-                  <span className="w-28 text-sm tabular-nums">
-                    {ordem.inicioPlaneado ?? "—"}–{ordem.fimPlaneado ?? "—"}
-                  </span>
-                  <span className="font-medium">{ordem.referencia}</span>
-                  <EtiquetaOperador id={ordem.operadorId} />
-                  <EtiquetaEstado estado={ordem.estado} />
-                  <span className="text-sm text-muted-foreground">
-                    {ordem.clienteNome} · {ordem.equipaNome}
-                  </span>
-                </Link>
-              </li>
+              <ItemListaDados key={ordem.id} href={`/ordens/${ordem.id}`} className="h-9 py-0">
+                <span className="w-28 font-mono text-xs tabular-nums text-muted-foreground">
+                  {ordem.inicioPlaneado ?? "—"}–{ordem.fimPlaneado ?? "—"}
+                </span>
+                <span className="font-mono text-[13px]/5 font-medium">{ordem.referencia}</span>
+                <EtiquetaOperador id={ordem.operadorId} soPonto />
+                <EtiquetaEstado estado={ordem.estado} />
+                <span className="text-muted-foreground">
+                  {ordem.clienteNome} · {ordem.equipaNome}
+                </span>
+              </ItemListaDados>
             ))}
-          </ul>
+          </ListaDados>
         )}
-      </section>
+      </Seccao>
     </div>
   );
 }
 
 export default function Pagina({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  return <Conteudo searchParams={searchParams} />;
+  return (
+    <Suspense fallback={<Carregamento />}>
+      <Painel searchParams={searchParams} />
+    </Suspense>
+  );
 }

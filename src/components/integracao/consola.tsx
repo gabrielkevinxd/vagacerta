@@ -277,9 +277,9 @@ export function ConsolaIntegracao({
             </select>
           </label>
         </div>
-        <h2 className="font-heading text-xl">{textos.grelha}</h2>
+        <h2 className="text-base font-semibold tracking-tight">{textos.grelha}</h2>
         {celulas.length === 0 ? <p className="text-sm text-muted-foreground">{textos.grelhaVazia}</p> : null}
-        <div className="overflow-x-auto rounded-xl border border-border">
+        <div className="overflow-x-auto superficie border">
           <table className="w-full min-w-[40rem] text-left text-sm">
             <thead className="bg-muted/60">
               <tr>
@@ -327,7 +327,7 @@ export function ConsolaIntegracao({
         </div>
       </section>
 
-      <form onSubmit={confirmar} className="space-y-3 rounded-xl border border-border bg-card p-4">
+      <form onSubmit={confirmar} className="space-y-3 superficie p-4">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {(
             [
@@ -375,7 +375,7 @@ export function ConsolaIntegracao({
         {decisao ? <p className="text-sm font-medium">{decisao}</p> : null}
       </form>
 
-      <form onSubmit={atalho} className="grid gap-3 rounded-xl border border-dashed border-border p-4 md:grid-cols-[1fr_auto]">
+      <form onSubmit={atalho} className="grid gap-3 superficie border-dashed p-4 md:grid-cols-[1fr_auto]">
         <label className="text-sm">
           <span className="mb-1 block text-muted-foreground">{textos.atalho}</span>
           <Textarea value={texto} onChange={(e) => setTexto(e.target.value)} rows={2} />
@@ -395,7 +395,7 @@ export function ConsolaIntegracao({
       {erro ? <p className="text-sm text-destructive">{erro}</p> : null}
 
       <section className="space-y-2">
-        <h2 className="font-heading text-xl">{textos.cenarios}</h2>
+        <h2 className="text-base font-semibold tracking-tight">{textos.cenarios}</h2>
         <div className="flex flex-wrap gap-2">
           {CENARIOS.map((id) => (
             <Button key={id} type="button" variant="outline" size="sm" onClick={() => void cenario(id)}>
@@ -407,13 +407,13 @@ export function ConsolaIntegracao({
 
       <section className="space-y-2">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="font-heading text-xl">{textos.consola}</h2>
+          <h2 className="text-base font-semibold tracking-tight">{textos.consola}</h2>
           <p className="text-xs text-muted-foreground">{textos.retries.replace("{n}", String(retries))}</p>
         </div>
         {logs.length === 0 ? <p className="text-sm text-muted-foreground">{textos.vazio}</p> : null}
         <div className="grid gap-3 lg:grid-cols-3">
           {colunas.map((coluna) => (
-            <div key={coluna.id} className="min-h-48 rounded-xl border border-border bg-card p-3">
+            <div key={coluna.id} className="min-h-48 superficie p-3">
               <h3 className="mb-2 text-sm font-medium">{coluna.titulo}</h3>
               <ul className="space-y-3">
                 {logs

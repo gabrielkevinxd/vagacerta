@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { Carregamento } from "@/components/carregamento";
 import { ConsolaIntegracao } from "@/components/integracao/consola";
+import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
 import { XAI_MODELO_OMISSAO, modeloXai } from "@/lib/ofsc/xai";
 import { i18nPedido } from "@/server/idioma";
 
@@ -8,8 +9,8 @@ async function Conteudo() {
   const { t } = await i18nPedido();
   const modelo = modeloXai() || XAI_MODELO_OMISSAO;
   return (
-    <div className="space-y-4">
-      <h1 className="font-heading text-3xl">{t("integracao.titulo")}</h1>
+    <div className="space-y-6">
+      <CabecalhoPagina titulo={t("integracao.titulo")} />
       <ConsolaIntegracao
         textos={{
           corpo: t("integracao.corpo"),

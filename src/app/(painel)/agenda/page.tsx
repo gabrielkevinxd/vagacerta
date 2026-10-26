@@ -7,6 +7,9 @@ import type { Agenda, BlocoVista, LinhaVista } from "@/lib/rules/agenda";
 import { GanttAgenda } from "@/components/agenda/gantt-agenda";
 import { Carregamento } from "@/components/carregamento";
 import { EstadoVazio } from "@/components/estado-vazio";
+import { Alerta } from "@/components/layout/alerta";
+import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
+import { SegmentoLigacao, Segmentos } from "@/components/layout/segmentos";
 import { formatarDataLocale, formatarDataLongaLocale } from "@/lib/i18n/formatacao";
 import { traduzirMensagem, traduzirNarrativa } from "@/lib/i18n/motor";
 import { eCentral, eDataIso, hojeLisboa, semanaIso, somarDias } from "@/lib/rules";
@@ -26,12 +29,11 @@ function encontrar(agenda: Agenda, id: string): { bloco: BlocoVista; equipa: Lin
   return null;
 }
 
-function ligacao(href: string, rotulo: string, atual = false) {
+function ligacao(href: string, rotulo: string) {
   return (
     <Link
       href={href}
-      aria-current={atual ? "page" : undefined}
-      className={`inline-flex h-10 items-center rounded-lg px-3 text-sm ${atual ? "bg-primary text-primary-foreground" : "border border-border bg-card"}`}
+      className="inline-flex h-8 items-center rounded-md border border-border bg-card px-3 text-sm font-medium transition-colors hover:bg-muted"
     >
       {rotulo}
     </Link>
@@ -76,42 +78,48 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
   const base = `/agenda?vista=${vista}&data=${data}`;
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-heading text-3xl">{t("agenda.titulo")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{titulo}</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {ligacao(`/agenda?vista=dia&data=${data}`, t("comum.dia"), vista === "dia")}
-          {ligacao(`/agenda?vista=semana&data=${data}`, t("comum.semana"), vista === "semana")}
-          {ligacao(
-            `/agenda?vista=${vista}&data=${anterior}`,
-            vista === "semana" ? t("agenda.semanaAnterior") : t("agenda.diaAnterior"),
-          )}
-          {ligacao(
-            `/agenda?vista=${vista}&data=${seguinte}`,
-            vista === "semana" ? t("agenda.semanaSeguinte") : t("agenda.diaSeguinte"),
-          )}
-          {ligacao(`/agenda?vista=${vista}&data=${hoje}`, t("comum.hoje"))}
-          {ligacao(`/agenda?vista=${vista}&data=${DATA_DEMONSTRACAO}`, t("agenda.demonstracao"))}
-        </div>
-      </div>
-      <p className="max-w-4xl text-sm text-muted-foreground">
-        {perfil === "tecnico" ? t("agenda.introTecnico") : perfil === "despachante" ? t("agenda.introDespacho") : t("agenda.introCentral")}
-      </p>
-      {gravado ? (
-        <p role="status" className="rounded-lg border border-border bg-card px-3 py-2 text-sm">
-          {t("agenda.gravado")}
-        </p>
-      ) : null}
+    <div className="space-y-6">
+      <CabecalhoPagina
+        titulo={t("agenda.titulo")}
+        descricao={
+          <>
+            <p className="font-medium text-foreground/80">{titulo}</p>
+            <p className="mt-1">
+              {perfil === "tecnico" ? t("agenda.introTecnico") : perfil === "despachante" ? t("agenda.introDespacho") : t("agenda.introCentral")}
+            </p>
+          </>
+        }
+        accoes={
+          <div className="flex flex-wrap items-center gap-2">
+            <Segmentos etiqueta={t("agenda.titulo")}>
+              <SegmentoLigacao href={`/agenda?vista=dia&data=${data}`} ativo={vista === "dia"}>
+                {t("comum.dia")}
+              </SegmentoLigacao>
+              <SegmentoLigacao href={`/agenda?vista=semana&data=${data}`} ativo={vista === "semana"}>
+                {t("comum.semana")}
+              </SegmentoLigacao>
+            </Segmentos>
+            {ligacao(
+              `/agenda?vista=${vista}&data=${anterior}`,
+              vista === "semana" ? t("agenda.semanaAnterior") : t("agenda.diaAnterior"),
+            )}
+            {ligacao(
+              `/agenda?vista=${vista}&data=${seguinte}`,
+              vista === "semana" ? t("agenda.semanaSeguinte") : t("agenda.diaSeguinte"),
+            )}
+            {ligacao(`/agenda?vista=${vista}&data=${hoje}`, t("comum.hoje"))}
+            {ligacao(`/agenda?vista=${vista}&data=${DATA_DEMONSTRACAO}`, t("agenda.demonstracao"))}
+          </div>
+        }
+      />
+      {gravado ? <Alerta tom="sucesso">{t("agenda.gravado")}</Alerta> : null}
       {erroPrevisao ? (
-        <p role="alert" className="sticky top-2 z-30 rounded-lg border border-destructive/40 bg-card px-3 py-2 text-sm text-destructive">
+        <Alerta tom="erro" role="alert" className="sticky top-2 z-30">
           {erroPrevisao} {t("agenda.voltou")}
-        </p>
+        </Alerta>
       ) : null}
       {previsao && escolhida ? (
-        <div id="mover" className="sticky top-2 z-30 space-y-3 rounded-xl border border-primary/40 bg-card p-4">
+        <div id="mover" className="sticky top-2 z-30 space-y-3 superficie border-primary/40 p-4">
           <p className="text-sm font-medium">{t("agenda.previsualizacao")}</p>
           <p className="text-sm">
             {t("agenda.antes", {
@@ -141,7 +149,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
         </div>
       ) : null}
       {escolhida && !previsao && perfil !== "tecnico" && escolhida.bloco.arrastavel ? (
-        <form id="mover" action="/agenda" className="grid gap-3 rounded-xl border border-border bg-card p-4 md:grid-cols-[1fr_1fr_8rem_auto] md:items-end">
+        <form id="mover" action="/agenda" className="grid gap-3 superficie p-4 md:grid-cols-[1fr_1fr_8rem_auto] md:items-end">
           <input type="hidden" name="vista" value={vista} />
           <input type="hidden" name="data" value={data} />
           <input type="hidden" name="ordem" value={escolhida.bloco.id} />

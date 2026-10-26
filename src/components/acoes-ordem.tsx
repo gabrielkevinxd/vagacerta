@@ -97,7 +97,7 @@ export function AcoesOrdem({
             );
           }}
         >
-          <h2 className="font-heading text-xl md:col-span-2">{t("ordens.ficha")}</h2>
+          <h2 className="text-base font-semibold tracking-tight md:col-span-2">{t("ordens.ficha")}</h2>
           <div className="space-y-1.5">
             <Label htmlFor="clienteNome">{t("ordens.cliente")}</Label>
             <Input id="clienteNome" name="clienteNome" required minLength={3} defaultValue={ficha.clienteNome} />
@@ -140,7 +140,7 @@ export function AcoesOrdem({
             void executar(() => enviar(`/api/ordens/${ordemId}/marcar`, equipaId ? { equipaId } : {}).then(() => undefined));
           }}
         >
-          <h2 className="font-heading text-xl">{t("ordens.marcar")}</h2>
+          <h2 className="text-base font-semibold tracking-tight">{t("ordens.marcar")}</h2>
           <div className="space-y-1.5">
             <Label htmlFor="equipa-marcar">{t("comum.equipa")}</Label>
             <select id="equipa-marcar" name="equipaId" className={campo} defaultValue="">
@@ -180,7 +180,7 @@ export function AcoesOrdem({
             void executar(() => enviar(`/api/ordens/${ordemId}/reagendar`, corpo).then(() => undefined));
           }}
         >
-          <h2 className="font-heading text-xl md:col-span-2">{t("ordens.reagendar")}</h2>
+          <h2 className="text-base font-semibold tracking-tight md:col-span-2">{t("ordens.reagendar")}</h2>
           <div className="space-y-1.5">
             <Label htmlFor="equipa-reagendar">{t("comum.equipa")}</Label>
             <select id="equipa-reagendar" name="equipaId" className={campo} defaultValue="">
@@ -221,7 +221,7 @@ export function AcoesOrdem({
 
       {estado === "em_espera" && !tecnico ? (
         <div className="space-y-2">
-          <h2 className="font-heading text-xl">{t("ordens.encaixeFila")}</h2>
+          <h2 className="text-base font-semibold tracking-tight">{t("ordens.encaixeFila")}</h2>
           <PainelReencaixe
             pedido={{ encaixarId: ordemId, permitirTroca: central }}
             rotulo={t("ordens.previsEncaixe")}
@@ -231,7 +231,7 @@ export function AcoesOrdem({
 
       {podeCancelar ? (
         <div className="space-y-4">
-          <h2 className="font-heading text-xl">{t("ordens.cancelarTitulo")}</h2>
+          <h2 className="text-base font-semibold tracking-tight">{t("ordens.cancelarTitulo")}</h2>
           <form
             className="space-y-3"
             onSubmit={(evento) => {

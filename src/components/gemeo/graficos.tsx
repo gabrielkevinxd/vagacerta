@@ -29,7 +29,7 @@ export function TabelaPoliticas({ politicas }: { politicas: MetricasPolitica[] }
     ["gemeo.utilizacao", (p) => formatarPercentagem(p.utilizacao, idioma)],
   ];
   return (
-    <div className="overflow-x-auto rounded-xl border border-border">
+    <div className="overflow-x-auto superficie border">
       <table className="w-full min-w-[40rem] text-left text-sm">
         <caption className="sr-only">{t("gemeo.compararPoliticas")}</caption>
         <thead className="bg-muted/60">
@@ -76,9 +76,9 @@ export function BarrasPolitica({
   const valores = politicas.map((politica) => Number(politica[campo]));
   const maximo = Math.max(...valores, emPercentagem ? 1 : 0.001);
   return (
-    <figure className="space-y-3 rounded-xl border border-border bg-card p-4">
+    <figure className="space-y-3 superficie p-4">
       <figcaption>
-        <p className="font-heading text-lg">{titulo}</p>
+        <p className="text-sm font-semibold tracking-tight">{titulo}</p>
         <p className="mt-1 text-sm text-muted-foreground">{explicacao}</p>
       </figcaption>
       <ul className="space-y-2">
@@ -107,9 +107,9 @@ export function SerieDiaria({ serie }: { serie: RelatorioGemeo["serieDiaria"] })
   const { t, idioma } = useT();
   const maximo = Math.max(...serie.map((ponto) => ponto.recusadas), 1);
   return (
-    <figure className="space-y-3 rounded-xl border border-border bg-card p-4">
+    <figure className="space-y-3 superficie p-4">
       <figcaption>
-        <p className="font-heading text-lg">{t("gemeo.serieTitulo")}</p>
+        <p className="text-sm font-semibold tracking-tight">{t("gemeo.serieTitulo")}</p>
         <p className="mt-1 text-sm text-muted-foreground">{t("gemeo.serieExplicacao")}</p>
       </figcaption>
       <ul className="grid gap-2 sm:grid-cols-5">
@@ -137,9 +137,9 @@ export function ComparacaoPesos({ relatorio }: { relatorio: RelatorioGemeo }) {
   const { t } = useT();
   if (!relatorio.comparacao?.length) return null;
   return (
-    <figure className="space-y-3 rounded-xl border border-border bg-card p-4">
+    <figure className="space-y-3 superficie p-4">
       <figcaption>
-        <p className="font-heading text-lg">{t("gemeo.pesos")}</p>
+        <p className="text-sm font-semibold tracking-tight">{t("gemeo.pesos")}</p>
         <p className="mt-1 text-sm text-muted-foreground">{t("gemeo.pesosExplicacao")}</p>
       </figcaption>
       <ul className="grid gap-3 sm:grid-cols-3">

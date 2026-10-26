@@ -47,7 +47,7 @@ async function Conteudo({
         <Link href="/equipas" className="text-sm text-muted-foreground underline">
           {t("nav.equipas")}
         </Link>
-        <h1 className="font-heading text-3xl">{equipa.nome}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight md:text-[1.75rem]">{equipa.nome}</h1>
         <p className="text-sm text-muted-foreground">
           {t("equipas.baseEm", {
             codigo: equipa.codigo,
@@ -61,7 +61,7 @@ async function Conteudo({
           {t("equipas.abrirDiaAgenda")}
         </Link>
       </div>
-      <dl className="grid gap-3 rounded-xl border border-border bg-card p-4 text-sm md:grid-cols-2">
+      <dl className="grid gap-3 superficie p-4 text-sm md:grid-cols-2">
         <div>
           <dt className="text-muted-foreground">{t("equipas.zonaVigor")}</dt>
           <dd>{equipa.zona ? `${equipa.zona.codigo} · ${equipa.zona.nome}` : t("equipas.semZona")}</dd>
@@ -96,7 +96,7 @@ async function Conteudo({
       </dl>
       <section className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 className="font-heading text-xl">{t("equipas.diaDe", { data: formatarDataLongaLocale(data, idioma) })}</h2>
+          <h2 className="text-base font-semibold tracking-tight">{t("equipas.diaDe", { data: formatarDataLongaLocale(data, idioma) })}</h2>
           <form action={`/equipas/${equipa.id}`} className="flex items-center gap-2">
             <label htmlFor="data" className="text-sm">
               {t("comum.data")}
@@ -116,7 +116,7 @@ async function Conteudo({
         {equipa.ocupacaoHoje.proprias.length === 0 ? (
           <EstadoVazio titulo={t("equipas.semVisitasSuas")} detalhe={t("equipas.semVisitasSuasDetalhe")} />
         ) : (
-          <ul className="divide-y divide-border rounded-xl border border-border bg-card">
+          <ul className="divide-y divide-border superficie">
             {equipa.ocupacaoHoje.proprias.map((ordem) => (
               <li key={ordem.id}>
                 <Link href={`/ordens/${ordem.id}`} className="flex flex-wrap items-center gap-2 px-4 py-3 hover:bg-muted">
@@ -136,7 +136,7 @@ async function Conteudo({
         )}
       </section>
       <section className="space-y-2">
-        <h2 className="font-heading text-xl">{t("equipas.membros")}</h2>
+        <h2 className="text-base font-semibold tracking-tight">{t("equipas.membros")}</h2>
         <ul className="text-sm">
           {equipa.membros.map((membro) => (
             <li key={membro.id}>
@@ -157,7 +157,7 @@ async function Conteudo({
         />
       ) : (
         <section className="space-y-2">
-          <h2 className="font-heading text-xl">{t("equipas.indisponibilidades")}</h2>
+          <h2 className="text-base font-semibold tracking-tight">{t("equipas.indisponibilidades")}</h2>
           {equipa.indisponibilidades.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("equipas.nenhumaIndisp")}</p>
           ) : (

@@ -26,7 +26,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
           {t("nav.ordens")}
         </Link>
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="font-heading text-3xl">{ordem.referencia}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight md:text-[1.75rem]">{ordem.referencia}</h1>
           <EtiquetaOperador id={ordem.operadorId} nome={ordem.operadorNome} />
           <EtiquetaEstado estado={ordem.estado} />
         </div>
@@ -40,7 +40,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
           {t("ordens.verDiaAgenda")}
         </Link>
       </div>
-      <dl className="grid gap-3 rounded-xl border border-border bg-card p-4 text-sm md:grid-cols-2">
+      <dl className="grid gap-3 superficie p-4 text-sm md:grid-cols-2">
         <div>
           <dt className="text-muted-foreground">{t("ordens.cliente")}</dt>
           <dd>
@@ -123,7 +123,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
         }}
       />
       <section className="space-y-2">
-        <h2 className="font-heading text-xl">{t("ordens.historico")}</h2>
+        <h2 className="text-base font-semibold tracking-tight">{t("ordens.historico")}</h2>
         {historico.length === 0 ? <p className="text-sm text-muted-foreground">{t("ordens.aindaSemMovimentos")}</p> : null}
         <ol className="space-y-2">
           {historico.map((linha) => (

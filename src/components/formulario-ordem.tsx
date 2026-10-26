@@ -231,7 +231,7 @@ export function FormularioOrdem({
       </div>
       {vagas ? (
         <div className="md:col-span-2">
-          <h2 className="font-heading text-lg">{t("ordens.vagas")}</h2>
+          <h2 className="text-sm font-semibold tracking-tight">{t("ordens.vagas")}</h2>
           {vagas.duracaoMin === null ? (
             <p className="text-sm text-destructive">{t("ordens.semDuracao")}</p>
           ) : (

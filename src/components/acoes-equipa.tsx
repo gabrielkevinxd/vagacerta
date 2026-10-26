@@ -84,7 +84,7 @@ export function AcoesEquipa({
           void executar(() => enviar(`/api/equipas/${equipaId}`, { horarios: linhas }, "PATCH").then(() => undefined));
         }}
       >
-        <h2 className="font-heading text-xl">{t("equipas.horario")}</h2>
+        <h2 className="text-base font-semibold tracking-tight">{t("equipas.horario")}</h2>
         <ul className="space-y-2">
           {horarios.map((linha) => {
             const dia = t(DIAS[linha.diaSemana] ?? "diaSemana.d1");
@@ -118,7 +118,7 @@ export function AcoesEquipa({
           );
         }}
       >
-        <h2 className="font-heading text-xl md:col-span-2">{t("equipas.zonaVigor")}</h2>
+        <h2 className="text-base font-semibold tracking-tight md:col-span-2">{t("equipas.zonaVigor")}</h2>
         <div className="space-y-1.5">
           <Label htmlFor="zona">{t("equipas.zona")}</Label>
           <select id="zona" name="zonaId" className={campo} defaultValue={zonas[0]?.id}>
@@ -149,7 +149,7 @@ export function AcoesEquipa({
       </form>
 
       <div className="space-y-3">
-        <h2 className="font-heading text-xl">{t("equipas.membros")}</h2>
+        <h2 className="text-base font-semibold tracking-tight">{t("equipas.membros")}</h2>
         <ul className="space-y-2 text-sm">
           {membros.map((membro) => (
             <li key={membro.id} className="flex items-center justify-between gap-3">
@@ -193,7 +193,7 @@ export function AcoesEquipa({
       </div>
 
       <div className="space-y-3">
-        <h2 className="font-heading text-xl">{t("equipas.indisponibilidades")}</h2>
+        <h2 className="text-base font-semibold tracking-tight">{t("equipas.indisponibilidades")}</h2>
         <ul className="space-y-2 text-sm">
           {indisponibilidades.length === 0 ? <li className="text-muted-foreground">{t("equipas.nenhumaIndisp")}</li> : null}
           {indisponibilidades.map((bloco) => (

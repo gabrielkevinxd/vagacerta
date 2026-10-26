@@ -287,7 +287,7 @@ export function GanttAgenda({
           if (alvo instanceof HTMLElement && alvo.dataset.ordem) setEscolhidaId(alvo.dataset.ordem);
         }}
       >
-        <details className="rounded-xl border border-border bg-card px-4 py-3 md:hidden">
+        <details className="superficie px-4 py-3 md:hidden">
           <summary className="cursor-pointer text-sm font-medium">{t("agenda.comoLer")}</summary>
           <div className="pt-3">
             <LegendaGantt perfil={perfil} margem={agenda.margemDeslocacaoMin} podeMover={podeMover} embutida />
@@ -311,7 +311,7 @@ export function GanttAgenda({
           </p>
         ) : null}
         {proposta ? (
-          <div className="sticky top-2 z-30 space-y-3 rounded-xl border border-primary/40 bg-card p-4 shadow-sm">
+          <div className="sticky top-2 z-30 space-y-3 superficie border-primary/40 p-4 shadow-sm">
             <p className="text-sm font-medium">{t("agenda.previsualizacao")}</p>
             <p className="text-sm">
               {localizar(agenda, proposta.ordemId)?.bloco.referencia ?? t("agenda.visita")} → {nomeDaEquipa(agenda, proposta.equipaId)},{" "}
@@ -390,7 +390,7 @@ function LegendaGantt({
 }) {
   const { t } = useT();
   return (
-    <div className={embutida ? "space-y-3" : "space-y-3 rounded-xl border border-border bg-card p-4"}>
+    <div className={embutida ? "space-y-3" : "space-y-3 superficie p-4"}>
       <LegendaOperadores compacta />
       <ul className="grid gap-2 text-sm sm:grid-cols-2">
         <li className="flex items-center gap-2">
@@ -451,7 +451,7 @@ function QuadroDia({
       ) : (
         <p className="text-sm text-muted-foreground">{t("agenda.semConflitosDia")}</p>
       )}
-      <div className="overflow-x-auto rounded-xl border border-border bg-card">
+      <div className="overflow-x-auto superficie">
         <div className="min-w-[58rem]">
           <div className="grid grid-cols-[11rem_1fr] border-b border-border bg-muted/60">
             <div className="px-3 py-2 text-xs font-medium">{t("comum.equipa")}</div>
@@ -521,7 +521,7 @@ function QuadroSemana({
       ) : (
         <p className="text-sm text-muted-foreground">{t("agenda.semConflitosSemana")}</p>
       )}
-      <div className="overflow-x-auto rounded-xl border border-border bg-card">
+      <div className="overflow-x-auto superficie">
         <div className="min-w-[86rem]">
           <div className="grid border-b border-border bg-muted/60" style={colunas}>
             <div className="sticky left-0 z-20 bg-muted/60 px-3 py-2 text-xs font-medium">{t("comum.equipa")}</div>
@@ -760,18 +760,23 @@ function Bloco({
   const rotulo = ocupada
     ? t("agenda.ocupadaAria", { inicio: bloco.inicio, fim: bloco.fim, n: bloco.duracaoMin })
     : t("agenda.visitaAria", { referencia: bloco.referencia ?? "", cliente: bloco.clienteNome ?? "", inicio: bloco.inicio, fim: bloco.fim });
-  const classe = `absolute z-10 overflow-hidden rounded-md px-1.5 py-1 text-left shadow-sm ${
+  const classe = `absolute z-10 overflow-hidden rounded-md border border-border bg-card px-1.5 py-1 text-left ${
     bloco.arrastavel ? "cursor-grab touch-none active:cursor-grabbing" : "cursor-pointer"
   } ${conflito ? "outline outline-2 outline-offset-1 outline-destructive" : ""} ${
-    escolhida ? "ring-2 ring-white ring-offset-1 ring-offset-transparent" : ""
+    escolhida ? "ring-2 ring-ring ring-offset-1" : ""
   } ${arrastando ? "pointer-events-none opacity-30" : ""}`;
-  const estilo = {
+  const estilo: React.CSSProperties = {
     left: `${percentagem(bloco.inicioMin, eixo)}%`,
     width: `${Math.max(percentagem(bloco.fimMin, eixo) - percentagem(bloco.inicioMin, eixo), compacta ? 8 : 5)}%`,
     top: `calc(${(faixa / faixas) * 100}% + 4px)`,
     height: `calc(${100 / faixas}% - 8px)`,
-    background: ocupada ? "repeating-linear-gradient(135deg,#e7e2d8 0 6px,#d4cec2 6px 12px)" : COR_OPERADOR[bloco.operadorId ?? "azul"],
-    color: ocupada ? "#2c261f" : "#fff",
+    background: ocupada
+      ? "repeating-linear-gradient(135deg,#F4F4F5 0 6px,#E4E4E7 6px 12px)"
+      : "#FFFFFF",
+    color: ocupada ? "#52525B" : "#18181B",
+    boxShadow: ocupada ? undefined : undefined,
+    borderLeftWidth: ocupada ? 1 : 3,
+    borderLeftColor: ocupada ? "#E4E4E7" : COR_OPERADOR[bloco.operadorId ?? "azul"],
   };
   return (
     <div
@@ -785,12 +790,12 @@ function Bloco({
       className={classe}
       style={estilo}
     >
-      <span className="block truncate text-[11px] font-semibold leading-tight">{ocupada ? t("comum.ocupada") : bloco.referencia}</span>
-      <span className="block truncate text-[11px] leading-tight opacity-95">
+      <span className="block truncate font-mono text-[11px]/4 font-medium leading-tight">{ocupada ? t("comum.ocupada") : bloco.referencia}</span>
+      <span className="block truncate font-mono text-[11px]/4 leading-tight text-muted-foreground">
         {bloco.inicio}–{bloco.fim}
         {ocupada ? ` · ${bloco.duracaoMin} ${t("comum.minutos")}` : bloco.clienteNome ? ` · ${bloco.clienteNome}` : ""}
       </span>
-      {conflito ? <span className="block truncate text-[10px] font-semibold leading-tight">{t("comum.conflito")}</span> : null}
+      {conflito ? <span className="block truncate text-[10px] font-medium leading-tight text-destructive">{t("comum.conflito")}</span> : null}
     </div>
   );
 }
@@ -824,18 +829,20 @@ function CartaoSemana({
       aria-label={rotulo}
       title={mensagem ? `${rotulo}. ${mensagem}` : rotulo}
       onPointerDown={onPointerDown}
-      className={`rounded-md px-2 py-1.5 text-left shadow-sm ${
+      className={`rounded-md border border-border bg-card px-2 py-1.5 text-left ${
         bloco.arrastavel ? "cursor-grab touch-none active:cursor-grabbing" : "cursor-pointer"
-      } ${conflito ? "outline outline-2 outline-destructive" : ""} ${escolhida ? "ring-2 ring-offset-1 ring-white" : ""} ${
+      } ${conflito ? "outline outline-2 outline-destructive" : ""} ${escolhida ? "ring-2 ring-ring ring-offset-1" : ""} ${
         arrastando ? "pointer-events-none opacity-30" : ""
       }`}
       style={{
-        background: ocupada ? "repeating-linear-gradient(135deg,#e7e2d8 0 6px,#d4cec2 6px 12px)" : COR_OPERADOR[bloco.operadorId ?? "azul"],
-        color: ocupada ? "#2c261f" : "#fff",
+        background: ocupada ? "repeating-linear-gradient(135deg,#F4F4F5 0 6px,#E4E4E7 6px 12px)" : "#FFFFFF",
+        color: ocupada ? "#52525B" : "#18181B",
+        borderLeftWidth: ocupada ? 1 : 3,
+        borderLeftColor: ocupada ? "#E4E4E7" : COR_OPERADOR[bloco.operadorId ?? "azul"],
       }}
     >
-      <span className="block truncate text-[11px] font-semibold leading-tight">{ocupada ? t("comum.ocupada") : bloco.referencia}</span>
-      <span className="block truncate text-[11px] leading-tight opacity-95">
+      <span className="block truncate font-mono text-[11px]/4 font-medium leading-tight">{ocupada ? t("comum.ocupada") : bloco.referencia}</span>
+      <span className="block truncate font-mono text-[11px]/4 leading-tight text-muted-foreground">
         {bloco.inicio}–{bloco.fim}
         {ocupada || !bloco.clienteNome ? "" : ` · ${bloco.clienteNome}`}
       </span>
@@ -859,10 +866,10 @@ function Ficha({
   const conflitos = equipa.conflitos.filter((conflito) => conflito.ordemId === bloco.id);
   const { t, idioma, m } = useT();
   return (
-    <section className="hidden space-y-3 rounded-xl border border-border bg-card p-4 md:block">
+    <section className="hidden space-y-3 superficie p-4 md:block">
       {bloco.vista === "ocupada" ? (
         <div>
-          <h2 className="font-heading text-xl">{t("comum.ocupada")}</h2>
+          <h2 className="text-base font-semibold tracking-tight">{t("comum.ocupada")}</h2>
           <p className="mt-1 text-sm">
             {t("agenda.ocupadaDetalhe", {
               equipa: equipa.nome,
@@ -876,7 +883,7 @@ function Ficha({
       ) : (
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="font-heading text-xl">
+            <h2 className="text-base font-semibold tracking-tight">
               {bloco.referencia}
               {bloco.operadorId ? <span className="ml-2 text-base font-sans font-medium">{t(`operador.${bloco.operadorId}`)}</span> : null}
             </h2>
@@ -985,14 +992,14 @@ function ListaMovel({ agenda, podeMover }: { agenda: Agenda; podeMover: boolean 
         entradas.sort((a, b) => a.data.localeCompare(b.data) || a.bloco.inicioMin - b.bloco.inicioMin);
         return (
           <section key={equipaId} className="space-y-2">
-            <h2 className="font-heading text-xl">{nome}</h2>
+            <h2 className="text-base font-semibold tracking-tight">{nome}</h2>
             {entradas.length === 0 ? <p className="text-sm text-muted-foreground">{t("agenda.semVisitasPeriodo")}</p> : null}
             <ul className="space-y-2">
               {entradas.map(({ bloco, data, linha }) => {
                 const conflito = linha.conflitos.find((item) => item.ordemId === bloco.id);
                 const ocupada = bloco.vista === "ocupada";
                 return (
-                  <li key={`${data}-${bloco.id}`} className="rounded-xl border border-border bg-card p-3">
+                  <li key={`${data}-${bloco.id}`} className="superficie p-3">
                     <p className="text-xs text-muted-foreground">{formatarDataLongaLocale(data, idioma)}</p>
                     <p className="mt-1 font-medium tabular-nums">
                       {bloco.inicio}–{bloco.fim}

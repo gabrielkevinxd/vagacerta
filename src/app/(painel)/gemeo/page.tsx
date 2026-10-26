@@ -6,12 +6,13 @@ import { eCentral } from "@/lib/rules";
 import { Carregamento } from "@/components/carregamento";
 import { BotaoApagarLote, BotaoInjetar } from "@/components/gemeo/controlos-injetar";
 import { ComparacaoPesos, BarrasPolitica, SerieDiaria, TabelaPoliticas } from "@/components/gemeo/graficos";
+import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
 import { LegendaOperadores } from "@/components/legenda-operadores";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 import { listarLotes, relatorioDoLote } from "@/server/gemeo-injetar";
 
-const campo = "h-10 w-full rounded-lg border border-input bg-card px-2.5 text-sm";
+const campo = "h-8 w-full rounded-md border border-input bg-background px-2.5 text-sm";
 
 function numeroConsulta(valor: string, omissao: number): number {
   if (!valor) return omissao;
@@ -24,7 +25,7 @@ function ligacaoModo(href: string, rotulo: string, atual: boolean) {
     <a
       href={href}
       aria-current={atual ? "page" : undefined}
-      className={`inline-flex h-10 items-center rounded-lg px-4 text-sm ${atual ? "bg-primary text-primary-foreground" : "border border-border bg-card"}`}
+      className={`inline-flex h-8 items-center rounded-md px-3 text-sm font-medium transition-colors ${atual ? "bg-primary text-primary-foreground" : "border border-border bg-card hover:bg-muted"}`}
     >
       {rotulo}
     </a>
@@ -36,9 +37,8 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
   const ator = await exigirAtorPagina();
   if (!eCentral(ator)) {
     return (
-      <div className="max-w-2xl space-y-2">
-        <h1 className="font-heading text-3xl">{t("gemeo.titulo")}</h1>
-        <p className="text-sm text-muted-foreground">{t("gemeo.soCentral")}</p>
+      <div className="space-y-6">
+        <CabecalhoPagina titulo={t("gemeo.titulo")} descricao={t("gemeo.soCentral")} />
       </div>
     );
   }
@@ -79,21 +79,27 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-heading text-3xl">{t("gemeo.titulo")}</h1>
-        <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-          {modo === "injetar" ? t("gemeo.introInjetar", { semente: pedido.semente }) : t("gemeo.intro", { semente: pedido.semente })}
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {ligacaoModo(`/gemeo?modo=simular&${qs}`, t("gemeo.modoSimular"), modo === "simular")}
-          {ligacaoModo(`/gemeo?modo=injetar&${qs}`, t("gemeo.modoInjetar"), modo === "injetar")}
-        </div>
-        <div className="mt-3">
-          <LegendaOperadores compacta />
-        </div>
-      </div>
+      <CabecalhoPagina
+        titulo={t("gemeo.titulo")}
+        descricao={
+          <>
+            <p>
+              {modo === "injetar" ? t("gemeo.introInjetar", { semente: pedido.semente }) : t("gemeo.intro", { semente: pedido.semente })}
+            </p>
+            <div className="mt-3">
+              <LegendaOperadores compacta />
+            </div>
+          </>
+        }
+        accoes={
+          <div className="flex flex-wrap gap-2">
+            {ligacaoModo(`/gemeo?modo=simular&${qs}`, t("gemeo.modoSimular"), modo === "simular")}
+            {ligacaoModo(`/gemeo?modo=injetar&${qs}`, t("gemeo.modoInjetar"), modo === "injetar")}
+          </div>
+        }
+      />
 
-      <form action="/gemeo" className="grid gap-3 rounded-xl border border-border bg-card p-4 md:grid-cols-3">
+      <form action="/gemeo" className="grid gap-3 superficie p-4 md:grid-cols-3">
         <input type="hidden" name="modo" value={modo} />
         {lotePedido && modo === "injetar" ? <input type="hidden" name="lote" value={lotePedido} /> : null}
         <label className="space-y-1 text-sm">
@@ -182,8 +188,8 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
       </form>
 
       {modo === "injetar" ? (
-        <section className="space-y-3 rounded-xl border border-border bg-card p-4">
-          <h2 className="font-heading text-xl">{t("gemeo.lotes")}</h2>
+        <section className="space-y-3 superficie p-4">
+          <h2 className="text-base font-semibold tracking-tight">{t("gemeo.lotes")}</h2>
           {lotes.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("gemeo.semLotes")}</p>
           ) : (
@@ -209,7 +215,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
 
       {relatorio ? (
         <div className="space-y-6">
-          <p className="rounded-xl border border-border bg-card p-4 text-sm">{relatorio.nota}</p>
+          <p className="superficie p-4 text-sm">{relatorio.nota}</p>
           <TabelaPoliticas politicas={relatorio.politicas} />
           <div className="grid gap-4 lg:grid-cols-2">
             <BarrasPolitica
@@ -241,8 +247,8 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
           <SerieDiaria serie={relatorio.serieDiaria} />
           <ComparacaoPesos relatorio={relatorio} />
           {modo === "simular" ? (
-            <section className="space-y-2 rounded-xl border border-border bg-card p-4 text-sm">
-              <h2 className="font-heading text-xl">{t("gemeo.comoLer")}</h2>
+            <section className="space-y-2 superficie p-4 text-sm">
+              <h2 className="text-base font-semibold tracking-tight">{t("gemeo.comoLer")}</h2>
               <ol className="list-decimal space-y-2 pl-5 text-muted-foreground">
                 <li>
                   <span className="font-medium text-foreground">{t("gemeo.polIndependente")}</span> {t("gemeo.polIndependenteTexto")}

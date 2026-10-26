@@ -13,8 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 function Coluna({ titulo, linhas }: { titulo: string; linhas: PlanoVista["antes"] }) {
   const { t } = useT();
   return (
-    <div className="rounded-xl border border-border bg-card p-3">
-      <h3 className="font-heading text-lg">{titulo}</h3>
+    <div className="superficie p-3">
+      <h3 className="text-sm font-semibold tracking-tight">{titulo}</h3>
       <ul className="mt-3 space-y-3">
         {linhas.map((linha) => (
           <li key={linha.equipaId}>

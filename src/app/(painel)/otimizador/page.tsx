@@ -5,6 +5,9 @@ import type { PlanoVista } from "@/lib/rules/agenda";
 import type { PedidoRealocacao } from "@/lib/rules/reencaixe";
 import { eCentral, eDataIso } from "@/lib/rules";
 import { Carregamento } from "@/components/carregamento";
+import { Alerta } from "@/components/layout/alerta";
+import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
+import { Superficie } from "@/components/layout/superficie";
 import { PlanoComparacao } from "@/components/plano-comparacao";
 import { traduzirMensagem, traduzirPlanoVista } from "@/lib/i18n/motor";
 import { ErroHttp } from "@/server/erros";
@@ -13,9 +16,9 @@ import { exigirAtorPagina } from "@/server/sessao";
 import { listarEquipas, listarOrdens, previsualizar } from "@/server/servicos";
 import { confirmarPlanoAcao } from "./accoes";
 
-const campo = "h-10 w-full rounded-lg border border-input bg-card px-2.5 text-sm";
+const campo = "h-8 w-full rounded-md border border-input bg-background px-2.5 text-sm";
 const botao =
-  "inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground";
+  "inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90";
 
 type Modo = "encaixar" | "cancelar" | "falta";
 
@@ -37,9 +40,8 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
 
   if (ator.papel === "tecnico") {
     return (
-      <div className="space-y-2">
-        <h1 className="font-heading text-3xl">{t("reencaixe.titulo")}</h1>
-        <p>{t("reencaixe.tecnico")}</p>
+      <div className="space-y-6">
+        <CabecalhoPagina titulo={t("reencaixe.titulo")} descricao={t("reencaixe.tecnico")} />
       </div>
     );
   }
@@ -86,19 +88,12 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
   }
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="font-heading text-3xl">{t("reencaixe.titulo")}</h1>
-        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{t("reencaixe.intro")}</p>
-      </div>
+    <div className="space-y-6">
+      <CabecalhoPagina titulo={t("reencaixe.titulo")} descricao={t("reencaixe.intro")} />
 
-      {confirmado ? (
-        <p className="rounded-lg border border-border bg-card px-3 py-2 text-sm" role="status">
-          {t("reencaixe.aplicado")}
-        </p>
-      ) : null}
+      {confirmado ? <Alerta tom="sucesso">{t("reencaixe.aplicado")}</Alerta> : null}
 
-      <form action="/otimizador" className="space-y-4">
+      <form action="/otimizador" className="superficie space-y-4 p-4">
         <input type="hidden" name="prever" value="1" />
         <div className="grid gap-3 md:grid-cols-2">
           <label className="space-y-1.5 text-sm" htmlFor="data">
