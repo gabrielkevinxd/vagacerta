@@ -402,7 +402,7 @@ export function TabelaOrdens({
               <Label htmlFor="quem-massa">{t("ordens.quemPediu")}</Label>
               <select
                 id="quem-massa"
-                className="h-9 w-full rounded-md border border-input bg-card px-2.5 text-[13px]/5"
+                className="h-8 w-full rounded-md border border-input bg-card px-2.5 text-[13px]/5"
                 value={quemPediu}
                 onChange={(e) => setQuemPediu(e.target.value as QuemPediu)}
               >

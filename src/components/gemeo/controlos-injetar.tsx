@@ -35,7 +35,7 @@ export function BotaoInjetar({
       <button
         type="button"
         disabled={aCorrer}
-        className="inline-flex h-10 items-center rounded-lg bg-primary px-4 text-[13px]/5 font-medium text-primary-foreground disabled:opacity-50"
+        className="inline-flex h-8 items-center rounded-lg bg-primary px-4 text-[13px]/5 font-medium text-primary-foreground disabled:opacity-50"
         onClick={async () => {
           setErro(null);
           setACorrer(true);
@@ -80,7 +80,7 @@ export function BotaoApagarLote({ loteId }: { loteId: string }) {
       <button
         type="button"
         disabled={aCorrer}
-        className="inline-flex h-10 items-center rounded-lg border border-destructive/40 px-4 text-[13px]/5 text-destructive disabled:opacity-50"
+        className="inline-flex h-8 items-center rounded-lg border border-destructive/40 px-4 text-[13px]/5 text-destructive disabled:opacity-50"
         onClick={async () => {
           setErro(null);
           setACorrer(true);

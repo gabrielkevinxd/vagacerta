@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-const campo = "h-9 w-full rounded-lg border border-input bg-card px-2.5 text-[13px]/5";
+const campo = "h-8 w-full rounded-lg border border-input bg-card px-2.5 text-[13px]/5";
 
 export function AcoesOrdem({
   ordemId,
