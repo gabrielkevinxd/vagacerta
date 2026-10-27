@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { DATA_DEMONSTRACAO } from "@/lib/demonstracao";
 import { um } from "@/lib/consulta-pagina";
 import { formatarDataLongaLocale, formatarNumero } from "@/lib/i18n/formatacao";
 import { COR_OPERADOR, eDataIso, hojeLisboa } from "@/lib/rules";
@@ -14,6 +13,7 @@ import { LegendaOperadores } from "@/components/legenda-operadores";
 import { SeletorData } from "@/components/seletor-data";
 import { Button } from "@/components/ui/button";
 import { i18nPedido } from "@/server/idioma";
+import { diaDemonstracaoAtual } from "@/server/db";
 import { exigirAtorPagina } from "@/server/sessao";
 import { painel } from "@/server/servicos";
 
@@ -21,7 +21,8 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
   const { t, idioma } = await i18nPedido();
   const parametros = await searchParams;
   const pedido = um(parametros.data);
-  const data = eDataIso(pedido) ? pedido : DATA_DEMONSTRACAO;
+  const diaRico = diaDemonstracaoAtual();
+  const data = eDataIso(pedido) ? pedido : diaRico;
   const ator = await exigirAtorPagina();
   const vista = painel(ator, data);
   const hoje = hojeLisboa();
@@ -51,7 +52,7 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
               <Link href={`/?data=${hoje}`}>{t("comum.hoje")}</Link>
             </Button>
             <Button asChild variant="ghost">
-              <Link href={`/?data=${DATA_DEMONSTRACAO}`}>{t("painel.demonstracao")}</Link>
+              <Link href={`/?data=${diaRico}`}>{t("painel.demonstracao")}</Link>
             </Button>
           </form>
         }
