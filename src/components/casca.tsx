@@ -5,6 +5,7 @@ import { SeletorIdioma } from "@/components/idioma/seletor";
 import type { Chave } from "@/lib/i18n";
 import { eCentral, type Ator } from "@/lib/rules";
 import { i18nPedido } from "@/server/idioma";
+import { baseDados } from "@/server/db";
 import { exigirAtorPagina } from "@/server/sessao";
 import { BotaoSair } from "./botao-sair";
 import { Carregamento } from "./carregamento";
@@ -101,6 +102,22 @@ function chaveDeHref(href: string): Chave {
   return "nav.painel";
 }
 
+function rotuloEntidade(acc: string, segmento: string): string {
+  if (acc.startsWith("/ordens/") && segmento !== "nova") {
+    const linha = baseDados().prepare("SELECT referencia FROM ordens WHERE id = ?").get(segmento) as
+      | { referencia: string }
+      | undefined;
+    if (linha?.referencia) return linha.referencia;
+  }
+  if (acc.startsWith("/equipas/")) {
+    const linha = baseDados().prepare("SELECT nome FROM equipas WHERE id = ?").get(segmento) as
+      | { nome: string }
+      | undefined;
+    if (linha?.nome) return linha.nome;
+  }
+  return segmento.toUpperCase();
+}
+
 function migalhasDe(caminho: string, traduzir: (chave: Chave) => string) {
   const partes = [{ href: "/", rotulo: traduzir("nav.painel") }];
   if (caminho === "/" || caminho === "") {
@@ -115,7 +132,7 @@ function migalhasDe(caminho: string, traduzir: (chave: Chave) => string) {
     } else if (["ordens", "equipas", "agenda", "otimizador", "assistente", "integracao", "gemeo", "definicoes"].includes(segmento)) {
       partes.push({ href: acc, rotulo: traduzir(chaveDeHref(acc)) });
     } else {
-      partes.push({ href: acc, rotulo: segmento.toUpperCase() });
+      partes.push({ href: acc, rotulo: rotuloEntidade(acc, segmento) });
     }
   }
   return partes;

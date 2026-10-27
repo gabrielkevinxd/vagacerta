@@ -25,6 +25,8 @@ async function Conteudo() {
     <div className="space-y-4">
       <CabecalhoPagina titulo={t("integracao.titulo")} />
       <ConsolaIntegracao
+        operadorFixo={ator.papel === "despachante" ? ator.operadorId : null}
+        esconderOutros={ator.papel === "despachante"}
         textos={{
           corpo: t("integracao.corpo"),
           escolherOperador: t("integracao.escolherOperador"),

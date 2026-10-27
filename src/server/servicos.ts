@@ -382,19 +382,20 @@ export function mudarEstado(ator: Ator, id: string, estado: EstadoOrdem, motivo?
   const antes = lerMundo();
   const ordem = antes.ordens.find((linha) => linha.id === id);
   exigir(Boolean(ordem), 404, "NAO_ENCONTRADO", "Não encontrámos esta ordem.");
-  exigir(podeMudarEstado(ator, ordem!, estado), 403, "SEM_PERMISSAO", "Não pode mudar esta ordem para esse estado.");
   if (estado === "cancelada") {
     exigir(ator.papel !== "tecnico", 403, "SEM_PERMISSAO", "O técnico não cancela ordens.");
+    exigir(podeLerOrdem(ator, ordem!), 404, "NAO_ENCONTRADO", "Não encontrámos esta ordem.");
     exigir(Boolean(motivo?.trim()), 400, "DADOS_INVALIDOS", "Cancelar exige um motivo.");
     exigir(Boolean(quemPediu), 400, "DADOS_INVALIDOS", "Indique quem pediu o cancelamento.");
     const resultado = cancelarOrdem(antes, id, motivo!.trim(), quemPediu!);
     if (!resultado.ok) {
-      const status = resultado.codigo === "JA_CANCELADA" ? 409 : 400;
+      const status = resultado.codigo === "JA_CANCELADA" || resultado.codigo === "CONFLITO" ? 409 : 400;
       throw new ErroHttp(status, resultado.codigo, resultado.mensagem);
     }
     gravarDiferença(ator, antes, resultado.mundo, `${ordem!.referencia} cancelada.`);
     return verOrdem(resultado.resultado);
   }
+  exigir(podeMudarEstado(ator, ordem!, estado), 403, "SEM_PERMISSAO", "Não pode mudar esta ordem para esse estado.");
   if (estado === "agendada") {
     const resultado = agendarExistente(antes, id, ordem!.equipaId);
     if (!resultado.ok) throw new ErroHttp(409, resultado.codigo, resultado.mensagem);

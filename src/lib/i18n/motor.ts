@@ -45,6 +45,7 @@ const POR_TEXTO: Record<string, Chave> = {
   "Cancelar exige um motivo.": "erros.cancelarMotivo",
   "Indique quem pediu o cancelamento.": "erros.quemPediu",
   "Esta ordem já está cancelada.": "erros.JA_CANCELADA",
+  "Esta ordem já não pode ser cancelada.": "erros.CONFLITO",
   "Só uma ordem cancelada pode ser reposta.": "erros.naoRepor",
   "Indique um intervalo de datas válido.": "erros.agendaIntervalo",
   "O intervalo da agenda não pode passar de 15 dias.": "erros.agenda15",

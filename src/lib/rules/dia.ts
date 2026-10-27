@@ -1,4 +1,5 @@
 import { corresponderJanela, duracaoMinutos } from "./catalogo";
+import { estadoCancelavel } from "./permissoes";
 import { formatHHMM, eDataIso, diaSemanaIso, parseHHMM } from "./tempo";
 import {
   falha,
@@ -286,7 +287,8 @@ export function cancelarOrdem(
   if (existente.estado === "cancelada") {
     return falha("JA_CANCELADA", "Esta ordem já está cancelada.");
   }
-  if (!ocupaCapacidade(existente.estado) && existente.estado !== "pendente" && existente.estado !== "em_espera") {
+  // Concluídas ocupam capacidade (ESTADOS_QUE_OCUPAM) mas não são canceláveis.
+  if (!estadoCancelavel(existente.estado)) {
     return falha("CONFLITO", "Esta ordem já não pode ser cancelada.");
   }
   let seguinte = structuredClone(mundo);

@@ -88,6 +88,8 @@ const FORM_VAZIO: Formulario = {
 
 export function ConsolaIntegracao({
   textos,
+  operadorFixo = null,
+  esconderOutros = false,
 }: {
   textos: {
     corpo: string;
@@ -122,8 +124,10 @@ export function ConsolaIntegracao({
     campos: Record<keyof Formulario, string>;
     cenariosRotulo: Record<(typeof CENARIOS)[number], string>;
   };
+  operadorFixo?: OperadorId | null;
+  esconderOutros?: boolean;
 }) {
-  const [operador, setOperador] = useState<OperadorId>("azul");
+  const [operador, setOperador] = useState<OperadorId>(operadorFixo ?? "azul");
   const [texto, setTexto] = useState(textos.exemplo);
   const [form, setForm] = useState<Formulario>(FORM_VAZIO);
   const [emFalta, setEmFalta] = useState<string[]>([]);
@@ -242,15 +246,14 @@ export function ConsolaIntegracao({
     }
   }
 
-  const colunas = useMemo(
-    () =>
-      [
-        { id: "origem" as const, titulo: textos.colunaOrigem },
-        { id: "vagacerta" as const, titulo: textos.colunaVaga },
-        { id: "outros" as const, titulo: textos.colunaOutros },
-      ] as const,
-    [textos],
-  );
+  const colunas = useMemo(() => {
+    const base = [
+      { id: "origem" as const, titulo: textos.colunaOrigem },
+      { id: "vagacerta" as const, titulo: textos.colunaVaga },
+    ];
+    if (esconderOutros) return base;
+    return [...base, { id: "outros" as const, titulo: textos.colunaOutros }];
+  }, [textos, esconderOutros]);
 
   const local = ["customerName", "streetAddress", "city", "postalCode", "latitude", "longitude"] as const;
 
@@ -265,9 +268,10 @@ export function ConsolaIntegracao({
             <select
               className="h-10 rounded-lg border border-input bg-background px-2 text-[13px]/5"
               value={operador}
+              disabled={Boolean(operadorFixo)}
               onChange={(e) => setOperador(e.target.value as OperadorId)}
             >
-              {(["azul", "vermelho", "verde"] as const).map((id) => (
+              {(operadorFixo ? [operadorFixo] : (["azul", "vermelho", "verde"] as const)).map((id) => (
                 <option key={id} value={id}>
                   {textos.operadores[id]}
                 </option>
@@ -448,10 +452,9 @@ export function ConsolaIntegracao({
           <p className="text-xs text-muted-foreground">{textos.retries.replace("{n}", String(retries))}</p>
         </div>
         {logs.length === 0 ? <p className="text-[13px]/5 text-muted-foreground">{textos.vazio}</p> : null}
-        <div className="grid min-w-0 gap-3 lg:grid-cols-3">
+        <div className={`grid min-w-0 gap-3 ${esconderOutros ? "lg:grid-cols-2" : "lg:grid-cols-3"}`}>
           {colunas.map((coluna) => (
             <div key={coluna.id} className="min-w-0 superficie p-3">
-              {/* D1 deferred: OFSC dos outros still shows technician names / full JSON as-is */}
               <h3 className="mb-2 text-[13px]/5 font-medium">{coluna.titulo}</h3>
               <ScrollArea className="h-[calc(100vh-13rem)] pr-2">
                 <ul className="space-y-3">

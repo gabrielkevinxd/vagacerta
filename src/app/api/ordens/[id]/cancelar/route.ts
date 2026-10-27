@@ -6,7 +6,7 @@ import { mudarEstado } from "@/server/servicos";
 
 const esquema = z.object({
   motivo: z.string().trim().min(3, "Indique o motivo do cancelamento.").max(240),
-  quemPediu: z.enum(QUEM_PEDIU),
+  quemPediu: z.enum(QUEM_PEDIU, { message: "Indique quem pediu o cancelamento." }),
 });
 
 type Contexto = { params: Promise<{ id: string }> };

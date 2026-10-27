@@ -22,7 +22,7 @@ async function Conteudo() {
           <>
             <p>{t("equipas.intro")}</p>
             <div className="mt-3">
-              <LegendaOperadores compacta />
+              <LegendaOperadores compacta apenas={ator.papel === "despachante" ? ator.operadorId : null} />
             </div>
           </>
         }

@@ -66,7 +66,8 @@ export function PainelReencaixe({
   async function previsualizar() {
     setErro(null);
     setConfirmado(false);
-    if (pedirMotivo && motivo.trim().length < 3) {
+    const motivoEfetivo = (pedirMotivo ? motivo : pedido.motivo)?.trim() ?? "";
+    if ((pedirMotivo || pedido.cancelarId) && motivoEfetivo.length < 3) {
       setErro(t("reencaixe.motivoCurto"));
       return;
     }

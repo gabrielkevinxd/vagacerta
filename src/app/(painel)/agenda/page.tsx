@@ -198,6 +198,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
           perfil={perfil}
           vista={vista}
           ancora={data}
+          operadorLegenda={perfil === "despachante" ? ator.operadorId : null}
         />
       )}
     </div>

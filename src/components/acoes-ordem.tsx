@@ -27,6 +27,7 @@ export function AcoesOrdem({
   equipas,
   janelas,
   ficha,
+  quemPediuPadrao = "operador",
 }: {
   ordemId: string;
   estado: EstadoOrdem;
@@ -39,12 +40,14 @@ export function AcoesOrdem({
   equipas: { id: string; nome: string }[];
   janelas: { codigo: string; inicio: string; fim: string }[];
   ficha: { clienteNome: string; clienteContacto: string; morada: string; nota: string; prioridade: string };
+  quemPediuPadrao?: (typeof QUEM_PEDIU)[number];
 }) {
   const { t } = useT();
   const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [aTrabalhar, setATrabalhar] = useState(false);
+  const [motivoCancelamento, setMotivoCancelamento] = useState("");
 
   async function executar(trabalho: () => Promise<void>) {
     setErro(null);
@@ -233,6 +236,16 @@ export function AcoesOrdem({
       {podeCancelar ? (
         <div className="space-y-4">
           <h2 className="text-base font-semibold tracking-tight">{t("ordens.cancelarTitulo")}</h2>
+          <div className="space-y-1.5">
+            <Label htmlFor="motivo-direto">{t("ordens.motivoSimples")}</Label>
+            <Textarea
+              id="motivo-direto"
+              required
+              minLength={3}
+              value={motivoCancelamento}
+              onChange={(evento) => setMotivoCancelamento(evento.target.value)}
+            />
+          </div>
           <form
             className="space-y-3"
             onSubmit={(evento) => {
@@ -240,19 +253,15 @@ export function AcoesOrdem({
               const dados = new FormData(evento.currentTarget);
               void executar(() =>
                 enviar(`/api/ordens/${ordemId}/cancelar`, {
-                  motivo: String(dados.get("motivo") ?? ""),
-                  quemPediu: String(dados.get("quemPediu") ?? "operador"),
+                  motivo: motivoCancelamento,
+                  quemPediu: String(dados.get("quemPediu") ?? quemPediuPadrao),
                 }).then(() => undefined),
               );
             }}
           >
             <div className="space-y-1.5">
-              <Label htmlFor="motivo-direto">{t("ordens.motivoSimples")}</Label>
-              <Textarea id="motivo-direto" name="motivo" required minLength={3} />
-            </div>
-            <div className="space-y-1.5">
               <Label htmlFor="quem">{t("ordens.quemPediu")}</Label>
-              <select id="quem" name="quemPediu" className={campo} defaultValue="operador">
+              <select id="quem" name="quemPediu" className={campo} defaultValue={quemPediuPadrao}>
                 {QUEM_PEDIU.map((item) => (
                   <option key={item} value={item}>
                     {t(`quem.${item}`)}
@@ -260,11 +269,14 @@ export function AcoesOrdem({
                 ))}
               </select>
             </div>
-            <Button type="submit" variant="destructive" disabled={aTrabalhar}>
+            <Button type="submit" variant="destructive" disabled={aTrabalhar || motivoCancelamento.trim().length < 3}>
               {t("ordens.cancelarSemReencaixe")}
             </Button>
           </form>
-          <PainelReencaixe pedido={{ cancelarId: ordemId }} rotulo={t("ordens.previsCancelar")} pedirMotivo />
+          <PainelReencaixe
+            pedido={{ cancelarId: ordemId, motivo: motivoCancelamento }}
+            rotulo={t("ordens.previsCancelar")}
+          />
         </div>
       ) : null}
     </div>

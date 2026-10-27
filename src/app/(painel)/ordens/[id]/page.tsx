@@ -112,6 +112,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
         podeMarcar={(ordem.estado === "pendente" || ordem.estado === "em_espera") && podeMarcarOperador(ator, ordem.operadorId)}
         podeEditarFicha={ator.papel !== "tecnico"}
         central={central}
+        quemPediuPadrao={ator.papel === "despachante" ? "operador" : "central"}
         equipas={equipas}
         janelas={janelas}
         ficha={{

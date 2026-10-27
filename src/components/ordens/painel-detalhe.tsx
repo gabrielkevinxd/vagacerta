@@ -154,16 +154,14 @@ export function PainelDetalheOrdem({
                   <p className="text-xs text-muted-foreground">{ordem.morada}</p>
                 </TabsContent>
               </Tabs>
-              {podeAgir ? (
+              {podeAgir && podeCancelarOrdem ? (
                 <SheetFooter className="mt-auto flex-row justify-end gap-2 border-t border-border px-4 py-3">
                   <Button type="button" variant="outline" size="sm" disabled>
                     {t("tabela.reagendar")}
                   </Button>
-                  {podeCancelarOrdem ? (
-                    <Button type="button" variant="destructive" size="sm" onClick={pedirCancelar}>
-                      {t("tabela.cancelarOrdem")}
-                    </Button>
-                  ) : null}
+                  <Button type="button" variant="destructive" size="sm" onClick={pedirCancelar}>
+                    {t("tabela.cancelarOrdem")}
+                  </Button>
                 </SheetFooter>
               ) : null}
             </>

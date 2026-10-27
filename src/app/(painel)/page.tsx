@@ -112,7 +112,11 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
         </ul>
       </Seccao>
 
-      <Seccao titulo={t("painel.ocupacao")} descricao={t("painel.ocupacaoIntro")} accoes={<LegendaOperadores compacta />}>
+      <Seccao
+        titulo={t("painel.ocupacao")}
+        descricao={t("painel.ocupacaoIntro")}
+        accoes={<LegendaOperadores compacta apenas={ator.papel === "despachante" ? ator.operadorId : null} />}
+      >
         {vista.equipas.length === 0 ? (
           <EstadoVazio titulo={t("painel.semEquipasTitulo")} detalhe={t("painel.semEquipasDetalhe")} />
         ) : (

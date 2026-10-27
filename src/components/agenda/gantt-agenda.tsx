@@ -16,6 +16,7 @@ import {
 import type { Agenda, BlocoVista, LinhaVista } from "@/lib/rules/agenda";
 import { COR_OPERADOR } from "@/lib/rules/rotulos";
 import { formatHHMM, hojeLisboa } from "@/lib/rules/tempo";
+import type { OperadorId } from "@/lib/rules/tipos";
 import { enviar } from "@/lib/cliente";
 import { LegendaOperadores } from "@/components/legenda-operadores";
 import { BarraOperador, EtiquetaOperador } from "@/components/etiquetas";
@@ -126,11 +127,13 @@ export function GanttAgenda({
   perfil,
   vista,
   ancora,
+  operadorLegenda = null,
 }: {
   agendaInicial: Agenda;
   perfil: Perfil;
   vista: "dia" | "semana";
   ancora: string;
+  operadorLegenda?: OperadorId | null;
 }) {
   const [agenda, setAgenda] = useState(agendaInicial);
   const [proposta, setProposta] = useState<Proposta | null>(null);
@@ -345,11 +348,22 @@ export function GanttAgenda({
         <details className="superficie px-4 py-3 md:hidden">
           <summary className="cursor-pointer text-[13px]/5 font-medium">{t("agenda.comoLer")}</summary>
           <div className="pt-3">
-            <LegendaGantt perfil={perfil} margem={agenda.margemDeslocacaoMin} podeMover={podeMover} embutida />
+            <LegendaGantt
+              perfil={perfil}
+              margem={agenda.margemDeslocacaoMin}
+              podeMover={podeMover}
+              embutida
+              operadorLegenda={operadorLegenda}
+            />
           </div>
         </details>
         <div className="hidden md:block">
-          <LegendaGantt perfil={perfil} margem={agenda.margemDeslocacaoMin} podeMover={podeMover} />
+          <LegendaGantt
+            perfil={perfil}
+            margem={agenda.margemDeslocacaoMin}
+            podeMover={podeMover}
+            operadorLegenda={operadorLegenda}
+          />
         </div>
         <p className="sr-only" aria-live="polite">
           {aCalcular ? t("agenda.aValidar") : ""} {erro ?? ""} {aviso ?? ""} {proposta?.mensagem ?? ""}
@@ -442,17 +456,19 @@ function LegendaGantt({
   margem,
   podeMover,
   embutida = false,
+  operadorLegenda = null,
 }: {
   perfil: Perfil;
   margem: number;
   podeMover: boolean;
   embutida?: boolean;
+  operadorLegenda?: OperadorId | null;
 }) {
   const { t } = useT();
   const tecnico = perfil === "tecnico";
   return (
     <div className={embutida ? "space-y-3" : "space-y-3 superficie p-4"}>
-      <LegendaOperadores compacta />
+      <LegendaOperadores compacta apenas={operadorLegenda} />
       <ul className="grid gap-2 text-[13px]/5 sm:grid-cols-2">
         {!tecnico ? (
           <li className="flex items-center gap-2">
