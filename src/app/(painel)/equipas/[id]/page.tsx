@@ -37,11 +37,11 @@ async function Conteudo({
 }) {
   const { id } = await params;
   const consulta = await searchParams;
+  const ator = await exigirAtorPagina();
   const { t, idioma } = await i18nPedido();
   const pedida = um(consulta.data);
   const diaRico = diaDemonstracaoAtual();
   const data = eDataIso(pedida) ? pedida : diaRico;
-  const ator = await exigirAtorPagina();
   const equipa = obterEquipa(ator, id, data);
   const zonas = listarZonas();
   const central = podeGerirEquipas(ator);
