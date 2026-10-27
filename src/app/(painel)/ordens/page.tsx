@@ -146,7 +146,7 @@ async function Lista({ searchParams }: { searchParams: Promise<Record<string, st
           ordens={linhas}
         />
       )}
-      <PainelDetalheOrdem ordem={abertaLinha} idioma={idioma} />
+      <PainelDetalheOrdem ordem={abertaLinha} idioma={idioma} podeAgir={ator.papel !== "tecnico"} />
     </div>
   );
 }

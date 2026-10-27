@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { enviar } from "@/lib/cliente";
 import { formatarDataLocale } from "@/lib/i18n/formatacao";
 import type { Idioma } from "@/lib/i18n";
 import type { LinhaOrdem } from "./tabela-ordens";
@@ -34,13 +35,23 @@ function useXl() {
   return xl;
 }
 
-export function PainelDetalheOrdem({ ordem, idioma }: { ordem: LinhaOrdem | null; idioma: Idioma }) {
+export function PainelDetalheOrdem({
+  ordem,
+  idioma,
+  podeAgir = true,
+}: {
+  ordem: LinhaOrdem | null;
+  idioma: Idioma;
+  podeAgir?: boolean;
+}) {
   const { t } = useT();
   const router = useRouter();
   const xl = useXl();
   const aberto = Boolean(ordem);
   const [confirmarCancelar, setConfirmarCancelar] = useState(false);
   const [refACancelar, setRefACancelar] = useState("");
+  const [idACancelar, setIdACancelar] = useState("");
+  const [aCancelar, setACancelar] = useState(false);
 
   const fechar = () => {
     const sp = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
@@ -50,20 +61,46 @@ export function PainelDetalheOrdem({ ordem, idioma }: { ordem: LinhaOrdem | null
   };
 
   const pedirCancelar = () => {
-    if (!ordem) return;
+    if (!ordem || !podeAgir) return;
     setRefACancelar(ordem.referencia);
+    setIdACancelar(ordem.id);
     setConfirmarCancelar(true);
   };
 
-  const cancelar = () => {
+  const cancelar = async () => {
     const ref = refACancelar || ordem?.referencia;
-    if (!ref) return;
-    setConfirmarCancelar(false);
-    toast(t("toast.ordemCancelada", { ref }), {
-      action: { label: t("comum.anular"), onClick: () => undefined },
-      duration: 6000,
-    });
-    fechar();
+    const id = idACancelar || ordem?.id;
+    if (!ref || !id || aCancelar) return;
+    setACancelar(true);
+    try {
+      await enviar(`/api/ordens/${id}/cancelar`, {
+        motivo: "Cancelada a partir do painel de detalhe.",
+        quemPediu: "central",
+      });
+      setConfirmarCancelar(false);
+      toast(t("toast.ordemCancelada", { ref }), {
+        action: {
+          label: t("comum.anular"),
+          onClick: () => {
+            void enviar(`/api/ordens/${id}/restaurar`)
+              .then(() => {
+                toast(t("toast.anulado"));
+                router.refresh();
+              })
+              .catch((falha) => {
+                toast.error(falha instanceof Error ? falha.message : t("comum.pedidoFalhou"));
+              });
+          },
+        },
+        duration: 6000,
+      });
+      fechar();
+      router.refresh();
+    } catch (falha) {
+      toast.error(falha instanceof Error ? falha.message : t("comum.pedidoFalhou"));
+    } finally {
+      setACancelar(false);
+    }
   };
 
   return (
@@ -102,14 +139,16 @@ export function PainelDetalheOrdem({ ordem, idioma }: { ordem: LinhaOrdem | null
                   <p className="text-xs text-muted-foreground">{ordem.morada}</p>
                 </TabsContent>
               </Tabs>
-              <SheetFooter className="mt-auto flex-row justify-end gap-2 border-t border-border px-4 py-3">
-                <Button type="button" variant="outline" size="sm" disabled>
-                  {t("tabela.reagendar")}
-                </Button>
-                <Button type="button" variant="destructive" size="sm" onClick={pedirCancelar}>
-                  {t("tabela.cancelarOrdem")}
-                </Button>
-              </SheetFooter>
+              {podeAgir ? (
+                <SheetFooter className="mt-auto flex-row justify-end gap-2 border-t border-border px-4 py-3">
+                  <Button type="button" variant="outline" size="sm" disabled>
+                    {t("tabela.reagendar")}
+                  </Button>
+                  <Button type="button" variant="destructive" size="sm" onClick={pedirCancelar}>
+                    {t("tabela.cancelarOrdem")}
+                  </Button>
+                </SheetFooter>
+              ) : null}
             </>
           ) : null}
         </SheetContent>
@@ -122,10 +161,10 @@ export function PainelDetalheOrdem({ ordem, idioma }: { ordem: LinhaOrdem | null
             <DialogDescription>{t("confirmar.cancelarOrdemDetalhe")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setConfirmarCancelar(false)}>
+            <Button type="button" variant="outline" onClick={() => setConfirmarCancelar(false)} disabled={aCancelar}>
               {t("comum.cancelar")}
             </Button>
-            <Button type="button" variant="destructive" onClick={cancelar}>
+            <Button type="button" variant="destructive" onClick={() => void cancelar()} disabled={aCancelar}>
               {t("tabela.cancelarOrdem")}
             </Button>
           </DialogFooter>

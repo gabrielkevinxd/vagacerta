@@ -12,6 +12,9 @@ const esquema = z.object({
 type Contexto = { params: Promise<{ id: string }> };
 
 export const POST = api<Contexto>(async (ator, pedido, contexto) => {
+  if (ator.papel === "tecnico") {
+    throw new ErroHttp(403, "SEM_PERMISSAO", "O técnico não cancela ordens.");
+  }
   const { id } = await contexto.params;
   const corpo = await lerJson(esquema, pedido);
   if (!corpo.motivo.trim()) throw new ErroHttp(400, "DADOS_INVALIDOS", "Cancelar exige um motivo.");

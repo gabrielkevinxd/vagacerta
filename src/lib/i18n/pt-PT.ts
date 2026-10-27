@@ -51,16 +51,23 @@ export const ptPT = {
   toast: {
     ordemCriada: "Ordem {ref} criada.",
     ordemCancelada: "Ordem {ref} cancelada.",
+    ordensCanceladas: "{n} ordens canceladas.",
+    ordensCancelarFalhas: "{n} ordens não puderam ser canceladas.",
     equipaDesativada: "Equipa {nome} desativada.",
     equipaAtivada: "Equipa {nome} ativada.",
+    tecnicoDesativado: "{nome} desativado.",
     lugarGravado: "Visita reagendada para {data}, {hora}.",
     anulado: "Alteração anulada.",
   },
   confirmar: {
     cancelarOrdemTitulo: "Cancelar {ref}?",
     cancelarOrdemDetalhe: "A visita sai da agenda e passa a cancelada. Esta ação pode ser revista no histórico.",
+    cancelarMassaTitulo: "Cancelar {n} ordens?",
+    cancelarMassaDetalhe: "As visitas saem da agenda e passam a canceladas.",
     desativarEquipaTitulo: "Desativar {nome}?",
     desativarEquipaDetalhe: "As visitas futuras ficam em fila. Pode voltar a ativar a equipa mais tarde.",
+    desativarTecnicoTitulo: "Desativar {nome}?",
+    desativarTecnicoDetalhe: "Deixa de receber visitas desta equipa.",
     desativar: "Desativar",
   },
   migalhas: {

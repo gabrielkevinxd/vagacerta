@@ -54,6 +54,7 @@ export function AcoesEquipa({
   const [erro, setErro] = useState<string | null>(null);
   const [aTrabalhar, setATrabalhar] = useState(false);
   const [confirmarDesativar, setConfirmarDesativar] = useState(false);
+  const [membroADesativar, setMembroADesativar] = useState<{ id: string; nome: string } | null>(null);
   const nome = equipaNome;
 
   async function executar(trabalho: () => Promise<void>) {
@@ -205,7 +206,7 @@ export function AcoesEquipa({
                   variant="outline"
                   size="sm"
                   disabled={aTrabalhar}
-                  onClick={() => executar(() => enviar(`/api/equipas/${equipaId}/membros/${membro.id}`, undefined, "DELETE").then(() => undefined))}
+                  onClick={() => setMembroADesativar({ id: membro.id, nome: membro.nome })}
                 >
                   {t("equipas.desativar")}
                 </Button>
@@ -323,6 +324,36 @@ export function AcoesEquipa({
               {t("comum.cancelar")}
             </Button>
             <Button type="button" variant="destructive" disabled={aTrabalhar} onClick={() => void desativarEquipa()}>
+              {t("confirmar.desativar")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(membroADesativar)} onOpenChange={(v) => !v && setMembroADesativar(null)}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{t("confirmar.desativarTecnicoTitulo", { nome: membroADesativar?.nome ?? "" })}</DialogTitle>
+            <DialogDescription>{t("confirmar.desativarTecnicoDetalhe")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setMembroADesativar(null)}>
+              {t("comum.cancelar")}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={aTrabalhar || !membroADesativar}
+              onClick={() => {
+                if (!membroADesativar) return;
+                const alvo = membroADesativar;
+                setMembroADesativar(null);
+                void executar(async () => {
+                  await enviar(`/api/equipas/${equipaId}/membros/${alvo.id}`, undefined, "DELETE");
+                  toast(t("toast.tecnicoDesativado", { nome: alvo.nome }));
+                });
+              }}
+            >
               {t("confirmar.desativar")}
             </Button>
           </DialogFooter>

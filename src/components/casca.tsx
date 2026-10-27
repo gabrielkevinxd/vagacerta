@@ -75,7 +75,7 @@ async function Sessao({ children }: { children: React.ReactNode }) {
               </BreadcrumbList>
             </Breadcrumb>
             <div className="ml-auto flex items-center gap-2">
-              <ComandoPalette destinos={destinos} />
+              <ComandoPalette destinos={destinos} papel={ator.papel} />
             </div>
           </header>
           <main id="conteudo" className="w-full flex-1 px-4 py-4 md:px-6 md:py-5">

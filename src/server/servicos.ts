@@ -8,6 +8,7 @@ import {
   atribuirPeriodo,
   cancelarOrdem,
   diaAceita,
+  restaurarCancelamento as restaurarCancelamentoNoMundo,
   eDataIso,
   hojeLisboa,
   marcarOrdem,
@@ -365,12 +366,25 @@ export function atualizarOrdem(
   return verOrdem(alvo);
 }
 
+export function restaurarCancelamento(ator: Ator, id: string): OrdemVista {
+  exigir(ator.papel !== "tecnico", 403, "SEM_PERMISSAO", "O técnico não cancela nem repõe ordens.");
+  const antes = lerMundo();
+  const ordem = antes.ordens.find((linha) => linha.id === id);
+  exigir(Boolean(ordem), 404, "NAO_ENCONTRADO", "Não encontrámos esta ordem.");
+  exigir(podeLerOrdem(ator, ordem!), 403, "SEM_PERMISSAO", "Sem acesso a esta ordem.");
+  const resultado = restaurarCancelamentoNoMundo(antes, id);
+  if (!resultado.ok) throw new ErroHttp(400, resultado.codigo, resultado.mensagem);
+  gravarDiferença(ator, antes, resultado.mundo, `${ordem!.referencia} reposta.`);
+  return verOrdem(resultado.resultado);
+}
+
 export function mudarEstado(ator: Ator, id: string, estado: EstadoOrdem, motivo?: string, quemPediu?: QuemPediu): OrdemVista {
   const antes = lerMundo();
   const ordem = antes.ordens.find((linha) => linha.id === id);
   exigir(Boolean(ordem), 404, "NAO_ENCONTRADO", "Não encontrámos esta ordem.");
   exigir(podeMudarEstado(ator, ordem!, estado), 403, "SEM_PERMISSAO", "Não pode mudar esta ordem para esse estado.");
   if (estado === "cancelada") {
+    exigir(ator.papel !== "tecnico", 403, "SEM_PERMISSAO", "O técnico não cancela ordens.");
     exigir(Boolean(motivo?.trim()), 400, "DADOS_INVALIDOS", "Cancelar exige um motivo.");
     const resultado = cancelarOrdem(antes, id, motivo!.trim(), quemPediu ?? "central");
     if (!resultado.ok) throw new ErroHttp(400, resultado.codigo, resultado.mensagem);

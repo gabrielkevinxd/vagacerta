@@ -301,6 +301,29 @@ export function cancelarOrdem(
   return { ok: true, mundo: seguinte, resultado: seguinte.ordens.find((linha) => linha.id === id)! };
 }
 
+/** Reposição imediata após um cancelamento (Anular no toast). */
+export function restaurarCancelamento(mundo: Mundo, id: string): Resultado<Ordem> {
+  const existente = mundo.ordens.find((ordem) => ordem.id === id);
+  if (!existente) return falha("NAO_ENCONTRADO", "Não encontrámos a ordem.");
+  if (existente.estado !== "cancelada") {
+    return falha("CONFLITO", "Só uma ordem cancelada pode ser reposta.");
+  }
+  let seguinte = structuredClone(mundo);
+  const ordem = seguinte.ordens.find((linha) => linha.id === id)!;
+  ordem.motivoCancelamento = null;
+  ordem.quemPediu = null;
+  ordem.inicioFixado = false;
+  ordem.inicioPlaneado = null;
+  ordem.fimPlaneado = null;
+  if (ordem.equipaId) {
+    ordem.estado = "agendada";
+    seguinte = recalcularDia(seguinte, ordem.equipaId, ordem.data);
+  } else {
+    ordem.estado = "em_espera";
+  }
+  return { ok: true, mundo: seguinte, resultado: seguinte.ordens.find((linha) => linha.id === id)! };
+}
+
 export function reagendarOrdem(mundo: Mundo, id: string, alteracao: AlteracaoAgenda): Resultado<Ordem> {
   const existente = mundo.ordens.find((ordem) => ordem.id === id);
   if (!existente) return falha("NAO_ENCONTRADO", "Não encontrámos a ordem.");

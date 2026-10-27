@@ -44,7 +44,7 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
               {t("comum.dia")}
             </label>
             <SeletorData id="data" name="data" defaultValue={data} className="w-auto" />
-            <Button type="submit" size="sm">
+            <Button type="submit" size="sm" variant="outline">
               {t("comum.ver")}
             </Button>
             <Button asChild variant="outline" size="sm">
@@ -191,39 +191,62 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
             }
           />
         ) : (
-          <div className="superficie overflow-hidden">
-            <table className="w-full text-[13px]/5">
-              <thead className="bg-muted/50 text-left text-xs font-medium text-muted-foreground">
-                <tr className="h-9 border-b border-border">
-                  <th className="px-3 font-medium">{t("comum.hora")}</th>
-                  <th className="px-3 font-medium">{t("tabela.ref")}</th>
-                  <th className="px-3 font-medium">{t("tabela.cliente")}</th>
-                  <th className="px-3 font-medium">{t("tabela.equipa")}</th>
-                  <th className="px-3 font-medium">{t("comum.estado")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {vista.visitas.map((ordem) => (
-                  <tr key={ordem.id} className="h-9 border-b border-border last:border-0 hover:bg-muted">
-                    <td className="px-3 font-mono text-xs tabular-nums text-muted-foreground">
-                      {ordem.inicioPlaneado ?? "—"}–{ordem.fimPlaneado ?? "—"}
-                    </td>
-                    <td className="px-3">
-                      <Link href={`/ordens/${ordem.id}`} className="inline-flex items-center gap-1.5 font-mono font-medium hover:text-primary">
-                        <EtiquetaOperador id={ordem.operadorId} soPonto />
-                        {ordem.referencia}
-                      </Link>
-                    </td>
-                    <td className="px-3 text-muted-foreground">{ordem.clienteNome}</td>
-                    <td className="px-3 text-muted-foreground">{ordem.equipaNome}</td>
-                    <td className="px-3">
+          <>
+            <ul className="space-y-2 md:hidden">
+              {vista.visitas.map((ordem) => (
+                <li key={ordem.id}>
+                  <Link href={`/ordens/${ordem.id}`} className="superficie block space-y-1 p-3 transition-colors hover:bg-muted/50 foco-anel">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                        {ordem.inicioPlaneado ?? "—"}–{ordem.fimPlaneado ?? "—"}
+                      </span>
                       <EtiquetaEstado estado={ordem.estado} />
-                    </td>
+                    </div>
+                    <p className="inline-flex items-center gap-1.5 font-mono text-[13px]/5 font-medium">
+                      <EtiquetaOperador id={ordem.operadorId} soPonto />
+                      {ordem.referencia}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {ordem.clienteNome} · {ordem.equipaNome}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <div className="superficie hidden overflow-x-auto md:block">
+              <table className="w-full text-[13px]/5">
+                <thead className="bg-muted/50 text-left text-xs font-medium text-muted-foreground">
+                  <tr className="h-9 border-b border-border">
+                    <th className="px-3 font-medium">{t("comum.hora")}</th>
+                    <th className="px-3 font-medium">{t("tabela.ref")}</th>
+                    <th className="px-3 font-medium">{t("tabela.cliente")}</th>
+                    <th className="px-3 font-medium">{t("tabela.equipa")}</th>
+                    <th className="px-3 font-medium">{t("comum.estado")}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {vista.visitas.map((ordem) => (
+                    <tr key={ordem.id} className="h-9 border-b border-border last:border-0 hover:bg-muted">
+                      <td className="px-3 font-mono text-xs tabular-nums text-muted-foreground">
+                        {ordem.inicioPlaneado ?? "—"}–{ordem.fimPlaneado ?? "—"}
+                      </td>
+                      <td className="px-3">
+                        <Link href={`/ordens/${ordem.id}`} className="inline-flex items-center gap-1.5 whitespace-nowrap font-mono font-medium hover:text-primary">
+                          <EtiquetaOperador id={ordem.operadorId} soPonto />
+                          {ordem.referencia}
+                        </Link>
+                      </td>
+                      <td className="px-3 text-muted-foreground">{ordem.clienteNome}</td>
+                      <td className="px-3 text-muted-foreground">{ordem.equipaNome}</td>
+                      <td className="px-3">
+                        <EtiquetaEstado estado={ordem.estado} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </Seccao>
     </div>

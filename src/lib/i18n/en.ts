@@ -53,16 +53,23 @@ export const en = {
   toast: {
     ordemCriada: "Order {ref} created.",
     ordemCancelada: "Order {ref} cancelled.",
+    ordensCanceladas: "{n} orders cancelled.",
+    ordensCancelarFalhas: "{n} orders could not be cancelled.",
     equipaDesativada: "Team {nome} deactivated.",
     equipaAtivada: "Team {nome} activated.",
+    tecnicoDesativado: "{nome} deactivated.",
     lugarGravado: "Visit rescheduled to {data}, {hora}.",
     anulado: "Change undone.",
   },
   confirmar: {
     cancelarOrdemTitulo: "Cancel {ref}?",
     cancelarOrdemDetalhe: "The visit leaves the schedule and becomes cancelled. This can be reviewed in history.",
+    cancelarMassaTitulo: "Cancel {n} orders?",
+    cancelarMassaDetalhe: "The visits leave the schedule and become cancelled.",
     desativarEquipaTitulo: "Deactivate {nome}?",
     desativarEquipaDetalhe: "Future visits move to the waiting list. You can reactivate the team later.",
+    desativarTecnicoTitulo: "Deactivate {nome}?",
+    desativarTecnicoDetalhe: "They will no longer receive visits for this team.",
     desativar: "Deactivate",
   },
   migalhas: {

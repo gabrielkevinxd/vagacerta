@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Bot,
   CalendarDays,
@@ -30,33 +30,23 @@ import {
 import { Button } from "@/components/ui/button";
 import { definirIdiomaAcao } from "@/app/idioma/acao";
 import type { Chave } from "@/lib/i18n";
-import type { OperadorId } from "@/lib/rules";
+import type { OperadorId, Papel } from "@/lib/rules";
 
 type Destino = { href: string; rotulo: Chave; icone: string };
 type OrdemCmd = { id: string; referencia: string; clienteNome: string; operadorId: OperadorId };
-
-const DEMO_ORDENS: OrdemCmd[] = [
-  { id: "ord-az-24081", referencia: "AZ-24081", clienteNome: "Leonor Campos", operadorId: "azul" },
-  { id: "ord-vr-90001", referencia: "VR-90001", clienteNome: "Duarte Pimentel", operadorId: "vermelho" },
-  { id: "ord-vd-55210", referencia: "VD-55210", clienteNome: "Gonçalo Bentes", operadorId: "verde" },
-  { id: "ord-az-24102", referencia: "AZ-24102", clienteNome: "Tiago Furtado", operadorId: "azul" },
-  { id: "ord-vr-88350", referencia: "VR-88350", clienteNome: "Paulo Gameiro", operadorId: "vermelho" },
-  { id: "ord-vd-urg", referencia: "VD-URG", clienteNome: "Matilde Queirós", operadorId: "verde" },
-  { id: "ord-az-pend-01", referencia: "AZ-PEND-01", clienteNome: "Teresa Malhoa", operadorId: "azul" },
-  { id: "ord-vr-fila-01", referencia: "VR-FILA-01", clienteNome: "Lourenço Paiva", operadorId: "vermelho" },
-];
 
 function eMac(): boolean {
   if (typeof navigator === "undefined") return true;
   return /Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent);
 }
 
-export function ComandoPalette({ destinos }: { destinos: Destino[] }) {
+export function ComandoPalette({ destinos, papel }: { destinos: Destino[]; papel: Papel }) {
   const { t, idioma } = useT();
   const router = useRouter();
   const [aberto, setAberto] = useState(false);
   const [pesquisa, setPesquisa] = useState("");
   const [atalho, setAtalho] = useState("⌘K");
+  const [ordens, setOrdens] = useState<OrdemCmd[]>([]);
 
   useEffect(() => {
     setAtalho(eMac() ? "⌘K" : "Ctrl K");
@@ -70,6 +60,31 @@ export function ComandoPalette({ destinos }: { destinos: Destino[] }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  useEffect(() => {
+    if (!aberto) return;
+    const controlador = new AbortController();
+    const tempo = window.setTimeout(() => {
+      const q = pesquisa.trim();
+      const params = new URLSearchParams();
+      if (q) params.set("q", q);
+      params.set("limite", q ? "8" : "5");
+      void fetch(`/api/ordens/procurar?${params.toString()}`, {
+        credentials: "include",
+        signal: controlador.signal,
+      })
+        .then(async (resposta) => {
+          if (!resposta.ok) return [] as OrdemCmd[];
+          return (await resposta.json()) as OrdemCmd[];
+        })
+        .then((lista) => setOrdens(Array.isArray(lista) ? lista : []))
+        .catch(() => undefined);
+    }, 150);
+    return () => {
+      controlador.abort();
+      window.clearTimeout(tempo);
+    };
+  }, [aberto, pesquisa]);
+
   const icones: Record<string, React.ComponentType<{ className?: string }>> = {
     painel: LayoutDashboard,
     agenda: CalendarDays,
@@ -81,14 +96,6 @@ export function ComandoPalette({ destinos }: { destinos: Destino[] }) {
     gemeo: FlaskConical,
     definicoes: Settings,
   };
-
-  const ordensFiltradas = useMemo(() => {
-    const q = pesquisa.trim().toLowerCase();
-    if (!q) return DEMO_ORDENS.slice(0, 8);
-    return DEMO_ORDENS.filter(
-      (o) => o.referencia.toLowerCase().includes(q) || o.clienteNome.toLowerCase().includes(q),
-    ).slice(0, 8);
-  }, [pesquisa]);
 
   const ir = (href: string) => {
     setAberto(false);
@@ -128,7 +135,7 @@ export function ComandoPalette({ destinos }: { destinos: Destino[] }) {
           <CommandList>
             <CommandEmpty>{t("comando.semResultados")}</CommandEmpty>
             <CommandGroup heading={t("comando.ordens")}>
-              {ordensFiltradas.map((ordem) => (
+              {ordens.map((ordem) => (
                 <CommandItem key={ordem.id} value={`${ordem.referencia} ${ordem.clienteNome}`} onSelect={() => ir(`/ordens?ordem=${ordem.id}`)}>
                   <EtiquetaOperador id={ordem.operadorId} soPonto />
                   <span className="font-mono text-[13px]/5">{ordem.referencia}</span>
@@ -148,10 +155,12 @@ export function ComandoPalette({ destinos }: { destinos: Destino[] }) {
               })}
             </CommandGroup>
             <CommandGroup heading={t("comando.accoes")}>
-              <CommandItem onSelect={() => ir("/ordens/nova")}>
-                <Plus className="size-4" />
-                {t("comando.novaOrdem")}
-              </CommandItem>
+              {papel === "tecnico" ? null : (
+                <CommandItem onSelect={() => ir("/ordens/nova")}>
+                  <Plus className="size-4" />
+                  {t("comando.novaOrdem")}
+                </CommandItem>
+              )}
               <CommandItem onSelect={() => ir("/agenda")}>
                 <CalendarDays className="size-4" />
                 {t("comando.agendaHoje")}
