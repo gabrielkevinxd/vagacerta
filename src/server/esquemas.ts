@@ -71,6 +71,27 @@ export const esquemaConfirmar = z.object({
   selo: z.string().min(16, "Falta o selo da pré-visualização."),
 });
 
+export const esquemaAssistente = z.object({
+  texto: z.string().trim().min(1, "Os dados enviados não são válidos.").max(500, "Os dados enviados não são válidos."),
+  data: data.optional(),
+  historico: z
+    .array(
+      z.object({
+        papel: z.enum(["utilizador", "assistente"]),
+        texto: z.string().trim().min(1).max(800),
+      }),
+    )
+    .max(6)
+    .optional(),
+  propor: esquemaPedido.optional(),
+  confirmar: z
+    .object({
+      selo: z.string().min(16, "Falta o selo da pré-visualização."),
+      pedido: esquemaPedido,
+    })
+    .optional(),
+});
+
 export const esquemaIndisponibilidade = z.object({
   data,
   inicio: hora,

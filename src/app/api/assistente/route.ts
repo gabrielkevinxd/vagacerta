@@ -1,22 +1,14 @@
-import { NextResponse } from "next/server";
-import { t } from "@/lib/i18n";
-import { naoImplementado } from "@/server/http";
-import { i18nPedido } from "@/server/idioma";
-import { obterAtor } from "@/server/sessao";
+import type { PedidoAssistente } from "@/lib/contratos/assistente";
+import { esquemaAssistente } from "@/server/esquemas";
+import { diaDoAssistente, painelAssistente, responderAssistente } from "@/server/assistente";
+import { api, lerJson } from "@/server/http";
 
-export async function GET() {
-  return exigir();
-}
+export const GET = api(async (ator, pedido) => {
+  const data = new URL(pedido.url).searchParams.get("data") ?? undefined;
+  return painelAssistente(ator, diaDoAssistente(data ?? undefined));
+});
 
-export async function POST() {
-  return exigir();
-}
-
-async function exigir() {
-  const { m } = await i18nPedido();
-  const ator = await obterAtor();
-  if (!ator) {
-    return NextResponse.json({ codigo: "NAO_AUTENTICADO", mensagem: t(m, "erros.NAO_AUTENTICADO") }, { status: 401 });
-  }
-  return naoImplementado("src/lib/contratos/assistente.ts", t(m, "assistente.corpo"));
-}
+export const POST = api(async (ator, pedido) => {
+  const corpo = await lerJson(esquemaAssistente, pedido);
+  return responderAssistente(ator, corpo as PedidoAssistente);
+});

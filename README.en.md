@@ -69,7 +69,7 @@ Message files: `src/lib/i18n/pt-PT.ts` and `src/lib/i18n/en.ts`. Keys must match
 
 ## Pages
 
-`/entrar` sign-in · `/` day dashboard · `/ordens` orders · `/equipas` teams · `/otimizador` refit preview · `/definicoes` travel buffer · `/agenda` day/week Gantt · `/assistente` placeholder · `/gemeo` Monte Carlo twin · `/integracao` OFSC agent and live console.
+`/entrar` sign-in · `/` day dashboard · `/ordens` orders · `/equipas` teams · `/otimizador` refit preview · `/definicoes` travel buffer · `/agenda` day/week Gantt · `/assistente` chat and proactive alerts · `/gemeo` Monte Carlo twin · `/integracao` OFSC agent and live console.
 
 ## OFSC integration (phase 4)
 

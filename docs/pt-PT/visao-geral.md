@@ -6,4 +6,4 @@ A interface é bilingue: **português europeu** (predefinição) e **inglês**. 
 
 O dia rico da demonstração é **2026-10-27**. A base é SQLite local (`data/vagacerta.sqlite`, `node:sqlite` do Node 22). Não há serviço externo obrigatório.
 
-Páginas principais: `/entrar`, `/` (painel), `/ordens`, `/equipas`, `/agenda` (Gantt), `/otimizador` (reencaixe), `/gemeo` (simular ou injetar), `/integracao` (OFSC), `/definicoes`, `/assistente` (ainda 501).
+Páginas principais: `/entrar`, `/` (painel), `/ordens`, `/equipas`, `/agenda` (Gantt), `/otimizador` (reencaixe), `/gemeo` (simular ou injetar), `/integracao` (OFSC), `/definicoes`, `/assistente` (chat e alertas; grava só depois de confirmar).

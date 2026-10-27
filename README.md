@@ -76,7 +76,8 @@ Um despachante só reorganiza ordens do seu operador e não pode pedir a falta d
 
 ```
 src/lib/rules/        motor puro, sem SQLite e sem sessão
-src/lib/contratos/    tipos do assistente e do gémeo (sem implementação)
+src/lib/contratos/    tipos do assistente e do gémeo
+src/lib/assistente/   alertas, regras e cliente xAI do despacho
 src/lib/i18n/         catálogos pt-PT e en, tipados
 src/lib/demonstracao.ts   mundo de demonstração
 src/server/           SQLite, sessão, esquemas Zod, serviços
@@ -119,7 +120,7 @@ A UI lê `src/lib/i18n/pt-PT.ts` e `src/lib/i18n/en.ts`. As chaves coincidem (te
 | `/otimizador` | Antes e depois textual, com selo. Não é o Gantt |
 | `/definicoes` | Margem de deslocação (central) |
 | `/agenda` | Gantt de dia e de semana, com arrasto, pré-visualização e lista no telemóvel |
-| `/assistente` | Placeholder (`POST /api/assistente` continua 501) |
+| `/assistente` | Chat e alertas proativos. Grava só com confirmação |
 | `/gemeo` | Gémeo: só simular, ou injetar na aplicação pela semente (OFSC + quotas) |
 | `/integracao` | Agente OFSC, consola em três colunas e cenários |
 
@@ -338,11 +339,12 @@ Cores: `COR_OPERADOR` (`#1d4f91`, `#a32020`, `#1d7a45`). Um bloco `ocupada` não
 
 ### Assistente (`/assistente`)
 
-Tipos em `src/lib/contratos/assistente.ts`: `PedidoAssistente`, `IntencaoDespacho`, `RespostaAssistente`.
+Tipos em `src/lib/contratos/assistente.ts`: `PedidoAssistente`, `IntencaoDespacho`, `RespostaAssistente`, `PainelAssistente`.
 
-- `POST /api/assistente` e `GET /api/assistente` respondem 501 `{ pronto: false, codigo: "NAO_IMPLEMENTADO", mensagem, contrato }`.
-- A intenção `reencaixar` tem de produzir um `PedidoRealocacao` e chamar `POST /api/otimizar`. Só `POST /api/otimizar/confirmar` grava.
-- Sem `LLM_API_KEY` (ver `.env.example`), o fallback é determinístico. A chave não é obrigatória para o resto da aplicação.
+- `GET /api/assistente` lista alertas determinísticos do dia (sobrelotação, quotas, ausências, ordens sem técnico, sobreposições), já filtrados pelo perfil.
+- `POST /api/assistente` responde. Com `XAI_API_KEY` usa function calling; sem chave, ou se a chamada falhar, responde por regras.
+- A intenção `reencaixar` pré-visualiza com o mesmo motor de `POST /api/otimizar`. Só `confirmar: { selo, pedido }` grava, por `confirmarPlano`.
+- O despachante não recebe fichas nem referências de outro operador.
 
 ### Gémeo (`/gemeo`)
 

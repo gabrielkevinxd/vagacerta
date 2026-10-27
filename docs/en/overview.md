@@ -6,4 +6,4 @@ The UI is bilingual: **European Portuguese** (default) and **English**. **PT | E
 
 The rich demo day is **2026-10-27**. Storage is local SQLite (`data/vagacerta.sqlite`, Node 22 `node:sqlite`). No external service is required to run the app.
 
-Main pages: `/entrar`, `/` (dashboard), `/ordens`, `/equipas`, `/agenda` (Gantt), `/otimizador` (refit), `/gemeo` (simulate or inject), `/integracao` (OFSC), `/definicoes`, `/assistente` (still 501).
+Main pages: `/entrar`, `/` (dashboard), `/ordens`, `/equipas`, `/agenda` (Gantt), `/otimizador` (refit), `/gemeo` (simulate or inject), `/integracao` (OFSC), `/definicoes`, `/assistente` (chat and alerts; saves only after confirm).

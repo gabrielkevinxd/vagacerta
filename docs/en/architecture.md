@@ -3,6 +3,7 @@
 ```
 src/lib/rules/        pure engine (no SQLite, no session)
 src/lib/contratos/    assistant and twin types
+src/lib/assistente/   dispatch alerts, rules and xAI client
 src/lib/i18n/         pt-PT and en catalogues
 src/lib/ofsc/         quotas, parser, xAI client, OFSC types
 src/lib/demonstracao.ts

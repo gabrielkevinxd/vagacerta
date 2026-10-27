@@ -1,11 +1,9 @@
-import Link from "next/link";
 import { Suspense } from "react";
-import { Bot } from "lucide-react";
+import { PainelAssistenteCliente } from "@/components/assistente/painel";
 import { Carregamento } from "@/components/carregamento";
-import { EstadoVazio } from "@/components/estado-vazio";
-import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
 import { SemAcesso } from "@/components/sem-acesso";
-import { Button } from "@/components/ui/button";
+import { hojeLisboa } from "@/lib/rules";
+import { painelAssistente } from "@/server/assistente";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 
@@ -22,21 +20,8 @@ async function Conteudo() {
       />
     );
   }
-  return (
-    <div className="space-y-4">
-      <CabecalhoPagina titulo={t("assistente.titulo")} />
-      <EstadoVazio
-        titulo={t("assistente.emBreve")}
-        detalhe={t("assistente.emBreveDetalhe")}
-        icone={<Bot className="size-5 text-muted-foreground" strokeWidth={1.75} />}
-        accao={
-          <Button asChild size="sm">
-            <Link href="/otimizador">{t("assistente.abrirReencaixe")}</Link>
-          </Button>
-        }
-      />
-    </div>
-  );
+  const painel = painelAssistente(ator, hojeLisboa());
+  return <PainelAssistenteCliente inicial={painel} />;
 }
 
 export default function Pagina() {

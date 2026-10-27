@@ -3,6 +3,7 @@
 ```
 src/lib/rules/        motor puro (sem SQLite, sem sessão)
 src/lib/contratos/    tipos do assistente e do gémeo
+src/lib/assistente/   alertas, regras e cliente xAI do despacho
 src/lib/i18n/         catálogos pt-PT e en
 src/lib/ofsc/         quotas, interpretador, cliente xAI, tipos OFSC
 src/lib/demonstracao.ts
