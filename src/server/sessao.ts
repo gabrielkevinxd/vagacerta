@@ -50,6 +50,9 @@ export async function obterTokenSessao(): Promise<string | null> {
 
 export async function obterAtor(): Promise<Ator | null> {
   await connection();
+  // Limpeza oportunista (TTL): apaga todas as sessões expiradas + histórico CASCADE.
+  // Só aqui / no login — nunca no open da BD (Blocking Route).
+  limparSessoesExpiradas();
   const jar = await cookies();
   const token = jar.get(COOKIE)?.value;
   if (!token) return null;

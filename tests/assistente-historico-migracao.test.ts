@@ -274,4 +274,33 @@ describe("limparSessoesExpiradas", () => {
       (db.prepare("SELECT COUNT(*) AS n FROM assistente_historico WHERE sessao_token = ?").get(token) as { n: number }).n,
     ).toBe(0);
   });
+
+  it("obterAtor com sessão expirada apaga a sessão e o histórico (S2)", async () => {
+    const { baseDados } = await import("@/server/db");
+    const db = baseDados();
+    const utilizador = db.prepare("SELECT id FROM utilizadores WHERE email = ?").get("azul@vagacerta.exemplo") as {
+      id: string;
+    };
+    const token = `expirado-ator-${Date.now()}`;
+    const passado = new Date(Date.now() - 60_000).toISOString();
+    db.prepare("INSERT INTO sessoes (token, utilizador_id, expira_em, criada_em) VALUES (?, ?, ?, ?)").run(
+      token,
+      utilizador.id,
+      passado,
+      passado,
+    );
+    db.prepare(
+      "INSERT INTO assistente_historico (sessao_token, papel, texto, em, origem) VALUES (?, ?, ?, ?, ?)",
+    ).run(token, "utilizador", "pedido fantasma", passado, null);
+
+    jar.clear();
+    jar.set("vc_sessao", token);
+    const { obterAtor } = await import("@/server/sessao");
+    const ator = await obterAtor();
+    expect(ator).toBeNull();
+    expect(db.prepare("SELECT token FROM sessoes WHERE token = ?").get(token)).toBeUndefined();
+    expect(
+      (db.prepare("SELECT COUNT(*) AS n FROM assistente_historico WHERE sessao_token = ?").get(token) as { n: number }).n,
+    ).toBe(0);
+  });
 });

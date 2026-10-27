@@ -86,12 +86,13 @@ export function AcoesEquipa({
     setServidos(operadoresServidos);
   }
 
-  function listarOperadores(ids: OperadorId[], artigo: "o" | "do" | "none" = "o") {
+  function listarOperadores(ids: OperadorId[], artigo: "o" | "do" | "the" | "none" = "o") {
     const ordenados = OPERADORES.filter((op) => ids.includes(op));
     const locale = idioma === "en" ? "en" : "pt-PT";
     const nomes = ordenados.map((id) => {
       const nome = t(`operador.${id}`);
-      if (idioma === "en" || artigo === "none") return nome;
+      if (artigo === "none") return nome;
+      if (idioma === "en") return `the ${nome.charAt(0).toLowerCase()}${nome.slice(1)}`;
       return `${artigo} ${nome}`;
     });
     if (nomes.length === 0) return "—";
@@ -185,14 +186,6 @@ export function AcoesEquipa({
 
   return (
     <div className="space-y-8">
-      {erro ? (
-        <Alerta tom="erro" role="alert">
-          <div className="space-y-1">
-            <p className="font-medium text-foreground">{t("equipas.naoGuardarTitulo")}</p>
-            <div>{erro}</div>
-          </div>
-        </Alerta>
-      ) : null}
       {!ativa ? (
         <div>
           <Button
@@ -291,6 +284,14 @@ export function AcoesEquipa({
         <div className="space-y-3">
           <h2 className="text-base font-semibold tracking-tight">{t("equipas.operadoresServidos")}</h2>
           <p className="text-[13px]/5 text-muted-foreground">{t("equipas.operadoresServidosAjuda")}</p>
+          {erro ? (
+            <Alerta tom="erro" role="alert">
+              <div className="space-y-1">
+                <p className="font-medium text-foreground">{t("equipas.naoGuardarTitulo")}</p>
+                <div>{erro}</div>
+              </div>
+            </Alerta>
+          ) : null}
           <div className="flex flex-wrap gap-1.5" role="group" aria-label={t("equipas.operadoresServidos")}>
             {OPERADORES.map((id) => {
               const ativo = servidos.includes(id);

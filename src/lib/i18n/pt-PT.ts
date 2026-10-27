@@ -352,6 +352,7 @@ export const ptPT = {
     semEquipa: "Sem equipa",
     equipaReservada: "Equipa: {nome}",
     limparEquipa: "Limpar equipa",
+    equipaLimpaAnuncio: "Pré-seleção de equipa removida.",
     gravarFicha: "Gravar ficha",
     mudarEstado: "Mudar estado",
     marcar: "Marcar",
