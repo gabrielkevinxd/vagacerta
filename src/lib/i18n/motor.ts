@@ -43,6 +43,7 @@ const POR_TEXTO: Record<string, Chave> = {
   "Um despachante não marca visitas em dias já passados.": "erros.naoMarcaPassado",
   "A área não está na lista de localidades.": "erros.areaInvalida",
   "Cancelar exige um motivo.": "erros.cancelarMotivo",
+  "Indique quem pediu o cancelamento.": "erros.quemPediu",
   "Esta ordem já está cancelada.": "erros.JA_CANCELADA",
   "Só uma ordem cancelada pode ser reposta.": "erros.naoRepor",
   "Indique um intervalo de datas válido.": "erros.agendaIntervalo",

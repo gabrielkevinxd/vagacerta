@@ -38,6 +38,7 @@ export function AcoesEquipa({
   equipaNome,
   ativa,
   zonas,
+  zonaAtualId,
   horarios,
   membros,
   indisponibilidades,
@@ -46,6 +47,7 @@ export function AcoesEquipa({
   equipaNome: string;
   ativa: boolean;
   zonas: { id: string; codigo: string; nome: string }[];
+  zonaAtualId?: string | null;
   horarios: { diaSemana: number; inicio: string; fim: string }[];
   membros: { id: string; nome: string; ativo: boolean }[];
   indisponibilidades: { id: string; data: string; inicio: string; fim: string; motivo: string }[];
@@ -167,7 +169,12 @@ export function AcoesEquipa({
         <h2 className="text-base font-semibold tracking-tight md:col-span-2">{t("equipas.zonaVigor")}</h2>
         <div className="space-y-1.5">
           <Label htmlFor="zona">{t("equipas.zona")}</Label>
-          <select id="zona" name="zonaId" className={campo} defaultValue={zonas[0]?.id}>
+          <select
+            id="zona"
+            name="zonaId"
+            className={campo}
+            defaultValue={zonaAtualId && zonas.some((z) => z.id === zonaAtualId) ? zonaAtualId : (zonas[0]?.id ?? "")}
+          >
             {zonas.map((zona) => (
               <option key={zona.id} value={zona.id}>
                 {zona.codigo} · {zona.nome}

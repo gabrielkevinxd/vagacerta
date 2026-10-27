@@ -207,7 +207,7 @@ export function PainelDetalheOrdem({
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setConfirmarCancelar(false)} disabled={aCancelar}>
-              {t("comum.cancelar")}
+              {t("comum.voltarDialog")}
             </Button>
             <Button
               type="button"

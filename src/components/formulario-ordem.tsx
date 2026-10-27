@@ -173,7 +173,6 @@ export function FormularioOrdem({
         modo,
       });
       toast(t("toast.ordemCriada", { ref: referencia.trim() || criada.id }), {
-        action: { label: t("comum.anular"), onClick: () => undefined },
         duration: 6000,
       });
       router.push(`/ordens/${criada.id}`);

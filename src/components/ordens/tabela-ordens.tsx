@@ -416,7 +416,7 @@ export function TabelaOrdens({
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setConfirmarMassa(false)} disabled={aCancelarMassa}>
-              {t("comum.cancelar")}
+              {t("comum.voltarDialog")}
             </Button>
             <Button
               type="button"

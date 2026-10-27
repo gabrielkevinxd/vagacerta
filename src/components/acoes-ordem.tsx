@@ -241,7 +241,7 @@ export function AcoesOrdem({
               void executar(() =>
                 enviar(`/api/ordens/${ordemId}/cancelar`, {
                   motivo: String(dados.get("motivo") ?? ""),
-                  quemPediu: String(dados.get("quemPediu") ?? "central"),
+                  quemPediu: String(dados.get("quemPediu") ?? "operador"),
                 }).then(() => undefined),
               );
             }}

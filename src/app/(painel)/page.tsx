@@ -79,7 +79,7 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
           />
           <Indicador
             rotulo={t("painel.ocioso")}
-            valor={formatarNumero(vista.indicadores.minutosOciosos, idioma)}
+            valor={`${formatarNumero(vista.indicadores.minutosOciosos, idioma)} ${t("comum.minutos")}`}
             detalhe={t("painel.turnoSemVisita")}
             className="p-3 [&_p:nth-child(2)]:text-xl"
           />

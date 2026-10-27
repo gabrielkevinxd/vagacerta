@@ -142,6 +142,7 @@ async function Conteudo({
           equipaNome={equipa.nome}
           ativa={equipa.ativa}
           zonas={zonas}
+          zonaAtualId={equipa.zona?.id ?? null}
           horarios={equipa.horarios}
           membros={equipa.membros}
           indisponibilidades={equipa.indisponibilidades}
