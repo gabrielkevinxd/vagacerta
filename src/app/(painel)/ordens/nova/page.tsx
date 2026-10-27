@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import { DATA_DEMONSTRACAO } from "@/lib/demonstracao";
 import { JANELAS_INICIO } from "@/lib/rules";
 import { Carregamento } from "@/components/carregamento";
 import { FormularioOrdem } from "@/components/formulario-ordem";
 import { SemAcesso } from "@/components/sem-acesso";
 import { i18nPedido } from "@/server/idioma";
+import { diaDemonstracaoAtual } from "@/server/db";
 import { exigirAtorPagina } from "@/server/sessao";
 import { listarZonas } from "@/server/servicos";
 
@@ -32,7 +32,7 @@ async function Conteudo() {
         operadorFixo={ator.papel === "despachante" ? ator.operadorId : null}
         zonas={zonas}
         janelas={JANELAS_INICIO}
-        dataInicial={DATA_DEMONSTRACAO}
+        dataInicial={diaDemonstracaoAtual()}
       />
     </div>
   );

@@ -1,4 +1,6 @@
 import { SEMENTE_GEMEO, type PedidoGemeo } from "@/lib/contratos/gemeo";
+import { diaDemonstracao } from "@/lib/demonstracao-dia";
+import { semanaIso } from "@/lib/rules/tempo";
 
 export interface PedidoSimulacao {
   semente: number;
@@ -20,7 +22,14 @@ export const PEDIDO_OMISSAO: PedidoSimulacao = {
   pesos: { azul: 0.4, vermelho: 0.35, verde: 0.25 },
 };
 
-export const INICIO_HORIZONTE = "2026-10-26";
+/**
+ * Segunda-feira da semana do dia rico da demonstração: é onde começa o horizonte das simulações e das injeções.
+ * Os números do gémeo só dependem do dia da semana (a semente sorteia por posição no horizonte), por isso são
+ * os mesmos em qualquer semana; só o calendário da série diária muda.
+ */
+export function inicioHorizonte(dia: string = diaDemonstracao()): string {
+  return semanaIso(dia).inicio;
+}
 
 function numero(valor: unknown): number | null {
   return typeof valor === "number" && Number.isFinite(valor) ? valor : null;

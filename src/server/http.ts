@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import type { ZodType } from "zod";
-import type { Ator } from "@/lib/rules";
+import { eCentral, type Ator } from "@/lib/rules";
 import { IDIOMA_OMISSAO, mensagensDe, t } from "@/lib/i18n";
 import { traduzirMensagem } from "@/lib/i18n/motor";
-import { ErroHttp } from "./erros";
+import { ErroHttp, exigir } from "./erros";
 import { comIdiomaAsync, lerIdiomaPedido } from "./idioma";
+import { MENSAGEM_SO_CENTRAL_INTEGRACAO } from "./integracao-auth";
+import { respostaSeSegredoOfscInvalido } from "./ofsc/segredo";
 import { obterAtor } from "./sessao";
 
 type Contexto = { params: Promise<Record<string, string>> };
@@ -34,6 +36,38 @@ export function api<C extends Contexto = Contexto>(
         }
         const corpo = await handler(ator, pedido, contexto);
         return NextResponse.json(corpo ?? { ok: true });
+      } catch (erro) {
+        return responderErroCom(erro, mensagens);
+      }
+    });
+  };
+}
+
+/** Como `api`, mas só a central (administrador e supervisor) passa; os outros perfis recebem 403. */
+export function apiCentral<C extends Contexto = Contexto>(
+  handler: (ator: Ator, pedido: Request, contexto: C) => Promise<unknown> | unknown,
+) {
+  return api<C>((ator, pedido, contexto) => {
+    exigir(eCentral(ator), 403, "SEM_PERMISSAO", MENSAGEM_SO_CENTRAL_INTEGRACAO);
+    return handler(ator, pedido, contexto);
+  });
+}
+
+/**
+ * Rotas do contrato OFSC (webhook e endpoints simulados): segredo partilhado PR#2
+ * (`OFSC_WEBHOOK_SECRET` / `x-vagacerta-ofsc-secret`). Sem sessão de browser.
+ * O `handler` pode devolver uma `Response` já pronta ou um corpo JSON.
+ */
+export function apiIntegracao<C extends Contexto = Contexto>(handler: (pedido: Request, contexto: C) => Promise<unknown> | unknown) {
+  return async (pedido: Request, contexto: C) => {
+    const idioma = await lerIdiomaPedido();
+    return comIdiomaAsync(idioma, async () => {
+      const mensagens = mensagensDe(idioma);
+      try {
+        const negado = respostaSeSegredoOfscInvalido(pedido);
+        if (negado) return negado;
+        const resposta = await handler(pedido, contexto);
+        return resposta instanceof Response ? resposta : NextResponse.json(resposta ?? { ok: true });
       } catch (erro) {
         return responderErroCom(erro, mensagens);
       }

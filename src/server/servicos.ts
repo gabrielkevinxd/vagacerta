@@ -1,6 +1,7 @@
 import "server-only";
 
 import { indicadoresDoDia } from "@/lib/gemeo/indicadores";
+import { zonaDaArea } from "@/lib/ofsc/zonas";
 import { AREAS } from "@/lib/rules/areas";
 import { recalcularDia } from "@/lib/rules/dia";
 import {
@@ -251,11 +252,60 @@ export interface NovaOrdem {
   modo: "agendar" | "espera" | "pendente";
 }
 
+/** O motor responde 409 quando o pedido é bem formado mas conflitua com o que já existe (README: «Contrato HTTP»). */
+function estadoDoMotor(codigo: string): number {
+  return codigo === "INVIAVEL" || codigo === "REFERENCIA_DUPLICADA" ? 409 : 400;
+}
+
+/**
+ * Zonas que servem cada área: a zona-padrão da área e as zonas das equipas ativas que a cobrem
+ * (a Equipa Minho e a Equipa Ave cobrem Braga, uma na zona N01 e outra na N06; Chaves está em N03 e em N05).
+ * A primeira de cada lista é a predefinida do formulário; as outras seguem pelo código da zona.
+ */
+export function zonasPorArea(): Record<string, string[]> {
+  const linhas = baseDados()
+    .prepare(
+      `SELECT e.areas AS areas, z.id AS zona, z.codigo AS codigo
+       FROM equipas e
+       JOIN equipa_zona ez ON ez.equipa_id = e.id
+       JOIN zonas z ON z.id = ez.zona_id
+       WHERE e.ativa = 1`,
+    )
+    .all() as { areas: string; zona: string; codigo: string }[];
+  const resultado: Record<string, string[]> = {};
+  for (const area of AREAS) {
+    const padrao = zonaDaArea(area);
+    const outras = new Map<string, string>();
+    for (const linha of linhas) {
+      if (linha.zona !== padrao && (JSON.parse(linha.areas) as string[]).includes(area)) outras.set(linha.zona, linha.codigo);
+    }
+    resultado[area] = [padrao, ...[...outras.entries()].sort((a, b) => a[1].localeCompare(b[1])).map(([id]) => id)];
+  }
+  return resultado;
+}
+
+export function zonasDaArea(area: string): string[] {
+  return zonasPorArea()[area] ?? [];
+}
+
+/** B3: a zona de uma ordem tem de servir a sua área. A mensagem diz quais as zonas possíveis. */
+function exigirZonaCoerente(area: string, zonaId: string): void {
+  const validas = zonasDaArea(area);
+  if (validas.includes(zonaId)) return;
+  const nomes = new Map(listarZonas().map((zona) => [zona.id, `${zona.codigo} · ${zona.nome}`]));
+  const rotulo = (id: string) => nomes.get(id) ?? id;
+  throw new ErroHttp(
+    400,
+    "DADOS_INVALIDOS",
+    `A zona ${rotulo(zonaId)} não corresponde à área ${area}. Zonas possíveis: ${validas.map(rotulo).join(", ")}.`,
+  );
+}
+
 function validarDataOperador(ator: Ator, operadorId: string, data: string): void {
   if (ator.papel !== "despachante") return;
   const hoje = hojeLisboa();
   if (data < hoje) {
-    throw new ErroHttp(400, "DATA_INVALIDA", "Um despachante não marca visitas em dias já passados.");
+    throw new ErroHttp(400, "PASSADO", "Um despachante não marca visitas em dias já passados.");
   }
   const horizonte = baseDados().prepare("SELECT horizonte_dias AS dias FROM operadores WHERE id = ?").get(operadorId) as
     | { dias: number }
@@ -269,6 +319,7 @@ function validarDataOperador(ator: Ator, operadorId: string, data: string): void
 export function criarOrdem(ator: Ator, entrada: NovaOrdem): OrdemVista {
   exigir(podeMarcarOperador(ator, entrada.operadorId), 403, "SEM_PERMISSAO", "Não pode marcar ordens deste operador.");
   exigir((AREAS as readonly string[]).includes(entrada.area), 400, "DADOS_INVALIDOS", "A área não está na lista de localidades.");
+  exigirZonaCoerente(entrada.area, entrada.zonaId);
   validarDataOperador(ator, entrada.operadorId, entrada.data);
   const catalogo = validarCatalogo(entrada.operadorId, entrada.categoria, entrada.tecnologia, entrada.janelaInicio, entrada.janelaFim);
   if ("ok" in catalogo) throw new ErroHttp(400, catalogo.codigo, catalogo.mensagem);
@@ -276,7 +327,7 @@ export function criarOrdem(ator: Ator, entrada: NovaOrdem): OrdemVista {
   const antes = lerMundo();
   if (entrada.modo === "agendar") {
     const resultado = marcarOrdem(antes, { ...entrada, tecnologia: entrada.tecnologia });
-    if (!resultado.ok) throw new ErroHttp(resultado.codigo === "INVIAVEL" ? 409 : 400, resultado.codigo, resultado.mensagem);
+    if (!resultado.ok) throw new ErroHttp(estadoDoMotor(resultado.codigo), resultado.codigo, resultado.mensagem);
     gravarDiferença(ator, antes, resultado.mundo, "A ordem foi marcada.");
     return verOrdem(resultado.resultado);
   }
@@ -443,7 +494,7 @@ export function reagendar(ator: Ator, id: string, alteracao: Parameters<typeof r
   exigir(podeReagendar(ator, ordem!), 403, "SEM_PERMISSAO", "Não pode reagendar esta ordem.");
   if (alteracao.data) validarDataOperador(ator, ordem!.operadorId, alteracao.data);
   const resultado = reagendarOrdem(antes, id, alteracao);
-  if (!resultado.ok) throw new ErroHttp(resultado.codigo === "INVIAVEL" ? 409 : 400, resultado.codigo, resultado.mensagem);
+  if (!resultado.ok) throw new ErroHttp(estadoDoMotor(resultado.codigo), resultado.codigo, resultado.mensagem);
   gravarDiferença(ator, antes, resultado.mundo, `${ordem!.referencia} reagendada.`);
   return verOrdem(resultado.resultado);
 }
@@ -462,7 +513,7 @@ export function preverReagendamento(
   exigir(podeReagendar(ator, ordem!), 403, "SEM_PERMISSAO", "Não pode reagendar esta ordem.");
   if (alteracao.data) validarDataOperador(ator, ordem!.operadorId, alteracao.data);
   const resultado = reagendarOrdem(antes, id, alteracao);
-  if (!resultado.ok) throw new ErroHttp(resultado.codigo === "INVIAVEL" ? 409 : 400, resultado.codigo, resultado.mensagem);
+  if (!resultado.ok) throw new ErroHttp(estadoDoMotor(resultado.codigo), resultado.codigo, resultado.mensagem);
   const nova = resultado.resultado;
   const datas = [ordem!.data, nova.data].sort();
   const depois = projetarAgenda(resultado.mundo, ator, datas[0]!, datas[datas.length - 1]!);
@@ -529,9 +580,10 @@ function limitarPedido(ator: Ator, pedido: PedidoRealocacao): PedidoRealocacao {
 }
 
 export function obterAgenda(ator: Ator, de: string, ate: string): Agenda {
-  exigir(eDataIso(de) && eDataIso(ate) && ate >= de, 400, "DATA_INVALIDA", "Indique um intervalo de datas válido.");
+  exigir(eDataIso(de) && eDataIso(ate), 400, "DATA_INVALIDA", "Indique um intervalo de datas válido.");
+  exigir(ate >= de, 400, "INTERVALO", "O fim do período não pode ser anterior ao início.");
   if (somarDias(de, 14) < ate) {
-    throw new ErroHttp(400, "DATA_INVALIDA", "O intervalo da agenda não pode passar de 15 dias.");
+    throw new ErroHttp(400, "INTERVALO", "O intervalo da agenda não pode passar de 15 dias.");
   }
   return projetarAgenda(lerMundo(), ator, de, ate);
 }

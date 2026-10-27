@@ -1,7 +1,7 @@
 import { en } from "./en";
 import { interpolar, valorEm } from "./folhas";
 import { ptPT, type Mensagens } from "./pt-PT";
-import { eIdioma, IDIOMA_OMISSAO, type Folhas, type Idioma } from "./tipos";
+import { IDIOMA_OMISSAO, type Folhas, type Idioma } from "./tipos";
 
 export type { Mensagens };
 export type { Idioma };

@@ -1,5 +1,6 @@
 import { eCentral, type Ator } from "@/lib/rules";
-import { correrSimulacao, normalizarPedido, PEDIDO_OMISSAO } from "@/lib/gemeo";
+import { correrSimulacao, inicioHorizonte, normalizarPedido, PEDIDO_OMISSAO } from "@/lib/gemeo";
+import { diaDemonstracaoAtual } from "@/server/db";
 import { esquemaGemeo } from "@/server/esquemas";
 import { ErroHttp } from "@/server/erros";
 import { relatorioDoLote } from "@/server/gemeo-injetar";
@@ -36,7 +37,7 @@ export const GET = api(async (ator, pedido) => {
   };
   const normal = normalizarPedido(bruto);
   if ("mensagem" in normal) throw new ErroHttp(400, "DADOS_INVALIDOS", normal.mensagem);
-  return correrSimulacao(normal, idiomaAtual());
+  return correrSimulacao(normal, idiomaAtual(), undefined, inicioHorizonte(diaDemonstracaoAtual()));
 });
 
 export const POST = api(async (ator, pedido) => {
@@ -44,5 +45,5 @@ export const POST = api(async (ator, pedido) => {
   const corpo = await lerJson(esquemaGemeo, pedido);
   const normal = normalizarPedido(corpo);
   if ("mensagem" in normal) throw new ErroHttp(400, "DADOS_INVALIDOS", normal.mensagem);
-  return correrSimulacao(normal, idiomaAtual());
+  return correrSimulacao(normal, idiomaAtual(), undefined, inicioHorizonte(diaDemonstracaoAtual()));
 });

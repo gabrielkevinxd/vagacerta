@@ -21,8 +21,22 @@ If the browser sticks on “Loading this section…”, delete the `vc_sessao` a
 ```bash
 npm test
 npm run typecheck
+npm run lint          # no errors, no warnings
 npm run demo:reset    # deletes data/vagacerta.sqlite; next boot reseeds
 ```
+
+## Environment variables (optional)
+
+| Variable | Purpose |
+| --- | --- |
+| `VC_DEMO_DIA` | `YYYY-MM-DD`: pins the demo's “rich day” (a weekend moves to the following Monday). Without it, it is today in Lisbon. It only counts when the database is seeded: run `npm run demo:reset` to seed again |
+| `OFSC_WEBHOOK_SECRET` | Shared secret for the OFSC webhook and the simulated OFSC (`x-vagacerta-ofsc-secret` header or `Authorization: Bearer`). Without it there is a development secret, generated and kept in the local database only, never printed |
+| `VC_DATA_DIR` | Folder of the SQLite database (default `data`); tests use a temporary folder |
+| `XAI_API_KEY`, `XAI_MODEL`, `LLM_*` | See [xAI agent](xai-agent.md) |
+
+## Tests
+
+`npm test` (Vitest) runs the engine, the twin, the schedule, the i18n keys and, since correction round 2: access to routes and pages (`tests/integracao-acesso.test.ts`, `integracao-segredo.test.ts`, `proxy-acesso.test.ts`, `sessao-sair.test.ts`), order validation (zone↔area, past days: `ordens-validacao.test.ts`), the rich day relative to “today” and the same star story on any day (`demonstracao-dia.test.ts`, which includes a fresh database seeded on another day), the fictional data (`demonstracao-dados.test.ts`) and translation coverage (`i18n-cobertura.test.ts`). Tests pin `VC_DEMO_DIA=2026-10-27` (see `vitest.config.ts`) so they stay deterministic.
 
 The database is created on first read. Ignored locally: `node_modules`, `.next`, `data/*.sqlite`, `.env*`.
 

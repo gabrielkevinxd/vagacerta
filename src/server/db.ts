@@ -8,6 +8,7 @@ import {
   EQUIPA_CCO,
   OPERADORES_DEMO,
   ccosDemonstracao,
+  criadaEmDemonstracao,
   criarMundoDemonstracao,
   historicoDemonstracao,
   regioesDemonstracao,
@@ -16,7 +17,8 @@ import {
   vigenciasDemonstracao,
   zonasDemonstracao,
 } from "@/lib/demonstracao";
-import type { Categoria, Equipa, Mundo, OperadorId, Ordem, Tecnologia } from "@/lib/rules";
+import { diaDemonstracao } from "@/lib/demonstracao-dia";
+import { eDataIso, type Categoria, type Equipa, type Mundo, type OperadorId, type Ordem, type Tecnologia } from "@/lib/rules";
 
 const globalParaDb = globalThis as unknown as { __vcDb?: DatabaseSync };
 
@@ -25,7 +27,7 @@ function abrir(): DatabaseSync {
     migrar(globalParaDb.__vcDb);
     return globalParaDb.__vcDb;
   }
-  const pasta = join(process.cwd(), "data");
+  const pasta = process.env.VC_DATA_DIR || join(process.cwd(), "data");
   mkdirSync(pasta, { recursive: true });
   const db = new DatabaseSync(join(pasta, "vagacerta.sqlite"));
   db.exec("PRAGMA journal_mode = WAL;");
@@ -372,10 +374,28 @@ export function verificarPalavra(palavra: string, guardado: string): boolean {
   return timingSafeEqual(calculado, existente);
 }
 
+/**
+ * O dia rico da demonstração (a história VD-URG / AZ-24081 / VR-90001) fica guardado na base quando ela é semeada:
+ * as páginas, os atalhos «dia da demonstração» e os cenários usam sempre o dia em que a história realmente está,
+ * mesmo que a base seja aberta noutro dia. Uma base criada antes desta chave usa a data da ordem VD-URG.
+ */
+export function diaDemonstracaoAtual(): string {
+  const db = baseDados();
+  const guardado = db.prepare("SELECT valor FROM definicoes WHERE chave = 'dia_demonstracao'").get() as { valor: string } | undefined;
+  if (guardado && eDataIso(guardado.valor)) return guardado.valor;
+  const urgente = db.prepare("SELECT data FROM ordens WHERE id = 'ord-vd-urg'").get() as { data: string } | undefined;
+  const dia = urgente && eDataIso(urgente.data) ? urgente.data : diaDemonstracao();
+  db.prepare("INSERT OR REPLACE INTO definicoes (chave, valor) VALUES ('dia_demonstracao', ?)").run(dia);
+  return dia;
+}
+
 function semear(db: DatabaseSync): void {
   const existente = db.prepare("SELECT COUNT(*) AS total FROM operadores").get() as { total: number } | undefined;
   if (existente && existente.total > 0) return;
-  const mundo = criarMundoDemonstracao();
+  const forcado = process.env.VC_DEMO_DIA?.trim();
+  if (forcado && !eDataIso(forcado)) console.warn("VC_DEMO_DIA ignorada: use o formato AAAA-MM-DD.");
+  const dia = diaDemonstracao();
+  const mundo = criarMundoDemonstracao(dia);
   db.exec("BEGIN");
   try {
     for (const operador of OPERADORES_DEMO) {
@@ -435,7 +455,7 @@ function semear(db: DatabaseSync): void {
         ).run(bloco.id, equipa.id, bloco.data, bloco.inicio, bloco.fim, bloco.motivo);
       }
     }
-    for (const vigencia of vigenciasDemonstracao()) {
+    for (const vigencia of vigenciasDemonstracao(dia)) {
       db.prepare("INSERT INTO equipa_zona (id, equipa_id, zona_id, inicio, fim) VALUES (?, ?, ?, ?, ?)").run(
         vigencia.id,
         vigencia.equipaId,
@@ -464,16 +484,17 @@ function semear(db: DatabaseSync): void {
         utilizador.tecnicoId,
       );
     }
-    const agora = "2026-10-26T08:00:00.000Z";
+    const agora = criadaEmDemonstracao(dia);
     for (const ordem of mundo.ordens) {
       inserirOrdem(db, ordem, null, agora);
     }
-    for (const evento of historicoDemonstracao()) {
+    for (const evento of historicoDemonstracao(dia)) {
       db.prepare(
         "INSERT INTO historico_ordens (id, ordem_id, quando, utilizador_id, acao, detalhe) VALUES (?, ?, ?, NULL, ?, ?)",
       ).run(evento.id, evento.ordemId, evento.quando, evento.acao, evento.detalhe);
     }
     db.prepare("INSERT INTO definicoes (chave, valor) VALUES ('margem_deslocacao_min', '15')").run();
+    db.prepare("INSERT INTO definicoes (chave, valor) VALUES ('dia_demonstracao', ?)").run(dia);
     db.prepare("INSERT INTO definicoes (chave, valor) VALUES ('segredo_plano', ?)").run(randomBytes(32).toString("hex"));
     db.prepare("INSERT INTO auditoria (id, quando, utilizador_id, acao, detalhe) VALUES (?, ?, NULL, ?, ?)").run(
       "aud-semente",

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 import { listarOrdens } from "@/server/servicos";
+import { diaDemonstracaoAtual } from "@/server/db";
 
 function qsVista(vista: string, resto: Record<string, string | undefined>) {
   const sp = new URLSearchParams();
@@ -118,6 +119,7 @@ async function Lista({ searchParams }: { searchParams: Promise<Record<string, st
         }
       />
       <FiltrosChips
+        dataDemonstracao={diaDemonstracaoAtual()}
         estado={estado}
         data={data || (vista === "hoje" ? hoje : undefined)}
         q={q}
