@@ -1,11 +1,11 @@
 import "server-only";
 
 import { prepararContexto, resumoCompacto, type ContextoRegras } from "@/lib/assistente/analise";
-import { descreverAlertas, textoDe } from "@/lib/assistente/frases";
+import { descreverAlertas, montarResumoDia, textoDe } from "@/lib/assistente/frases";
 import { pedidoDaFerramenta, responderPorRegras, type Leitura } from "@/lib/assistente/regras";
 import { falarComXai } from "@/lib/assistente/xai";
 import type { PainelAssistente, PedidoAssistente, RespostaAssistente } from "@/lib/contratos/assistente";
-import { t } from "@/lib/i18n";
+import { t, type Chave } from "@/lib/i18n";
 import { traduzirMensagem, traduzirPlanoVista } from "@/lib/i18n/motor";
 import { chaveXai, modeloXai } from "@/lib/ofsc/xai";
 import { eDataIso, hojeLisboa, type Ator, type PedidoRealocacao, type PlanoVista } from "@/lib/rules";
@@ -60,7 +60,7 @@ export function painelAssistente(ator: Ator, data: string): PainelAssistente {
     modoChat: chaveXai() ? "ia" : "sem_ia",
     modelo: chaveXai() ? modeloXai() : null,
     podePropor: ator.papel !== "tecnico",
-    resumo: t(m, "assistente.resumoDia", {
+    resumo: montarResumoDia(m, {
       data: ctx.data,
       agendadas: ctx.contagens.agendadas,
       espera: ctx.contagens.espera,
@@ -156,7 +156,7 @@ export function responderAssistente(ator: Ator, corpo: PedidoAssistente): Promis
     },
   }).then((resultado) => {
     if (resultado.modo === "sem_ia") {
-      return deLeitura(ator, { tipo: "esclarecer", chave: "assistente.generico", vars: { n: ctx.factos.length }, pergunta: corpo.texto }, ctx, "sem_ia");
+      return deLeitura(ator, { tipo: "esclarecer", chave: "assistente.generico" as Chave, vars: { n: ctx.factos.length }, pergunta: corpo.texto }, ctx, "sem_ia");
     }
     const proposta = resultado.ferramentas.find((chamada) => chamada.nome === "propor_reencaixe");
     if (proposta) {
@@ -175,6 +175,6 @@ export function responderAssistente(ator: Ator, corpo: PedidoAssistente): Promis
       const leituraAlertas = responderPorRegras("conflitos", ctx);
       if (leituraAlertas.tipo !== "ambiguo") return deLeitura(ator, leituraAlertas, ctx, "ia");
     }
-    return deLeitura(ator, { tipo: "esclarecer", chave: "assistente.generico", vars: { n: ctx.factos.length }, pergunta: corpo.texto }, ctx, "sem_ia");
+    return deLeitura(ator, { tipo: "esclarecer", chave: "assistente.generico" as Chave, vars: { n: ctx.factos.length }, pergunta: corpo.texto }, ctx, "sem_ia");
   });
 }
