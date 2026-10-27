@@ -7,8 +7,8 @@ import { eCentral, eDataIso } from "@/lib/rules";
 import { Carregamento } from "@/components/carregamento";
 import { Alerta } from "@/components/layout/alerta";
 import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
-import { Superficie } from "@/components/layout/superficie";
 import { PlanoComparacao } from "@/components/plano-comparacao";
+import { SemAcesso } from "@/components/sem-acesso";
 import { traduzirMensagem, traduzirPlanoVista } from "@/lib/i18n/motor";
 import { ErroHttp } from "@/server/erros";
 import { i18nPedido } from "@/server/idioma";
@@ -16,9 +16,9 @@ import { exigirAtorPagina } from "@/server/sessao";
 import { listarEquipas, listarOrdens, previsualizar } from "@/server/servicos";
 import { confirmarPlanoAcao } from "./accoes";
 
-const campo = "h-8 w-full rounded-md border border-input bg-background px-2.5 text-sm";
+const campo = "h-8 w-full rounded-md border border-input bg-background px-2.5 text-[13px]/5";
 const botao =
-  "inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90";
+  "inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-[13px]/5 font-medium text-primary-foreground transition-colors hover:bg-primary/90";
 
 type Modo = "encaixar" | "cancelar" | "falta";
 
@@ -40,9 +40,12 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
 
   if (ator.papel === "tecnico") {
     return (
-      <div className="space-y-6">
-        <CabecalhoPagina titulo={t("reencaixe.titulo")} descricao={t("reencaixe.tecnico")} />
-      </div>
+      <SemAcesso
+        tituloPagina={t("reencaixe.titulo")}
+        titulo={t("acesso.semAcesso")}
+        detalhe={t("acesso.soCentralArea")}
+        accao={t("acesso.voltarPainel")}
+      />
     );
   }
 

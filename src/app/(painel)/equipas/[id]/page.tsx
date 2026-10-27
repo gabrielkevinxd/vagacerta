@@ -8,7 +8,7 @@ import { Carregamento } from "@/components/carregamento";
 import { EstadoVazio } from "@/components/estado-vazio";
 import { EtiquetaEstado, EtiquetaOperador } from "@/components/etiquetas";
 import type { Chave } from "@/lib/i18n";
-import { formatarDataLongaLocale } from "@/lib/i18n/formatacao";
+import { formatarDataLocale, formatarDataLongaLocale } from "@/lib/i18n/formatacao";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 import { listarZonas, obterEquipa } from "@/server/servicos";
@@ -149,6 +149,7 @@ async function Conteudo({
       {central ? (
         <AcoesEquipa
           equipaId={equipa.id}
+          equipaNome={equipa.nome}
           ativa={equipa.ativa}
           zonas={zonas}
           horarios={equipa.horarios}
@@ -164,7 +165,7 @@ async function Conteudo({
             <ul className="text-sm">
               {equipa.indisponibilidades.map((bloco) => (
                 <li key={bloco.id}>
-                  {bloco.data.split("-").reverse().join("/")} {bloco.inicio}–{bloco.fim} · {bloco.motivo}
+                  {formatarDataLocale(bloco.data, idioma)} {bloco.inicio}–{bloco.fim} · {bloco.motivo}
                 </li>
               ))}
             </ul>

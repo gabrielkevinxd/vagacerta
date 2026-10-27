@@ -2,14 +2,27 @@ import { Suspense } from "react";
 import { Carregamento } from "@/components/carregamento";
 import { ConsolaIntegracao } from "@/components/integracao/consola";
 import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
+import { SemAcesso } from "@/components/sem-acesso";
 import { XAI_MODELO_OMISSAO, modeloXai } from "@/lib/ofsc/xai";
 import { i18nPedido } from "@/server/idioma";
+import { exigirAtorPagina } from "@/server/sessao";
 
 async function Conteudo() {
   const { t } = await i18nPedido();
+  const ator = await exigirAtorPagina();
+  if (ator.papel === "tecnico") {
+    return (
+      <SemAcesso
+        tituloPagina={t("integracao.titulo")}
+        titulo={t("acesso.semAcesso")}
+        detalhe={t("acesso.soNaoTecnico")}
+        accao={t("acesso.voltarPainel")}
+      />
+    );
+  }
   const modelo = modeloXai() || XAI_MODELO_OMISSAO;
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <CabecalhoPagina titulo={t("integracao.titulo")} />
       <ConsolaIntegracao
         textos={{
@@ -31,6 +44,10 @@ async function Conteudo() {
           cenarios: t("integracao.cenarios"),
           vazio: t("integracao.vazio"),
           retries: t("integracao.retries"),
+          tentativas: t("integracao.tentativas"),
+          repetir: t("integracao.repetir"),
+          verPedido: t("integracao.verPedido"),
+          verResposta: t("integracao.verResposta"),
           grelha: t("integracao.grelha"),
           grelhaVazia: t("integracao.grelhaVazia"),
           camposConfirmar: t("integracao.camposConfirmar"),

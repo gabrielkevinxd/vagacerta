@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { ChevronRight } from "lucide-react";
 import { enviar } from "@/lib/cliente";
 import type { OperadorId } from "@/lib/rules";
 
@@ -104,6 +107,10 @@ export function ConsolaIntegracao({
     cenarios: string;
     vazio: string;
     retries: string;
+    tentativas: string;
+    repetir: string;
+    verPedido: string;
+    verResposta: string;
     grelha: string;
     grelhaVazia: string;
     camposConfirmar: string;
@@ -234,8 +241,8 @@ export function ConsolaIntegracao({
   const local = ["customerName", "streetAddress", "city", "postalCode", "latitude", "longitude"] as const;
 
   return (
-    <div className="space-y-6">
-      <p className="max-w-3xl text-sm text-muted-foreground">{textos.corpo}</p>
+    <div className="space-y-4">
+      <p className="text-[13px]/5 text-muted-foreground">{textos.corpo}</p>
 
       <section className="space-y-2">
         <div className="flex flex-wrap items-end gap-3">
@@ -287,7 +294,7 @@ export function ConsolaIntegracao({
                 <th className="px-2 py-2">{textos.campos.tecnicoId}</th>
                 <th className="px-2 py-2">{textos.campos.tipoIntervencao}</th>
                 <th className="px-2 py-2">{textos.campos.janelaInicio}</th>
-                <th className="px-2 py-2">N → N-1</th>
+                <th className="px-2 py-2">{textos.tentativas}</th>
               </tr>
             </thead>
             <tbody>
@@ -317,7 +324,7 @@ export function ConsolaIntegracao({
                         }))
                       }
                     >
-                      {celula.vagasTipo} → {Math.max(0, celula.vagasTipo - 1)}
+                      {textos.repetir.replace("{n}", String(celula.vagasTipo))}
                     </Button>
                   </td>
                 </tr>
@@ -410,32 +417,51 @@ export function ConsolaIntegracao({
           <h2 className="text-base font-semibold tracking-tight">{textos.consola}</h2>
           <p className="text-xs text-muted-foreground">{textos.retries.replace("{n}", String(retries))}</p>
         </div>
-        {logs.length === 0 ? <p className="text-sm text-muted-foreground">{textos.vazio}</p> : null}
-        <div className="grid gap-3 lg:grid-cols-3">
+        {logs.length === 0 ? <p className="text-[13px]/5 text-muted-foreground">{textos.vazio}</p> : null}
+        <div className="grid min-w-0 gap-3 lg:grid-cols-3">
           {colunas.map((coluna) => (
-            <div key={coluna.id} className="min-h-48 superficie p-3">
-              <h3 className="mb-2 text-sm font-medium">{coluna.titulo}</h3>
-              <ul className="space-y-3">
-                {logs
-                  .filter((log) => log.coluna === coluna.id)
-                  .map((log) => (
-                    <li key={log.id} className="rounded-lg bg-muted/60 p-2 text-xs">
-                      <p className="font-medium">{log.historia}</p>
-                      {log.metodo && log.caminho ? (
-                        <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-                          {log.metodo} {log.caminho}
-                          {log.codigo != null ? ` → ${log.codigo}` : ""}
-                        </p>
-                      ) : null}
-                      {log.pedido ? (
-                        <pre className="mt-1 max-h-32 overflow-auto whitespace-pre-wrap break-all text-[11px]">{log.pedido}</pre>
-                      ) : null}
-                      {log.resposta ? (
-                        <pre className="mt-1 max-h-32 overflow-auto whitespace-pre-wrap break-all text-[11px]">{log.resposta}</pre>
-                      ) : null}
-                    </li>
-                  ))}
-              </ul>
+            <div key={coluna.id} className="min-w-0 superficie p-3">
+              {/* D1 deferred: OFSC dos outros still shows technician names / full JSON as-is */}
+              <h3 className="mb-2 text-[13px]/5 font-medium">{coluna.titulo}</h3>
+              <ScrollArea className="h-[calc(100vh-13rem)] pr-2">
+                <ul className="space-y-3">
+                  {logs
+                    .filter((log) => log.coluna === coluna.id)
+                    .map((log) => (
+                      <li key={log.id} className="rounded-lg bg-muted/60 p-2 text-xs">
+                        <p className="font-medium">{log.historia}</p>
+                        {log.metodo && log.caminho ? (
+                          <p className="mt-1 font-mono text-[11px] text-muted-foreground">
+                            {log.metodo} {log.caminho}
+                            {log.codigo != null ? ` → ${log.codigo}` : ""}
+                          </p>
+                        ) : null}
+                        {log.pedido ? (
+                          <Collapsible className="mt-1">
+                            <CollapsibleTrigger className="inline-flex items-center gap-1 text-[11px]/4 font-medium text-muted-foreground hover:text-foreground">
+                              <ChevronRight className="size-3.5 transition-transform [[data-state=open]_&]:rotate-90" strokeWidth={1.75} />
+                              {textos.verPedido}
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px]">{log.pedido}</pre>
+                            </CollapsibleContent>
+                          </Collapsible>
+                        ) : null}
+                        {log.resposta ? (
+                          <Collapsible className="mt-1">
+                            <CollapsibleTrigger className="inline-flex items-center gap-1 text-[11px]/4 font-medium text-muted-foreground hover:text-foreground">
+                              <ChevronRight className="size-3.5 transition-transform [[data-state=open]_&]:rotate-90" strokeWidth={1.75} />
+                              {textos.verResposta}
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px]">{log.resposta}</pre>
+                            </CollapsibleContent>
+                          </Collapsible>
+                        ) : null}
+                      </li>
+                    ))}
+                </ul>
+              </ScrollArea>
             </div>
           ))}
         </div>

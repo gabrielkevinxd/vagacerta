@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 import { useT } from "@/components/idioma/provedor";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +13,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { formatarDataLocale } from "@/lib/i18n/formatacao";
+import type { Idioma } from "@/lib/i18n";
 import { ESTADOS_ORDEM, OPERADORES, type EstadoOrdem, type OperadorId } from "@/lib/rules";
 
 function qs(params: Record<string, string | undefined>) {
@@ -29,17 +32,21 @@ export function FiltrosChips({
   data,
   q,
   operador,
+  vista,
   mostrarOperador,
+  idioma,
 }: {
   estado?: string;
   data?: string;
   q?: string;
   operador?: string;
+  vista?: string;
   mostrarOperador: boolean;
+  idioma: Idioma;
 }) {
   const { t } = useT();
   const router = useRouter();
-  const base = { estado, data, q, operador };
+  const base = { estado, data, q, operador, vista };
   const chips: { chave: string; rotulo: string; limpar: Record<string, string | undefined> }[] = [];
   if (estado) {
     chips.push({
@@ -58,7 +65,7 @@ export function FiltrosChips({
   if (data) {
     chips.push({
       chave: "data",
-      rotulo: t("filtros.dataE", { valor: data }),
+      rotulo: t("filtros.dataE", { valor: formatarDataLocale(data, idioma) }),
       limpar: { ...base, data: undefined },
     });
   }
@@ -72,6 +79,27 @@ export function FiltrosChips({
 
   return (
     <div className="flex h-9 flex-wrap items-center gap-2">
+      <form
+        className="relative"
+        action="/ordens"
+        onSubmit={(evento) => {
+          evento.preventDefault();
+          const valor = new FormData(evento.currentTarget).get("q");
+          router.push(qs({ ...base, q: String(valor || "") || undefined }));
+        }}
+      >
+        {estado ? <input type="hidden" name="estado" value={estado} /> : null}
+        {data ? <input type="hidden" name="data" value={data} /> : null}
+        {operador ? <input type="hidden" name="operador" value={operador} /> : null}
+        {vista ? <input type="hidden" name="vista" value={vista} /> : null}
+        <Search className="pointer-events-none absolute top-1/2 left-2 size-4 -translate-y-1/2 text-muted-foreground" strokeWidth={1.75} />
+        <Input
+          name="q"
+          defaultValue={q}
+          placeholder={t("ordens.placeholder")}
+          className="h-8 w-64 pl-8"
+        />
+      </form>
       {chips.map((chip) => (
         <Link
           key={chip.chave}
@@ -84,8 +112,9 @@ export function FiltrosChips({
       ))}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button type="button" variant="outline" size="sm" className="h-7">
-            + {t("filtros.adicionar")}
+          <Button type="button" variant="outline" size="sm" className="h-7 gap-1">
+            <Plus className="size-3.5" strokeWidth={1.75} />
+            {t("filtros.adicionar")}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-56">
@@ -106,10 +135,23 @@ export function FiltrosChips({
               ))}
             </>
           ) : null}
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel>{t("comum.data")}</DropdownMenuLabel>
+          <DropdownMenuItem
+            onSelect={() => {
+              const hoje = new Date().toISOString().slice(0, 10);
+              router.push(qs({ ...base, data: hoje }));
+            }}
+          >
+            {t("comum.hoje")}
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => router.push(qs({ ...base, data: "2026-10-27" }))}>
+            {t("painel.demonstracao")}
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       {chips.length > 0 ? (
-        <Link href="/ordens" className="text-xs font-medium text-muted-foreground hover:text-foreground">
+        <Link href={qs({ vista })} className="text-xs font-medium text-muted-foreground hover:text-foreground">
           {t("filtros.limpar")}
         </Link>
       ) : null}

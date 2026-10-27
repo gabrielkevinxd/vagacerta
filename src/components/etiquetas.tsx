@@ -24,10 +24,7 @@ export function EtiquetaOperador({ id, nome, soPonto = false }: { id: OperadorId
   const rotulo = nome ?? t(`operador.${id}`);
   if (soPonto) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-[13px]/5" title={rotulo}>
-        <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: COR_OPERADOR[id] }} aria-hidden />
-        <span>{rotulo}</span>
-      </span>
+      <span className="inline-flex size-2 shrink-0 rounded-full" style={{ backgroundColor: COR_OPERADOR[id] }} title={rotulo} aria-label={rotulo} />
     );
   }
   return (

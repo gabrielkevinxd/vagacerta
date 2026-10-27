@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { eCentral } from "@/lib/rules";
+import { eCentral, hojeLisboa } from "@/lib/rules";
 import { um } from "@/lib/consulta-pagina";
 import { Carregamento } from "@/components/carregamento";
 import { EstadoVazio } from "@/components/estado-vazio";
 import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
+import { SegmentoLigacao, Segmentos } from "@/components/layout/segmentos";
 import { FiltrosChips } from "@/components/ordens/filtros-chips";
 import { PainelDetalheOrdem } from "@/components/ordens/painel-detalhe";
 import { TabelaOrdens } from "@/components/ordens/tabela-ordens";
@@ -12,6 +13,16 @@ import { Button } from "@/components/ui/button";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 import { listarOrdens } from "@/server/servicos";
+
+function qsVista(vista: string, resto: Record<string, string | undefined>) {
+  const sp = new URLSearchParams();
+  if (vista && vista !== "todas") sp.set("vista", vista);
+  for (const [k, v] of Object.entries(resto)) {
+    if (v) sp.set(k, v);
+  }
+  const s = sp.toString();
+  return s ? `/ordens?${s}` : "/ordens";
+}
 
 async function Lista({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { t, idioma } = await i18nPedido();
@@ -22,41 +33,97 @@ async function Lista({ searchParams }: { searchParams: Promise<Record<string, st
   const q = um(parametros.q);
   const operador = um(parametros.operador);
   const ordemAberta = um(parametros.ordem);
-  const ordens = listarOrdens(ator, {
-    estado: estado || undefined,
-    data: data || undefined,
+  const vista = um(parametros.vista) || "todas";
+  const hoje = hojeLisboa();
+
+  const filtroEstado = vista === "emFila" ? "em_espera" : estado || undefined;
+  const filtroData = vista === "hoje" ? hoje : data || undefined;
+
+  let ordens = listarOrdens(ator, {
+    estado: filtroEstado,
+    data: filtroData,
     q: q || undefined,
     operador: operador || undefined,
   });
+  if (vista === "semEquipa") {
+    ordens = ordens.filter((o) => !o.equipaNome);
+  }
+
   const intro = ordens.length === 1 ? t("ordens.uma") : t("ordens.varias", { n: ordens.length });
   const perfil =
     ator.papel === "despachante" ? t("ordens.soOperador") : ator.papel === "tecnico" ? t("ordens.soEquipa") : t("ordens.centralVe");
   const aberta = ordens.find((o) => o.id === ordemAberta) ?? null;
 
+  const linhas = ordens.map((ordem) => ({
+    id: ordem.id,
+    referencia: ordem.referencia,
+    clienteNome: ordem.clienteNome,
+    morada: ordem.morada,
+    data: ordem.data,
+    janelaInicio: ordem.janelaInicio,
+    janelaFim: ordem.janelaFim,
+    equipaNome: ordem.equipaNome,
+    operadorId: ordem.operadorId,
+    estado: ordem.estado,
+  }));
+  const abertaLinha = aberta
+    ? {
+        id: aberta.id,
+        referencia: aberta.referencia,
+        clienteNome: aberta.clienteNome,
+        morada: aberta.morada,
+        data: aberta.data,
+        janelaInicio: aberta.janelaInicio,
+        janelaFim: aberta.janelaFim,
+        equipaNome: aberta.equipaNome,
+        operadorId: aberta.operadorId,
+        estado: aberta.estado,
+      }
+    : null;
+
+  const restoQs = { estado, data, q, operador, ordem: ordemAberta };
+
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${abertaLinha ? "xl:pr-[440px]" : ""}`}>
       <CabecalhoPagina
         titulo={
           <>
             {t("ordens.titulo")}{" "}
-            <span className="text-sm font-normal text-muted-foreground tabular-nums">{ordens.length}</span>
+            <span className="text-[13px]/5 font-normal text-muted-foreground tabular-nums">{ordens.length}</span>
           </>
         }
         descricao={`${intro} ${perfil}`}
         accoes={
-          ator.papel === "tecnico" ? null : (
-            <Button asChild size="sm">
-              <Link href="/ordens/nova">{t("painel.novaOrdem")}</Link>
-            </Button>
-          )
+          <div className="flex flex-wrap items-center gap-2">
+            <Segmentos etiqueta={t("ordens.titulo")}>
+              <SegmentoLigacao href={qsVista("todas", restoQs)} ativo={vista === "todas"}>
+                {t("vistas.todas")}
+              </SegmentoLigacao>
+              <SegmentoLigacao href={qsVista("hoje", restoQs)} ativo={vista === "hoje"}>
+                {t("vistas.hoje")}
+              </SegmentoLigacao>
+              <SegmentoLigacao href={qsVista("emFila", restoQs)} ativo={vista === "emFila"}>
+                {t("vistas.emFila")}
+              </SegmentoLigacao>
+              <SegmentoLigacao href={qsVista("semEquipa", restoQs)} ativo={vista === "semEquipa"}>
+                {t("vistas.semEquipa")}
+              </SegmentoLigacao>
+            </Segmentos>
+            {ator.papel === "tecnico" ? null : (
+              <Button asChild size="sm">
+                <Link href="/ordens/nova">{t("painel.novaOrdem")}</Link>
+              </Button>
+            )}
+          </div>
         }
       />
       <FiltrosChips
         estado={estado}
-        data={data}
+        data={data || (vista === "hoje" ? hoje : undefined)}
         q={q}
         operador={operador}
         mostrarOperador={eCentral(ator)}
+        idioma={idioma}
       />
       {ordens.length === 0 ? (
         <EstadoVazio
@@ -74,45 +141,18 @@ async function Lista({ searchParams }: { searchParams: Promise<Record<string, st
         <TabelaOrdens
           idioma={idioma}
           ordemAberta={ordemAberta || undefined}
-          ordens={ordens.map((ordem) => ({
-            id: ordem.id,
-            referencia: ordem.referencia,
-            clienteNome: ordem.clienteNome,
-            morada: ordem.morada,
-            data: ordem.data,
-            janelaInicio: ordem.janelaInicio,
-            janelaFim: ordem.janelaFim,
-            equipaNome: ordem.equipaNome,
-            operadorId: ordem.operadorId,
-            estado: ordem.estado,
-          }))}
+          selecionavel={ator.papel !== "tecnico"}
+          ordens={linhas}
         />
       )}
-      <PainelDetalheOrdem
-        ordem={
-          aberta
-            ? {
-                id: aberta.id,
-                referencia: aberta.referencia,
-                clienteNome: aberta.clienteNome,
-                morada: aberta.morada,
-                data: aberta.data,
-                janelaInicio: aberta.janelaInicio,
-                janelaFim: aberta.janelaFim,
-                equipaNome: aberta.equipaNome,
-                operadorId: aberta.operadorId,
-                estado: aberta.estado,
-              }
-            : null
-        }
-      />
+      <PainelDetalheOrdem ordem={abertaLinha} idioma={idioma} />
     </div>
   );
 }
 
 export default function Pagina({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   return (
-    <Suspense fallback={<Carregamento />}>
+    <Suspense fallback={<Carregamento variante="tabela" />}>
       <Lista searchParams={searchParams} />
     </Suspense>
   );

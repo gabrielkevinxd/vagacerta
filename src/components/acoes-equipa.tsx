@@ -2,14 +2,24 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useT } from "@/components/idioma/provedor";
 import type { Chave } from "@/lib/i18n";
+import { formatarDataLocale } from "@/lib/i18n/formatacao";
 import { enviar } from "@/lib/cliente";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const campo = "h-9 w-full rounded-lg border border-input bg-card px-2.5 text-sm";
+const campo = "h-9 w-full rounded-md border border-input bg-card px-2.5 text-[13px]/5";
 const DIAS: Chave[] = [
   "diaSemana.d1",
   "diaSemana.d1",
@@ -23,6 +33,7 @@ const DIAS: Chave[] = [
 
 export function AcoesEquipa({
   equipaId,
+  equipaNome,
   ativa,
   zonas,
   horarios,
@@ -30,16 +41,19 @@ export function AcoesEquipa({
   indisponibilidades,
 }: {
   equipaId: string;
+  equipaNome: string;
   ativa: boolean;
   zonas: { id: string; codigo: string; nome: string }[];
   horarios: { diaSemana: number; inicio: string; fim: string }[];
   membros: { id: string; nome: string; ativo: boolean }[];
   indisponibilidades: { id: string; data: string; inicio: string; fim: string; motivo: string }[];
 }) {
-  const { t } = useT();
+  const { t, idioma } = useT();
   const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
   const [aTrabalhar, setATrabalhar] = useState(false);
+  const [confirmarDesativar, setConfirmarDesativar] = useState(false);
+  const nome = equipaNome;
 
   async function executar(trabalho: () => Promise<void>) {
     setErro(null);
@@ -54,22 +68,50 @@ export function AcoesEquipa({
     }
   }
 
+  async function desativarEquipa() {
+    setConfirmarDesativar(false);
+    await executar(async () => {
+      await enviar(`/api/equipas/${equipaId}`, { ativa: false }, "PATCH");
+      toast(t("toast.equipaDesativada", { nome }), {
+        duration: 6000,
+        action: {
+          label: t("comum.anular"),
+          onClick: () => {
+            void enviar(`/api/equipas/${equipaId}`, { ativa: true }, "PATCH")
+              .then(() => {
+                toast(t("toast.equipaAtivada", { nome }));
+                router.refresh();
+              })
+              .catch(() => undefined);
+          },
+        },
+      });
+    });
+  }
+
   return (
     <div className="space-y-8">
       {erro ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-[13px]/5 text-destructive">
           {erro}
         </p>
       ) : null}
-      <div>
-        <Button
-          variant="outline"
-          disabled={aTrabalhar}
-          onClick={() => executar(() => enviar(`/api/equipas/${equipaId}`, { ativa: !ativa }, "PATCH").then(() => undefined))}
-        >
-          {ativa ? t("equipas.desativarEquipa") : t("equipas.ativarEquipa")}
-        </Button>
-      </div>
+      {!ativa ? (
+        <div>
+          <Button
+            variant="outline"
+            disabled={aTrabalhar}
+            onClick={() =>
+              executar(async () => {
+                await enviar(`/api/equipas/${equipaId}`, { ativa: true }, "PATCH");
+                toast(t("toast.equipaAtivada", { nome }));
+              })
+            }
+          >
+            {t("equipas.ativarEquipa")}
+          </Button>
+        </div>
+      ) : null}
 
       <form
         className="space-y-3"
@@ -199,7 +241,7 @@ export function AcoesEquipa({
           {indisponibilidades.map((bloco) => (
             <li key={bloco.id} className="flex flex-wrap items-center justify-between gap-2">
               <span>
-                {bloco.data.split("-").reverse().join("/")} {bloco.inicio}–{bloco.fim} · {bloco.motivo}
+                {formatarDataLocale(bloco.data, idioma)} {bloco.inicio}–{bloco.fim} · {bloco.motivo}
               </span>
               <Button
                 variant="outline"
@@ -256,6 +298,35 @@ export function AcoesEquipa({
           </div>
         </form>
       </div>
+
+      {ativa ? (
+        <section className="superficie space-y-3 border-destructive/30 p-4">
+          <div className="space-y-1">
+            <h2 className="text-[13px]/5 font-semibold tracking-tight">{t("equipas.zonaPerigo")}</h2>
+            <p className="text-xs text-muted-foreground">{t("equipas.zonaPerigoAjuda")}</p>
+          </div>
+          <Button variant="destructive" disabled={aTrabalhar} onClick={() => setConfirmarDesativar(true)}>
+            {t("equipas.desativarEquipa")}
+          </Button>
+        </section>
+      ) : null}
+
+      <Dialog open={confirmarDesativar} onOpenChange={setConfirmarDesativar}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{t("confirmar.desativarEquipaTitulo", { nome })}</DialogTitle>
+            <DialogDescription>{t("confirmar.desativarEquipaDetalhe")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setConfirmarDesativar(false)}>
+              {t("comum.cancelar")}
+            </Button>
+            <Button type="button" variant="destructive" disabled={aTrabalhar} onClick={() => void desativarEquipa()}>
+              {t("confirmar.desativar")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

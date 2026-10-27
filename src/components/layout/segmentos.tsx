@@ -23,8 +23,8 @@ export function SegmentoLigacao({
       href={href}
       aria-current={ativo ? "page" : undefined}
       className={cn(
-        "inline-flex h-8 items-center rounded px-3 text-sm font-medium transition-colors",
-        ativo ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+        "inline-flex h-8 items-center rounded px-3 text-[13px]/5 font-medium transition-colors",
+        ativo ? "bg-card text-foreground" : "text-muted-foreground hover:text-foreground",
       )}
     >
       {children}

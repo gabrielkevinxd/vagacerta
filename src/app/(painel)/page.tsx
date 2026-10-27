@@ -60,7 +60,6 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
 
       <Seccao
         titulo={t("painel.indicadores")}
-        descricao={t("painel.indicadoresIntro")}
         accoes={
           ator.papel === "administrador" || ator.papel === "supervisor" ? (
             <Button asChild variant="outline" size="sm">
@@ -69,41 +68,42 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
           ) : null
         }
       >
-        <GrelhaIndicadores>
-          {(
-            [
-              [
-                t("painel.utilizacao"),
-                `${Math.round(vista.indicadores.utilizacao * 100)}%`,
-                t("painel.ocupadosDe", {
-                  ocupados: formatarNumero(vista.indicadores.minutosOcupados, idioma),
-                  capacidade: formatarNumero(vista.indicadores.minutosCapacidade, idioma),
-                }),
-              ],
-              [t("painel.ocioso"), `${vista.indicadores.minutosOciosos} ${t("comum.minutos")}`, t("painel.turnoSemVisita")],
-              [t("painel.recusadas"), String(vista.indicadores.recusadas), t("painel.filaDia")],
-              [
-                t("painel.evitadas"),
-                String(vista.indicadores.sobreReservasEvitadas),
-                vista.indicadores.sobreReservas
-                  ? t("painel.sobreposicoes", { n: vista.indicadores.sobreReservas })
-                  : t("painel.semSobreposicao"),
-              ],
-            ] as const
-          ).map(([rotulo, valor, detalhe]) => (
-            <Indicador key={rotulo} rotulo={rotulo} valor={valor} detalhe={detalhe} />
-          ))}
+        <GrelhaIndicadores className="grid-cols-2 lg:grid-cols-5">
+          <Indicador
+            rotulo={t("painel.utilizacao")}
+            valor={`${Math.round(vista.indicadores.utilizacao * 100)}%`}
+            detalhe={t("painel.ocupadosDe", {
+              ocupados: formatarNumero(vista.indicadores.minutosOcupados, idioma),
+              capacidade: formatarNumero(vista.indicadores.minutosCapacidade, idioma),
+            })}
+            className="p-3 [&_p:nth-child(2)]:text-xl"
+          />
+          <Indicador
+            rotulo={t("painel.ocioso")}
+            valor={`${vista.indicadores.minutosOciosos}`}
+            detalhe={t("painel.turnoSemVisita")}
+            className="p-3 [&_p:nth-child(2)]:text-xl"
+          />
+          <Indicador
+            rotulo={t("painel.recusadas")}
+            valor={String(vista.indicadores.recusadas)}
+            detalhe={t("painel.filaDia")}
+            className="p-3 [&_p:nth-child(2)]:text-xl"
+          />
+          <Indicador rotulo={t("painel.agendadas")} valor={String(vista.contagens.agendada)} className="p-3 [&_p:nth-child(2)]:text-xl" />
+          <Indicador rotulo={t("painel.emFila")} valor={String(vista.contagens.emEspera)} className="p-3 [&_p:nth-child(2)]:text-xl" />
         </GrelhaIndicadores>
+        <ul className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+          {cartoes
+            .filter(([rotulo]) => rotulo !== t("painel.agendadas") && rotulo !== t("painel.emFila"))
+            .map(([rotulo, valor]) => (
+              <li key={rotulo} className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1">
+                <span>{rotulo}</span>
+                <span className="font-medium tabular-nums text-foreground">{valor}</span>
+              </li>
+            ))}
+        </ul>
       </Seccao>
-
-      <ul className="superficie grid overflow-hidden sm:grid-cols-5">
-        {cartoes.map(([rotulo, valor], i) => (
-          <li key={rotulo} className={`px-4 py-3 ${i > 0 ? "border-t border-border sm:border-t-0 sm:border-l" : ""}`}>
-            <p className="text-xs font-medium text-muted-foreground">{rotulo}</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight">{valor}</p>
-          </li>
-        ))}
-      </ul>
 
       <Seccao titulo={t("painel.ocupacao")} descricao={t("painel.ocupacaoIntro")} accoes={<LegendaOperadores compacta />}>
         {vista.equipas.length === 0 ? (
@@ -128,10 +128,26 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
                     </td>
                     <td className="px-3">
                       <div className="flex items-center gap-2">
-                        <div className="h-1.5 min-w-[8rem] flex-1 overflow-hidden rounded-sm bg-muted">
-                          <div className="h-full bg-primary" style={{ width: `${Math.min(equipa.percentagem, 100)}%` }} />
+                        <div className="flex h-1.5 min-w-[8rem] flex-1 overflow-hidden rounded-sm bg-muted">
+                          {equipa.porOperador && equipa.porOperador.length > 0 ? (
+                            equipa.porOperador.map((parte) => (
+                              <div
+                                key={parte.operadorId}
+                                className="h-full"
+                                style={{
+                                  width: `${equipa.turnoMin ? Math.min((parte.minutos / equipa.turnoMin) * 100, 100) : 0}%`,
+                                  backgroundColor: COR_OPERADOR[parte.operadorId],
+                                }}
+                              />
+                            ))
+                          ) : (
+                            <div
+                              className="h-full bg-foreground/60"
+                              style={{ width: `${Math.min(equipa.percentagem, 100)}%` }}
+                            />
+                          )}
                         </div>
-                        <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">
+                        <span className="w-28 whitespace-nowrap text-right font-mono text-xs tabular-nums text-muted-foreground">
                           {equipa.ocupadoMin}/{equipa.turnoMin} {t("comum.minutos")}
                         </span>
                       </div>

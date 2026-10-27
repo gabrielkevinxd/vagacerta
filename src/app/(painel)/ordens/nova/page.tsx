@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { DATA_DEMONSTRACAO } from "@/lib/demonstracao";
 import { JANELAS_INICIO } from "@/lib/rules";
 import { Carregamento } from "@/components/carregamento";
 import { FormularioOrdem } from "@/components/formulario-ordem";
+import { SemAcesso } from "@/components/sem-acesso";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 import { listarZonas } from "@/server/servicos";
@@ -13,13 +13,12 @@ async function Conteudo() {
   const ator = await exigirAtorPagina();
   if (ator.papel === "tecnico") {
     return (
-      <div className="space-y-3">
-        <h1 className="text-2xl font-semibold tracking-tight md:text-[1.75rem]">{t("ordens.novaTitulo")}</h1>
-        <p>{t("ordens.tecnicoNaoCria")}</p>
-        <Link href="/ordens" className="text-sm underline">
-          {t("ordens.voltarLista")}
-        </Link>
-      </div>
+      <SemAcesso
+        tituloPagina={t("ordens.novaTitulo")}
+        titulo={t("acesso.semAcesso")}
+        detalhe={t("acesso.soCentralArea")}
+        accao={t("acesso.voltarPainel")}
+      />
     );
   }
   const zonas = listarZonas();

@@ -57,6 +57,8 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --shadow-popover: var(--shadow-popover);
+  --shadow-modal: var(--shadow-modal);
 }
 
 :root {
@@ -91,9 +93,9 @@
   --op-vermelho-soft: #fbeeee;
   --op-verde: #1d7a45;
   --op-verde-soft: #eaf5ee;
-  --chart-1: var(--op-azul);
-  --chart-2: var(--op-vermelho);
-  --chart-3: var(--op-verde);
+  --chart-1: #a1a1aa;
+  --chart-2: #52525b;
+  --chart-3: #6e56cf;
   --chart-4: #a1a1aa;
   --chart-5: #6e56cf;
   --sidebar: #fafafa;
@@ -141,6 +143,9 @@
   --sidebar-primary: #8b7cf6;
   --sidebar-primary-foreground: #09090b;
   --sidebar-ring: #8b7cf6;
+  --chart-1: #71717a;
+  --chart-2: #d4d4d8;
+  --chart-3: #8b7be0;
 }
 
 @layer base {

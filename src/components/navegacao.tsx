@@ -58,7 +58,7 @@ export function Navegacao({
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="h-12 justify-center border-b border-sidebar-border px-3">
         <Link href="/" className="flex items-center gap-2 overflow-hidden rounded-md px-1 foco-anel">
-          <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary text-[10px] font-semibold text-primary-foreground">
+          <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary text-[11px]/4 font-semibold text-primary-foreground">
             VC
           </span>
           <span className="truncate text-[13px]/5 font-semibold tracking-tight group-data-[collapsible=icon]:hidden">
