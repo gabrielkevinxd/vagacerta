@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { SeletorData } from "@/components/seletor-data";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -107,8 +108,9 @@ export function ConsolaIntegracao({
     cenarios: string;
     vazio: string;
     retries: string;
-    tentativas: string;
+    quota: string;
     repetir: string;
+    esgotada: string;
     verPedido: string;
     verResposta: string;
     grelha: string;
@@ -262,12 +264,7 @@ export function ConsolaIntegracao({
           </label>
           <label className="text-[13px]/5">
             <span className="mb-1 block text-muted-foreground">{textos.campos.data}</span>
-            <input
-              className="h-10 rounded-lg border border-input bg-background px-2 text-[13px]/5"
-              type="date"
-              value={form.data}
-              onChange={(e) => campo("data", e.target.value)}
-            />
+            <SeletorData valor={form.data} onChange={(iso) => campo("data", iso)} className="min-w-[10rem]" />
           </label>
           <label className="text-[13px]/5">
             <span className="mb-1 block text-muted-foreground">{textos.campos.tipoIntervencao}</span>
@@ -294,7 +291,7 @@ export function ConsolaIntegracao({
                 <th className="px-2 py-2">{textos.campos.tecnicoId}</th>
                 <th className="px-2 py-2">{textos.campos.tipoIntervencao}</th>
                 <th className="px-2 py-2">{textos.campos.janelaInicio}</th>
-                <th className="px-2 py-2">{textos.tentativas}</th>
+                <th className="px-2 py-2">{textos.quota}</th>
               </tr>
             </thead>
             <tbody>
@@ -311,6 +308,7 @@ export function ConsolaIntegracao({
                       type="button"
                       size="sm"
                       variant="outline"
+                      disabled={celula.vagasTipo <= 0}
                       onClick={() =>
                         setForm((atual) => ({
                           ...atual,
@@ -324,7 +322,9 @@ export function ConsolaIntegracao({
                         }))
                       }
                     >
-                      {textos.repetir.replace("{n}", String(celula.vagasTipo))}
+                      {celula.vagasTipo <= 0
+                        ? textos.esgotada
+                        : textos.repetir.replace("{n}", String(celula.vagasTipo))}
                     </Button>
                   </td>
                 </tr>
@@ -349,12 +349,16 @@ export function ConsolaIntegracao({
           ).map((chave) => (
             <label key={chave} className="text-[13px]/5">
               <span className="mb-1 block text-muted-foreground">{textos.campos[chave]}</span>
-              <input
-                className="h-10 w-full rounded-lg border border-input bg-background px-2 text-[13px]/5"
-                value={form[chave]}
-                onChange={(e) => campo(chave, e.target.value)}
-                required={chave !== "tecnicoId"}
-              />
+              {chave === "data" ? (
+                <SeletorData valor={form.data} onChange={(iso) => campo("data", iso)} required />
+              ) : (
+                <input
+                  className="h-10 w-full rounded-lg border border-input bg-background px-2 text-[13px]/5"
+                  value={form[chave]}
+                  onChange={(e) => campo(chave, e.target.value)}
+                  required={chave !== "tecnicoId"}
+                />
+              )}
             </label>
           ))}
         </div>

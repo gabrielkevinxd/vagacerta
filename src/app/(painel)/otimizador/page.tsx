@@ -8,6 +8,7 @@ import { Carregamento } from "@/components/carregamento";
 import { Alerta } from "@/components/layout/alerta";
 import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
 import { PlanoComparacao } from "@/components/plano-comparacao";
+import { SeletorData } from "@/components/seletor-data";
 import { SemAcesso } from "@/components/sem-acesso";
 import { traduzirMensagem, traduzirPlanoVista } from "@/lib/i18n/motor";
 import { ErroHttp } from "@/server/erros";
@@ -101,7 +102,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
         <div className="grid gap-3 md:grid-cols-2">
           <label className="space-y-1.5 text-[13px]/5" htmlFor="data">
             <span className="font-medium">{t("comum.dia")}</span>
-            <input id="data" name="data" type="date" defaultValue={data} className={campo} />
+            <SeletorData id="data" name="data" defaultValue={data} />
           </label>
           <label className="space-y-1.5 text-[13px]/5" htmlFor="modo">
             <span className="font-medium">{t("reencaixe.pedido")}</span>

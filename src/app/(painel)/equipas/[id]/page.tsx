@@ -7,6 +7,7 @@ import { AcoesEquipa } from "@/components/acoes-equipa";
 import { Carregamento } from "@/components/carregamento";
 import { EstadoVazio } from "@/components/estado-vazio";
 import { EtiquetaEstado, EtiquetaOperador } from "@/components/etiquetas";
+import { SeletorData } from "@/components/seletor-data";
 import type { Chave } from "@/lib/i18n";
 import { formatarDataLocale, formatarDataLongaLocale } from "@/lib/i18n/formatacao";
 import { i18nPedido } from "@/server/idioma";
@@ -101,7 +102,7 @@ async function Conteudo({
             <label htmlFor="data" className="text-[13px]/5">
               {t("comum.data")}
             </label>
-            <input id="data" name="data" type="date" defaultValue={data} className="h-9 rounded-lg border border-input bg-card px-2 text-[13px]/5" />
+            <SeletorData id="data" name="data" defaultValue={data} className="w-auto" />
             <button type="submit" className="h-9 rounded-lg border border-border px-3 text-[13px]/5">
               {t("comum.ver")}
             </button>

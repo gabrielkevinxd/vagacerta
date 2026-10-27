@@ -7,6 +7,7 @@ import { useT } from "@/components/idioma/provedor";
 import type { EstadoOrdem } from "@/lib/rules/tipos";
 import { enviar } from "@/lib/cliente";
 import { PainelReencaixe } from "@/components/painel-reencaixe";
+import { SeletorData } from "@/components/seletor-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -194,7 +195,7 @@ export function AcoesOrdem({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="data-reagendar">{t("comum.data")}</Label>
-            <Input id="data-reagendar" name="data" type="date" />
+            <SeletorData id="data-reagendar" name="data" />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="janela-reagendar">{t("ordens.janela")}</Label>
