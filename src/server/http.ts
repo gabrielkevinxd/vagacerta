@@ -48,7 +48,7 @@ export function apiCentral<C extends Contexto = Contexto>(
   handler: (ator: Ator, pedido: Request, contexto: C) => Promise<unknown> | unknown,
 ) {
   return api<C>((ator, pedido, contexto) => {
-    exigir(eCentral(ator), 403, "SEM_PERMISSAO", MENSAGEM_SO_CENTRAL_INTEGRACAO);
+    exigir(eCentral(ator), 403, "SO_CENTRAL_INTEGRACAO", MENSAGEM_SO_CENTRAL_INTEGRACAO);
     return handler(ator, pedido, contexto);
   });
 }

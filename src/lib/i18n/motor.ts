@@ -18,6 +18,7 @@ import { ptPT } from "./pt-PT";
 const POR_CODIGO: Record<string, Chave> = {
   NAO_AUTENTICADO: "erros.NAO_AUTENTICADO",
   SEM_PERMISSAO: "erros.SEM_PERMISSAO",
+  SO_CENTRAL_INTEGRACAO: "erros.soCentralIntegracao",
   NAO_ENCONTRADO: "erros.NAO_ENCONTRADO",
   DADOS_INVALIDOS: "erros.DADOS_INVALIDOS",
   DATA_INVALIDA: "erros.DATA_INVALIDA",

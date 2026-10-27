@@ -116,6 +116,24 @@ export function PainelAssistenteCliente({ inicial }: { inicial: PainelAssistente
     }
   }
 
+  async function limparHistorico() {
+    if (aTrabalhar) return;
+    setErro(null);
+    setATrabalhar(true);
+    try {
+      await enviar("/api/assistente/historico", undefined, "DELETE");
+      setLinhas([]);
+      setPlano(null);
+      setPedidoPlano(null);
+      setGravado(false);
+      toast(t("assistente.historicoLimpo"));
+    } catch (falha) {
+      setErro(falha instanceof Error ? falha.message : t("comum.pedidoFalhou"));
+    } finally {
+      setATrabalhar(false);
+    }
+  }
+
   const exemplos = [
     { rotulo: t("assistente.exAlertas"), propor: null as PedidoRealocacao | null },
     { rotulo: t("assistente.exQuotas"), propor: null },
@@ -148,7 +166,15 @@ export function PainelAssistenteCliente({ inicial }: { inicial: PainelAssistente
             </ul>
           )}
         </Seccao>
-        <Seccao titulo={t("assistente.chatTitulo")} descricao={modo}>
+        <Seccao
+          titulo={t("assistente.chatTitulo")}
+          descricao={modo}
+          accoes={
+            <Button type="button" variant="outline" size="sm" disabled={aTrabalhar} onClick={() => void limparHistorico()}>
+              {t("assistente.limparHistorico")}
+            </Button>
+          }
+        >
           <div className="flex flex-wrap gap-2" aria-label={t("assistente.exemplos")}>
             {exemplos.map((exemplo) => (
               <Button

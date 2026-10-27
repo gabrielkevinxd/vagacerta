@@ -461,6 +461,8 @@ export const en = {
     alertasIntro: "Computed from the day's rules, without a model. A dispatcher only sees their operator.",
     alertasVazios: "There are no conflicts on this day for your profile.",
     chatTitulo: "Conversation",
+    limparHistorico: "Clear conversation",
+    historicoLimpo: "Conversation cleared.",
     pergunta: "Your question",
     placeholder: "E.g. which quotas are exhausted? Fit the waiting order.",
     enviar: "Send",

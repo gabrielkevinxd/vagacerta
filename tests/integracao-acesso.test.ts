@@ -106,7 +106,7 @@ describe("integração: hub-only vs despachante com scope D1", () => {
         entrarComo(perfil);
         const resposta = await chamar();
         expect(resposta.status).toBe(403);
-        expect((await corpo(resposta)).codigo).toBe("SEM_PERMISSAO");
+        expect((await corpo(resposta)).codigo).toBe("SO_CENTRAL_INTEGRACAO");
       });
     }
   }

@@ -63,12 +63,16 @@ describe("catálogos i18n", () => {
     expect(textoDe(ptPT, { tipo: "esclarecer", chave: "assistente.generico", vars: { n: 1 }, pergunta: "oi" })).toContain("Há 1 alerta");
   });
 
-  it("pagina-negada lê tokens de globals.css", () => {
+  it("pagina-negada usa tokens standalone e carrega Inter (@font-face)", () => {
     const tokens = tokensDeGlobals();
     expect(tokens.background.toLowerCase()).toBe("#ffffff");
     expect(tokens.primary.toLowerCase()).toBe("#6e56cf");
     expect(tokens.foreground.toLowerCase()).toBe("#18181b");
     const fonte = cssFonteInter();
-    expect(fonte.includes("@font-face") || fonte.includes("system-ui")).toBe(true);
+    // Tem de ser o @font-face real do next/font — system-ui sozinho não conta.
+    expect(fonte).toContain("@font-face");
+    expect(fonte).toMatch(/font-family:\s*Inter\b/);
+    expect(fonte).toContain("/_next/");
+    expect(fonte.includes("/* Inter") && !fonte.includes("@font-face")).toBe(false);
   });
 });

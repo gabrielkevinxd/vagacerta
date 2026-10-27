@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { randomBytes } from "node:crypto";
 import { COOKIE_IDIOMA, COOKIE_SESSAO, eIdioma } from "@/lib/i18n";
 import type { Ator, Papel } from "@/lib/rules";
+import { limparHistoricoAssistente } from "./assistente-historico";
 import { baseDados, verificarPalavra } from "./db";
 import { sessaoViva } from "./sessao-viva";
 
@@ -105,6 +106,12 @@ export async function entrar(email: string, palavraPasse: string): Promise<Ator 
 export async function sair(): Promise<void> {
   const jar = await cookies();
   const token = jar.get(COOKIE)?.value;
-  if (token) baseDados().prepare("DELETE FROM sessoes WHERE token = ?").run(token);
+  if (token) {
+    const linha = baseDados()
+      .prepare("SELECT utilizador_id AS utilizadorId FROM sessoes WHERE token = ?")
+      .get(token) as { utilizadorId: string } | undefined;
+    if (linha?.utilizadorId) limparHistoricoAssistente(linha.utilizadorId);
+    baseDados().prepare("DELETE FROM sessoes WHERE token = ?").run(token);
+  }
   jar.delete(COOKIE);
 }
