@@ -74,6 +74,7 @@ export const esquemaConfirmar = z.object({
 export const esquemaAssistente = z.object({
   texto: z.string().trim().min(1, "Os dados enviados não são válidos.").max(500, "Os dados enviados não são válidos."),
   data: data.optional(),
+  // Aceite no schema por compatibilidade; o servidor ignora e usa `assistente_historico`.
   historico: z
     .array(
       z.object({

@@ -5,10 +5,11 @@ import { descreverAlertas, montarResumoDia, textoDe } from "@/lib/assistente/fra
 import { pedidoDaFerramenta, responderPorRegras, type Leitura } from "@/lib/assistente/regras";
 import { falarComXai } from "@/lib/assistente/xai";
 import type { PainelAssistente, PedidoAssistente, RespostaAssistente } from "@/lib/contratos/assistente";
-import { t, type Chave } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
 import { traduzirMensagem, traduzirPlanoVista } from "@/lib/i18n/motor";
 import { chaveXai, modeloXai } from "@/lib/ofsc/xai";
 import { eDataIso, hojeLisboa, type Ator, type PedidoRealocacao, type PlanoVista } from "@/lib/rules";
+import { acrescentarHistoricoAssistente, lerHistoricoAssistente } from "./assistente-historico";
 import { baseDados, lerMundo } from "./db";
 import { ErroHttp } from "./erros";
 import { idiomaAtual, mensagensAtuais } from "./idioma";
@@ -102,21 +103,29 @@ function prever(ator: Ator, pedido: PedidoRealocacao, prefixo: string, modo: "ia
   }
 }
 
+function registarTurno(ator: Ator, pergunta: string, resposta: RespostaAssistente): RespostaAssistente {
+  acrescentarHistoricoAssistente(ator.id, "utilizador", pergunta);
+  acrescentarHistoricoAssistente(ator.id, "assistente", resposta.mensagem.texto);
+  return resposta;
+}
+
 export function responderAssistente(ator: Ator, corpo: PedidoAssistente): Promise<RespostaAssistente> | RespostaAssistente {
   const m = mensagensAtuais();
   const data = diaDoAssistente(corpo.data);
   const ctx = contexto(ator, data);
 
   if (corpo.confirmar) {
-    if (ator.papel === "tecnico") return deLeitura(ator, { tipo: "recusar", chave: "assistente.tecnicoNaoGrava", vars: {} }, ctx, "sem_ia");
+    if (ator.papel === "tecnico") {
+      return registarTurno(ator, corpo.texto, deLeitura(ator, { tipo: "recusar", chave: "assistente.tecnicoNaoGrava", vars: {} }, ctx, "sem_ia"));
+    }
     try {
       const plano = traduzirPlanoVista(m, confirmarPlano(ator, corpo.confirmar.pedido, corpo.confirmar.selo));
       const texto = `${t(m, "assistente.gravado")} ${plano.mensagem}`.replace(/\s+/g, " ").trim();
-      return responder(texto, { tipo: "reencaixar", pedido: corpo.confirmar.pedido }, plano, "sem_ia", true);
+      return registarTurno(ator, corpo.texto, responder(texto, { tipo: "reencaixar", pedido: corpo.confirmar.pedido }, plano, "sem_ia", true));
     } catch (erro) {
       if (erro instanceof ErroHttp) {
         const texto = traduzirMensagem(m, erro.message, erro.codigo);
-        return responder(texto, { tipo: "recusar", mensagem: texto }, null, "sem_ia", false);
+        return registarTurno(ator, corpo.texto, responder(texto, { tipo: "recusar", mensagem: texto }, null, "sem_ia", false));
       }
       throw erro;
     }
@@ -138,15 +147,18 @@ export function responderAssistente(ator: Ator, corpo: PedidoAssistente): Promis
         equipa: ctx.equipas.find((linha) => linha.id === pedido.equipaEmFalta)?.nome ?? "",
       },
     });
-    return prever(ator, pedido, prefixo, "sem_ia");
+    return registarTurno(ator, corpo.texto, prever(ator, pedido, prefixo, "sem_ia"));
   }
 
   const leitura = responderPorRegras(corpo.texto, ctx);
-  if (leitura.tipo !== "ambiguo") return deLeitura(ator, leitura, ctx, "sem_ia");
+  if (leitura.tipo !== "ambiguo") return registarTurno(ator, corpo.texto, deLeitura(ator, leitura, ctx, "sem_ia"));
+
+  // Histórico só do servidor — o campo `historico` do cliente é ignorado de propósito.
+  const historico = lerHistoricoAssistente(ator.id);
 
   return falarComXai({
     texto: corpo.texto,
-    historico: corpo.historico ?? [],
+    historico,
     idioma: idiomaAtual(),
     resumo: resumoCompacto(ctx),
     executar: (nome, args) => {
@@ -156,7 +168,11 @@ export function responderAssistente(ator: Ator, corpo: PedidoAssistente): Promis
     },
   }).then((resultado) => {
     if (resultado.modo === "sem_ia") {
-      return deLeitura(ator, { tipo: "esclarecer", chave: "assistente.generico" as Chave, vars: { n: ctx.factos.length }, pergunta: corpo.texto }, ctx, "sem_ia");
+      return registarTurno(
+        ator,
+        corpo.texto,
+        deLeitura(ator, { tipo: "esclarecer", chave: "assistente.generico", vars: { n: ctx.factos.length }, pergunta: corpo.texto }, ctx, "sem_ia"),
+      );
     }
     const proposta = resultado.ferramentas.find((chamada) => chamada.nome === "propor_reencaixe");
     if (proposta) {
@@ -166,15 +182,19 @@ export function responderAssistente(ator: Ator, corpo: PedidoAssistente): Promis
         const ref = ctx.espera.find((linha) => linha.id === pedido.encaixarId)?.referencia ?? "";
         const equipa = ctx.equipas.find((linha) => linha.id === pedido.equipaEmFalta)?.nome ?? "";
         const prefixo = textoDe(m, { tipo: "reencaixar", pedido, chave, vars: { ref, equipa } });
-        return prever(ator, pedido, prefixo, "ia");
+        return registarTurno(ator, corpo.texto, prever(ator, pedido, prefixo, "ia"));
       }
     }
     const livre = resultado.texto.trim();
-    if (livre) return responder(livre, { tipo: "esclarecer", pergunta: corpo.texto }, null, "ia", false);
+    if (livre) return registarTurno(ator, corpo.texto, responder(livre, { tipo: "esclarecer", pergunta: corpo.texto }, null, "ia", false));
     if (resultado.ferramentas.some((chamada) => chamada.nome === "listar_alertas")) {
       const leituraAlertas = responderPorRegras("conflitos", ctx);
-      if (leituraAlertas.tipo !== "ambiguo") return deLeitura(ator, leituraAlertas, ctx, "ia");
+      if (leituraAlertas.tipo !== "ambiguo") return registarTurno(ator, corpo.texto, deLeitura(ator, leituraAlertas, ctx, "ia"));
     }
-    return deLeitura(ator, { tipo: "esclarecer", chave: "assistente.generico" as Chave, vars: { n: ctx.factos.length }, pergunta: corpo.texto }, ctx, "sem_ia");
+    return registarTurno(
+      ator,
+      corpo.texto,
+      deLeitura(ator, { tipo: "esclarecer", chave: "assistente.generico", vars: { n: ctx.factos.length }, pergunta: corpo.texto }, ctx, "sem_ia"),
+    );
   });
 }

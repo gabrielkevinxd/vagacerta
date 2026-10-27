@@ -1,5 +1,5 @@
 import type { AlertaAssistente, TipoAlerta } from "@/lib/contratos/assistente";
-import { idiomaDe, t, tp, type Chave, type Mensagens } from "@/lib/i18n";
+import { eBasePlural, idiomaDe, t, tp, type Chave, type ChaveLeitura, type Mensagens } from "@/lib/i18n";
 import { formatarDataLocale } from "@/lib/i18n/formatacao";
 import type { FactoAlerta } from "./analise";
 import type { Leitura } from "./regras";
@@ -135,7 +135,7 @@ function varsProntos(m: Mensagens, vars: Record<string, string | number>): Recor
 
 export function textoDe(m: Mensagens, leitura: Exclude<Leitura, { tipo: "ambiguo" }>, alertas: AlertaAssistente[] = []): string {
   const vars = varsProntos(m, "vars" in leitura ? leitura.vars : {});
-  const chave: Chave = leitura.chave;
+  const chave: ChaveLeitura = leitura.chave;
 
   if (chave === "assistente.resumoDia") {
     return montarResumoDia(m, {
@@ -150,15 +150,13 @@ export function textoDe(m: Mensagens, leitura: Exclude<Leitura, { tipo: "ambiguo
   }
 
   let base: string;
-  if (chave === ("assistente.verAlertas" as Chave)) {
-    base = tp(m, "assistente.verAlertas", Number(vars.n ?? 0), vars);
-  } else if (chave === ("assistente.generico" as Chave)) {
-    base = tp(m, "assistente.generico", Number(vars.n ?? 0), vars);
+  if (eBasePlural(chave)) {
+    base = tp(m, chave, Number(vars.n ?? 0), vars);
   } else {
-    base = t(m, chave, vars);
+    base = t(m, chave as Chave, vars);
   }
 
-  if (chave === ("assistente.verAlertas" as Chave)) {
+  if (chave === "assistente.verAlertas") {
     const linhas = alertas
       .slice(0, 5)
       .map((alerta) => `${alerta.titulo}: ${alerta.detalhe}`)

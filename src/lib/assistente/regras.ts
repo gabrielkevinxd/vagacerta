@@ -1,11 +1,11 @@
-import type { Chave } from "@/lib/i18n";
+import type { Chave, ChaveLeitura } from "@/lib/i18n";
 import { eCentral, type PedidoRealocacao } from "@/lib/rules";
 import type { ContextoRegras } from "./analise";
 
 export type Leitura =
   | { tipo: "ambiguo" }
   | { tipo: "reencaixar"; pedido: PedidoRealocacao; chave: Chave; vars: Record<string, string | number> }
-  | { tipo: "esclarecer"; chave: Chave; vars: Record<string, string | number>; pergunta: string }
+  | { tipo: "esclarecer"; chave: ChaveLeitura; vars: Record<string, string | number>; pergunta: string }
   | { tipo: "recusar"; chave: Chave; vars: Record<string, string | number> };
 
 function semAcento(valor: string): string {
@@ -29,7 +29,7 @@ function equipaMencionada(texto: string, equipas: { id: string; nome: string }[]
   });
 }
 
-function esclarecer(chave: Chave, pergunta: string, vars: Record<string, string | number> = {}): Leitura {
+function esclarecer(chave: ChaveLeitura, pergunta: string, vars: Record<string, string | number> = {}): Leitura {
   return { tipo: "esclarecer", chave, vars, pergunta };
 }
 
@@ -105,7 +105,7 @@ export function responderPorRegras(texto: string, ctx: ContextoRegras): Leitura 
 
   if (/(alerta|conflito|conflict|sobrelot|overlap|sobrepor)/.test(n)) {
     if (ctx.factos.length === 0) return esclarecer("assistente.alertasNenhum", pergunta, { data: ctx.data });
-    return esclarecer("assistente.verAlertas" as Chave, pergunta, { n: ctx.factos.length, data: ctx.data });
+    return esclarecer("assistente.verAlertas", pergunta, { n: ctx.factos.length, data: ctx.data });
   }
 
   if (/(quota|vaga|slot|capacidade|capacity)/.test(n)) {
