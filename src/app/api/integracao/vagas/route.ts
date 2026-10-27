@@ -8,7 +8,8 @@ import { listarGrelha } from "@/server/ofsc/grelha";
 export const GET = api(async (ator, pedido) => {
   exigirIntegracao(ator);
   const url = new URL(pedido.url);
-  const operadorPedido = url.searchParams.get("operador") ?? "azul";
+  const omisso = ator.operadorId ?? "azul";
+  const operadorPedido = url.searchParams.get("operador") ?? omisso;
   let operador = operadorPedido;
   if (ator.papel === "despachante") {
     if (!ator.operadorId) {

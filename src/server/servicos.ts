@@ -436,7 +436,7 @@ export function mudarEstado(ator: Ator, id: string, estado: EstadoOrdem, motivo?
 export function reagendar(ator: Ator, id: string, alteracao: Parameters<typeof reagendarOrdem>[2]): OrdemVista {
   const antes = lerMundo();
   const ordem = antes.ordens.find((linha) => linha.id === id);
-  exigir(Boolean(ordem), 404, "NAO_ENCONTRADO", "Não encontrámos esta ordem.");
+  exigir(Boolean(ordem) && podeLerOrdem(ator, ordem!), 404, "NAO_ENCONTRADO", "Não encontrámos esta ordem.");
   if (!estadoEditavel(ordem!.estado)) {
     throw new ErroHttp(409, "CONFLITO", "Uma ordem concluída ou cancelada não pode ser alterada.");
   }
@@ -455,7 +455,7 @@ export function preverReagendamento(
 ): { mensagem: string; ordem: OrdemVista; depois: Agenda } {
   const antes = lerMundo();
   const ordem = antes.ordens.find((linha) => linha.id === id);
-  exigir(Boolean(ordem), 404, "NAO_ENCONTRADO", "Não encontrámos esta ordem.");
+  exigir(Boolean(ordem) && podeLerOrdem(ator, ordem!), 404, "NAO_ENCONTRADO", "Não encontrámos esta ordem.");
   if (!estadoEditavel(ordem!.estado)) {
     throw new ErroHttp(409, "CONFLITO", "Uma ordem concluída ou cancelada não pode ser alterada.");
   }

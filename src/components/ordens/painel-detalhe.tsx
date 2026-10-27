@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { enviar } from "@/lib/cliente";
 import { traduzirMensagem } from "@/lib/i18n/motor";
@@ -138,22 +137,16 @@ export function PainelDetalheOrdem({
                   <EtiquetaEstado estado={ordem.estado} />
                 </div>
               </SheetHeader>
-              <Tabs defaultValue="resumo" className="flex min-h-0 flex-1 flex-col">
-                <div className="px-4 pt-3">
-                  <TabsList className="h-8">
-                    <TabsTrigger value="resumo" className="text-xs">
-                      {t("detalhe.resumo")}
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
-                <TabsContent value="resumo" className="space-y-3 px-4 pb-4 text-[13px]/5">
-                  <Campo rotulo={t("tabela.cliente")} valor={ordem.clienteNome} />
-                  <Campo rotulo={t("tabela.janela")} valor={`${ordem.janelaInicio}–${ordem.janelaFim}`} mono />
-                  <Campo rotulo={t("tabela.equipa")} valor={ordem.equipaNome ?? "—"} />
-                  <Campo rotulo={t("comum.data")} valor={formatarDataLocale(ordem.data, idioma)} mono />
-                  <p className="text-xs text-muted-foreground">{ordem.morada}</p>
-                </TabsContent>
-              </Tabs>
+              <div className="space-y-3 px-4 py-4 text-[13px]/5">
+                {!estadoCancelavel(ordem.estado) && (ordem.estado === "concluida" || ordem.estado === "cancelada") ? (
+                  <p className="text-muted-foreground">{t("ordens.soLeitura")}</p>
+                ) : null}
+                <Campo rotulo={t("tabela.cliente")} valor={ordem.clienteNome} />
+                <Campo rotulo={t("tabela.janela")} valor={`${ordem.janelaInicio}–${ordem.janelaFim}`} mono />
+                <Campo rotulo={t("tabela.equipa")} valor={ordem.equipaNome ?? "—"} />
+                <Campo rotulo={t("comum.data")} valor={formatarDataLocale(ordem.data, idioma)} mono />
+                <p className="text-xs text-muted-foreground">{ordem.morada}</p>
+              </div>
               {podeAgir && podeCancelarOrdem ? (
                 <SheetFooter className="mt-auto flex-row justify-end gap-2 border-t border-border px-4 py-3">
                   <Button type="button" variant="outline" size="sm" disabled>
@@ -191,7 +184,7 @@ export function PainelDetalheOrdem({
               <Label htmlFor="quem-painel">{t("ordens.quemPediu")}</Label>
               <select
                 id="quem-painel"
-                className="h-9 w-full rounded-md border border-input bg-card px-2.5 text-[13px]/5"
+                className="h-8 w-full rounded-md border border-input bg-card px-2.5 text-[13px]/5"
                 value={quemPediu}
                 onChange={(e) => setQuemPediu(e.target.value as QuemPediu)}
               >

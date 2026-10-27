@@ -5,6 +5,7 @@ import { eCentral, podeCancelar, podeEditarFicha, podeMarcarOperador, podeReagen
 import { AcoesOrdem } from "@/components/acoes-ordem";
 import { Carregamento } from "@/components/carregamento";
 import { EtiquetaEstado, EtiquetaOperador } from "@/components/etiquetas";
+import { DefinirMigalha } from "@/components/migalhas-contexto";
 import { formatarDataLocale, formatarInstante } from "@/lib/i18n/formatacao";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
@@ -21,6 +22,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <div className="space-y-8">
+      <DefinirMigalha href={`/ordens/${ordem.id}`} rotulo={ordem.referencia} />
       <div className="space-y-2">
         <Link href="/ordens" className="text-[13px]/5 text-muted-foreground underline">
           {t("nav.ordens")}
