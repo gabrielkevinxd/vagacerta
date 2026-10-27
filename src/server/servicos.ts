@@ -33,6 +33,8 @@ import {
   somarDias,
   utilizacaoDoDia,
   validarCatalogo,
+  validarOperadoresServidos,
+  competenciasDeOperadores,
   vigenteEm,
   type Agenda,
   type Ator,
@@ -58,6 +60,7 @@ import {
   selarImpressao,
   sincronizarMundo,
   transacao,
+  transacaoImediata,
 } from "./db";
 import { ErroHttp, exigir } from "./erros";
 
@@ -109,6 +112,7 @@ export interface EquipaVista {
   areas: string[];
   zona: { id: string; codigo: string; nome: string } | null;
   membros: { id: string; nome: string; ativo: boolean }[];
+  operadoresServidos: OperadorId[];
   competencias: { operadorId: OperadorId; categorias: Categoria[]; tecnologias: Tecnologia[] }[];
   horarios: { diaSemana: number; inicio: string; fim: string }[];
   indisponibilidades: { id: string; data: string; inicio: string; fim: string; motivo: string }[];
@@ -254,13 +258,14 @@ export interface NovaOrdem {
 
 /** O motor responde 409 quando o pedido é bem formado mas conflitua com o que já existe (README: «Contrato HTTP»). */
 function estadoDoMotor(codigo: string): number {
-  return codigo === "INVIAVEL" || codigo === "REFERENCIA_DUPLICADA" ? 409 : 400;
+  return codigo === "INVIAVEL" || codigo === "REFERENCIA_DUPLICADA" || codigo === "OPERADOR_NAO_SERVIDO" || codigo === "SLOT_OCUPADO"
+    ? 409
+    : 400;
 }
 
 /**
- * Zonas que servem cada área: a zona-padrão da área e as zonas das equipas ativas que a cobrem
- * (a Equipa Minho e a Equipa Ave cobrem Braga, uma na zona N01 e outra na N06; Chaves está em N03 e em N05).
- * A primeira de cada lista é a predefinida do formulário; as outras seguem pelo código da zona.
+ * Zona = município (DICOFRE). Cada área tem uma zona canónica; equipas com vigência noutro
+ * município que ainda cobrem a área (via `areas`) aparecem como alternativas no formulário.
  */
 export function zonasPorArea(): Record<string, string[]> {
   const linhas = baseDados()
@@ -269,7 +274,7 @@ export function zonasPorArea(): Record<string, string[]> {
        FROM equipas e
        JOIN equipa_zona ez ON ez.equipa_id = e.id
        JOIN zonas z ON z.id = ez.zona_id
-       WHERE e.ativa = 1`,
+       WHERE e.ativa = 1 AND (ez.fim IS NULL OR ez.fim >= date('now'))`,
     )
     .all() as { areas: string; zona: string; codigo: string }[];
   const resultado: Record<string, string[]> = {};
@@ -277,7 +282,9 @@ export function zonasPorArea(): Record<string, string[]> {
     const padrao = zonaDaArea(area);
     const outras = new Map<string, string>();
     for (const linha of linhas) {
-      if (linha.zona !== padrao && (JSON.parse(linha.areas) as string[]).includes(area)) outras.set(linha.zona, linha.codigo);
+      if (linha.zona !== padrao && (JSON.parse(linha.areas) as string[]).includes(area)) {
+        outras.set(linha.zona, linha.codigo);
+      }
     }
     resultado[area] = [padrao, ...[...outras.entries()].sort((a, b) => a[1].localeCompare(b[1])).map(([id]) => id)];
   }
@@ -316,6 +323,35 @@ function validarDataOperador(ator: Ator, operadorId: string, data: string): void
   }
 }
 
+function mensagemComAlternativa(codigo: string, mensagem: string, alternativa: string | null): string {
+  if (!alternativa) return mensagem;
+  if (codigo === "INVIAVEL" || codigo === "SLOT_OCUPADO") {
+    return `${mensagem} Alternativa: ${alternativa}.`;
+  }
+  return mensagem;
+}
+
+function alternativaDeReserva(mundo: Mundo, entrada: NovaOrdem): string | null {
+  const publicacao = proporVagas(mundo, {
+    operadorId: entrada.operadorId,
+    data: entrada.data,
+    area: entrada.area,
+    categoria: entrada.categoria,
+    tecnologia: entrada.tecnologia,
+  });
+  for (const janela of publicacao.janelas) {
+    if (janela.inicio === entrada.janelaInicio && janela.fim === entrada.janelaFim) continue;
+    if (janela.estado === "indisponivel") continue;
+    const livre = janela.equipas.find((e) => e.estado !== "indisponivel");
+    if (!livre) continue;
+    return `${janela.inicio}–${janela.fim} na ${livre.nome}`;
+  }
+  const mesma = publicacao.janelas.find((j) => j.inicio === entrada.janelaInicio && j.fim === entrada.janelaFim);
+  const outraEquipa = mesma?.equipas.find((e) => e.estado !== "indisponivel" && e.equipaId !== entrada.equipaId);
+  if (outraEquipa) return `${entrada.janelaInicio}–${entrada.janelaFim} na ${outraEquipa.nome}`;
+  return null;
+}
+
 export function criarOrdem(ator: Ator, entrada: NovaOrdem): OrdemVista {
   exigir(podeMarcarOperador(ator, entrada.operadorId), 403, "SEM_PERMISSAO", "Não pode marcar ordens deste operador.");
   exigir((AREAS as readonly string[]).includes(entrada.area), 400, "DADOS_INVALIDOS", "A área não está na lista de localidades.");
@@ -324,14 +360,30 @@ export function criarOrdem(ator: Ator, entrada: NovaOrdem): OrdemVista {
   const catalogo = validarCatalogo(entrada.operadorId, entrada.categoria, entrada.tecnologia, entrada.janelaInicio, entrada.janelaFim);
   if ("ok" in catalogo) throw new ErroHttp(400, catalogo.codigo, catalogo.mensagem);
 
-  const antes = lerMundo();
   if (entrada.modo === "agendar") {
-    const resultado = marcarOrdem(antes, { ...entrada, tecnologia: entrada.tecnologia });
-    if (!resultado.ok) throw new ErroHttp(estadoDoMotor(resultado.codigo), resultado.codigo, resultado.mensagem);
-    gravarDiferença(ator, antes, resultado.mundo, "A ordem foi marcada.");
-    return verOrdem(resultado.resultado);
+    let vista: OrdemVista | null = null;
+    transacaoImediata(() => {
+      const antes = lerMundo();
+      const resultado = marcarOrdem(antes, { ...entrada, tecnologia: entrada.tecnologia });
+      if (!resultado.ok) {
+        const alt = alternativaDeReserva(antes, entrada);
+        throw new ErroHttp(
+          estadoDoMotor(resultado.codigo === "INVIAVEL" ? "SLOT_OCUPADO" : resultado.codigo),
+          resultado.codigo === "INVIAVEL" ? "SLOT_OCUPADO" : resultado.codigo,
+          mensagemComAlternativa(
+            resultado.codigo === "INVIAVEL" ? "SLOT_OCUPADO" : resultado.codigo,
+            resultado.codigo === "INVIAVEL" ? "O intervalo já foi reservado por outro operador." : resultado.mensagem,
+            alt,
+          ),
+        );
+      }
+      aplicarDiferença(ator, antes, resultado.mundo, "A ordem foi marcada.");
+      vista = verOrdem(resultado.resultado);
+    });
+    return vista!;
   }
 
+  const antes = lerMundo();
   const id = `ord-${crypto.randomUUID()}`;
   const ordem: Ordem = {
     id,
@@ -366,18 +418,20 @@ export function criarOrdem(ator: Ator, entrada: NovaOrdem): OrdemVista {
   return verOrdem(ordem);
 }
 
+function aplicarDiferença(ator: Ator, antes: Mundo, depois: Mundo, detalheAuditoria: string): void {
+  const ids = sincronizarMundo(antes, depois, ator.id);
+  for (const id of ids) {
+    const anterior = antes.ordens.find((ordem) => ordem.id === id);
+    const seguinte = depois.ordens.find((ordem) => ordem.id === id);
+    if (!seguinte) continue;
+    const texto = descrever(anterior, seguinte);
+    registarHistorico(id, ator.id, texto.acao, texto.detalhe);
+  }
+  registarAuditoria(ator.id, "mundo", detalheAuditoria);
+}
+
 function gravarDiferença(ator: Ator, antes: Mundo, depois: Mundo, detalheAuditoria: string): void {
-  transacao(() => {
-    const ids = sincronizarMundo(antes, depois, ator.id);
-    for (const id of ids) {
-      const anterior = antes.ordens.find((ordem) => ordem.id === id);
-      const seguinte = depois.ordens.find((ordem) => ordem.id === id);
-      if (!seguinte) continue;
-      const texto = descrever(anterior, seguinte);
-      registarHistorico(id, ator.id, texto.acao, texto.detalhe);
-    }
-    registarAuditoria(ator.id, "mundo", detalheAuditoria);
-  });
+  transacao(() => aplicarDiferença(ator, antes, depois, detalheAuditoria));
 }
 
 function descrever(antes: Ordem | undefined, depois: Ordem): { acao: string; detalhe: string } {
@@ -699,6 +753,7 @@ export function listarEquipas(ator: Ator): Omit<EquipaVista, "membros" | "ocupac
         areas: JSON.parse(String(linha.areas)) as string[],
         zona,
         competencias: competenciasDe(String(linha.id)),
+        operadoresServidos: operadoresServidosDe(String(linha.id)),
         horarios: horariosDe(String(linha.id)),
       };
     });
@@ -716,6 +771,10 @@ function competenciasDe(equipaId: string) {
     categorias: JSON.parse(linha.categorias) as Categoria[],
     tecnologias: JSON.parse(linha.tecnologias) as Tecnologia[],
   }));
+}
+
+function operadoresServidosDe(equipaId: string): OperadorId[] {
+  return competenciasDe(equipaId).map((linha) => linha.operadorId);
 }
 
 function horariosDe(equipaId: string) {
@@ -771,12 +830,43 @@ export function guardarEquipa(
     ativa?: boolean;
     areas?: string[];
     horarios?: { diaSemana: number; inicio: string; fim: string }[];
+    operadoresServidos?: OperadorId[];
     competencias?: { operadorId: OperadorId; categorias: Categoria[]; tecnologias: Tecnologia[] }[];
   },
 ): void {
   exigir(podeGerirEquipas(ator), 403, "SEM_PERMISSAO", "Só a central gere equipas.");
   const existe = baseDados().prepare("SELECT id FROM equipas WHERE id = ?").get(id);
   exigir(Boolean(existe), 404, "NAO_ENCONTRADO", "Não encontrámos esta equipa.");
+
+  if (campos.operadoresServidos) {
+    const validados = validarOperadoresServidos(campos.operadoresServidos);
+    if ("ok" in validados) throw new ErroHttp(400, validados.codigo, validados.mensagem);
+    const seguintes = validados;
+    const atuais = operadoresServidosDe(id);
+    const removidos = atuais.filter((op) => !seguintes.includes(op));
+    if (removidos.length > 0) {
+      const hoje = hojeLisboa();
+      const futuras = baseDados()
+        .prepare(
+          `SELECT referencia, operador_id AS operadorId, data FROM ordens
+           WHERE equipa_id = ? AND operador_id IN (${removidos.map(() => "?").join(",")})
+             AND estado IN ('agendada','em_curso','em_espera','pendente')
+             AND data >= ?
+           ORDER BY data, referencia`,
+        )
+        .all(id, ...removidos, hoje) as { referencia: string; operadorId: string; data: string }[];
+      if (futuras.length > 0) {
+        const lista = futuras.map((o) => `${o.referencia} (${o.operadorId}, ${o.data})`).join("; ");
+        throw new ErroHttp(
+          409,
+          "OPERADOR_COM_ORDENS",
+          `Não pode deixar de servir operador(es) com ordens futuras nesta equipa: ${lista}.`,
+        );
+      }
+    }
+    campos.competencias = competenciasDeOperadores(seguintes);
+  }
+
   transacao(() => {
     const db = baseDados();
     if (campos.ativa !== undefined) db.prepare("UPDATE equipas SET ativa = ? WHERE id = ?").run(campos.ativa ? 1 : 0, id);
@@ -797,6 +887,9 @@ export function guardarEquipa(
       }
     }
     if (campos.competencias) {
+      if (campos.competencias.length === 0) {
+        throw new ErroHttp(400, "OPERADORES_SERVIDOS", "A equipa tem de servir pelo menos um operador.");
+      }
       db.prepare("DELETE FROM competencias WHERE equipa_id = ?").run(id);
       for (const competencia of campos.competencias) {
         if (competencia.categorias.length === 0) continue;

@@ -188,7 +188,7 @@ describe("D1 integração consola", () => {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             operadorId: "azul",
-            zona: "zn-n04",
+            zona: "0105",
             data: "2026-10-27",
             janelaInicio: "08:00",
             janelaFim: "13:00",

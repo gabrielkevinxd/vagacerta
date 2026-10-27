@@ -484,7 +484,7 @@ describe("cobertura de tradução: consola de integração, agente e histórico"
       operadorId: "azul",
       referencia: ref,
       area: "Braga",
-      zonaId: "zn-n01",
+      zonaId: "0303",
       categoria: "instalacao",
       tecnologia: null,
       data: dia,

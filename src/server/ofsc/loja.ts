@@ -89,7 +89,7 @@ export function guardarAtividade(operadorId: OperadorOfsc, atividade: AtividadeO
       atividade.activityType,
       atividade.technology,
       atividade.city,
-      "zn-n01",
+      "0303",
       atividade.customerName,
       atividade.customerPhone,
       atividade.address,

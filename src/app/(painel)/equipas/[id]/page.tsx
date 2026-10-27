@@ -76,6 +76,17 @@ async function Conteudo({
           <dd>{equipa.areas.join(", ")}</dd>
         </div>
         <div className="md:col-span-2">
+          <dt className="text-muted-foreground">{t("equipas.operadoresServidos")}</dt>
+          <dd className="mt-1 flex flex-wrap gap-1.5">
+            {equipa.operadoresServidos.map((id) => (
+              <EtiquetaOperador key={id} id={id} nome={t(`operador.${id}`)} />
+            ))}
+          </dd>
+          {!central ? (
+            <p className="mt-1 text-[13px]/5 text-muted-foreground">{t("equipas.operadoresServidosSoLeitura")}</p>
+          ) : null}
+        </div>
+        <div className="md:col-span-2">
           <dt className="text-muted-foreground">{t("equipas.competencias")}</dt>
           <dd>
             <ul className="mt-1 space-y-1">
@@ -150,6 +161,7 @@ async function Conteudo({
           horarios={equipa.horarios}
           membros={equipa.membros}
           indisponibilidades={equipa.indisponibilidades}
+          operadoresServidos={equipa.operadoresServidos}
         />
       ) : (
         <>

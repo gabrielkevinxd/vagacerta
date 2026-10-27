@@ -93,6 +93,10 @@ function classificar(
 
 function capaz(equipa: Equipa, consulta: ConsultaVaga): boolean {
   if (!equipa.ativa || !equipa.areas.includes(consulta.area)) return false;
+  const servidos = equipa.operadoresServidos?.length
+    ? equipa.operadoresServidos
+    : equipa.competencias.map((linha) => linha.operadorId);
+  if (!servidos.includes(consulta.operadorId)) return false;
   const competencia = equipa.competencias.find((linha) => linha.operadorId === consulta.operadorId);
   if (!competencia || !competencia.categorias.includes(consulta.categoria)) return false;
   if (consulta.operadorId === "verde") {

@@ -101,6 +101,10 @@ export function equipaCobre(
 ): boolean {
   if (!equipa.ativa) return false;
   if (!equipa.areas.includes(area)) return false;
+  const servidos = equipa.operadoresServidos?.length
+    ? equipa.operadoresServidos
+    : equipa.competencias.map((linha) => linha.operadorId);
+  if (!servidos.includes(operadorId)) return false;
   const competencia = equipa.competencias.find((linha) => linha.operadorId === operadorId);
   if (!competencia || !competencia.categorias.includes(categoria)) return false;
   if (operadorId === "verde") {
@@ -191,11 +195,17 @@ export function marcarOrdem(mundo: Mundo, entrada: EntradaMarcacao, id = `ord-${
     const equipa = mundo.equipas.find((linha) => linha.id === entrada.equipaId);
     if (!equipa) return falha("EQUIPA_DESCONHECIDA", "A equipa não existe.");
     if (!equipa.areas.includes(entrada.area)) return falha("AREA", "A equipa não cobre esta área.");
+    const servidos = equipa.operadoresServidos?.length
+      ? equipa.operadoresServidos
+      : equipa.competencias.map((linha) => linha.operadorId);
+    if (!servidos.includes(entrada.operadorId)) {
+      return falha("OPERADOR_NAO_SERVIDO", "A equipa não serve este operador.");
+    }
     if (!equipaCobre(equipa, entrada.operadorId, entrada.categoria, tecnologia, entrada.area)) {
       return falha("COMPETENCIA", "A equipa não tem competência para este serviço.");
     }
   } else if (capazes.length === 0) {
-    return falha("SEM_EQUIPA", "Nenhuma equipa cobre a área e a competência pedidas.");
+    return falha("SEM_EQUIPA", "Nenhuma equipa cobre a área e serve este operador para o serviço pedido.");
   }
 
   const candidatas = entrada.equipaId ? mundo.equipas.filter((equipa) => equipa.id === entrada.equipaId) : capazes;

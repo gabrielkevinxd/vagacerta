@@ -19,7 +19,7 @@ function nova(parcial: Partial<NovaOrdem> = {}): NovaOrdem {
     operadorId: "azul",
     referencia: `AZ-VAL${String(seq).padStart(3, "0")}-${crypto.randomUUID().slice(0, 6)}`,
     area: "Braga",
-    zonaId: "zn-n01",
+    zonaId: "0303",
     categoria: "instalacao",
     tecnologia: null,
     data: "2034-05-09",
@@ -52,19 +52,19 @@ describe("B3: a zona tem de ser coerente com a área", () => {
   });
 
   it("recusa uma zona que não serve a área, com uma mensagem clara e 400", () => {
-    const erro = falha(() => criarOrdem(central, nova({ area: "Braga", zonaId: "zn-n03" })));
+    const erro = falha(() => criarOrdem(central, nova({ area: "Braga", zonaId: "1714" })));
     expect(erro.status).toBe(400);
     expect(erro.codigo).toBe("DADOS_INVALIDOS");
     expect(erro.message).toContain("Braga");
-    expect(erro.message).toContain("N03");
-    expect(erro.message).toContain("N01");
+    expect(erro.message).toContain("1714");
+    expect(erro.message).toContain("0303");
   });
 
   it("recusa a combinação incoerente também a um despachante e noutros modos", () => {
     const hoje = new Date();
     hoje.setUTCDate(hoje.getUTCDate() + 2);
     for (const modo of ["agendar", "espera", "pendente"] as const) {
-      const erro = falha(() => criarOrdem(despachanteAzul, nova({ area: "Viseu", zonaId: "zn-n04", modo, data: hoje.toISOString().slice(0, 10) })));
+      const erro = falha(() => criarOrdem(despachanteAzul, nova({ area: "Viseu", zonaId: "0105", modo, data: hoje.toISOString().slice(0, 10) })));
       expect(erro.status).toBe(400);
       expect(erro.message).toContain("Viseu");
     }
@@ -75,29 +75,33 @@ describe("B3: a zona tem de ser coerente com a área", () => {
     expect(erro.status).toBe(400);
   });
 
-  it("aceita as zonas que servem a área (Braga em N01; Chaves em N03 ou em N05)", () => {
-    expect(criarOrdem(central, nova({ area: "Braga", zonaId: "zn-n01" })).zonaId).toBe("zn-n01");
-    expect(criarOrdem(central, nova({ area: "Chaves", zonaId: "zn-n03" })).zonaId).toBe("zn-n03");
-    expect(criarOrdem(central, nova({ area: "Chaves", zonaId: "zn-n05" })).zonaId).toBe("zn-n05");
+  it("aceita as zonas que servem a área (Braga=0303; Chaves via Douro/Barroso)", () => {
+    expect(criarOrdem(central, nova({ area: "Braga", zonaId: "0303" })).zonaId).toBe("0303");
+    expect(criarOrdem(central, nova({ area: "Chaves", zonaId: "1703" })).zonaId).toBe("1703");
+    // Equipas Douro (vigência Vila Real) e Barroso (Montalegre) cobrem Chaves → zonas alternativas
+    expect(zonasDaArea("Chaves")).toEqual(expect.arrayContaining(["1703", "1714", "1706"]));
+    expect(criarOrdem(central, nova({ area: "Chaves", zonaId: "1714" })).zonaId).toBe("1714");
+    expect(criarOrdem(central, nova({ area: "Chaves", zonaId: "1706" })).zonaId).toBe("1706");
   });
 
   it("recusa Chaves na zona de Braga", () => {
-    expect(falha(() => criarOrdem(central, nova({ area: "Chaves", zonaId: "zn-n01" }))).status).toBe(400);
+    expect(falha(() => criarOrdem(central, nova({ area: "Chaves", zonaId: "0303" }))).status).toBe(400);
   });
 
   it("a mensagem traduz-se para inglês com a zona e a área", () => {
-    const erro = falha(() => criarOrdem(central, nova({ area: "Braga", zonaId: "zn-n03" })));
+    const erro = falha(() => criarOrdem(central, nova({ area: "Braga", zonaId: "1714" })));
     const emIngles = traduzirMensagem(mensagensDe("en"), erro.message, erro.codigo);
     expect(emIngles).not.toBe(erro.message);
     expect(emIngles).toContain("Braga");
-    expect(emIngles).toContain("N03");
+    expect(emIngles).toContain("1714");
     expect(emIngles).toMatch(/zone/i);
   });
 
   it("a primeira zona de cada área é a predefinida do formulário, e todas as ordens da semente são coerentes", () => {
-    expect(zonasDaArea("Braga")[0]).toBe("zn-n01");
-    expect(zonasDaArea("Guimarães")).toContain("zn-n06");
-    expect(zonasDaArea("Aveiro")).toEqual(["zn-n04"]);
+    expect(zonasDaArea("Braga")[0]).toBe("0303");
+    expect(zonasDaArea("Guimarães")).toContain("0308");
+    expect(zonasDaArea("Aveiro")[0]).toBe("0105");
+    expect(zonasDaArea("Aveiro")).toContain("0105");
     for (const ordem of lerMundo().ordens) {
       expect(zonasDaArea(ordem.area), `${ordem.referencia}: ${ordem.area} / ${ordem.zonaId}`).toContain(ordem.zonaId);
     }

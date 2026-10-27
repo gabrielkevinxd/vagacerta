@@ -1,12 +1,16 @@
 import { diaDemonstracao, diaUtilAnterior, diaUtilSeguinte } from "./demonstracao-dia";
 import { recalcularDia } from "./rules/dia";
+import { competenciasDeOperadores, OPERADORES_SERVIDOS_PADRAO } from "./rules/operadores-servidos";
 import { somarDias } from "./rules/tempo";
 import type { Categoria, Equipa, Mundo, OperadorId, Ordem, Papel, Prioridade, Tecnologia } from "./rules/tipos";
+import { DEMO_AREA_PARA_DICOFRE, municipiosComCobertura, regioesPorNuts2 } from "./zonas/catalogo";
 
 /**
  * Tudo o que é datado na semente (as ordens de ontem, do dia rico e de amanhã, a formação da Equipa Cávado,
  * o momento de criação) é relativo ao dia rico, que vem de `diaDemonstracao()` (hoje, ou VC_DEMO_DIA).
  * A história-estrela é a mesma em qualquer dia: só as datas se deslocam.
+ *
+ * Zona = município (DICOFRE). As 7 equipas de demonstração servem os 3 operadores.
  */
 
 export interface RegiaoDemo {
@@ -61,54 +65,47 @@ function diasUteis(inicio: string, fim: string) {
   return [1, 2, 3, 4, 5].map((diaSemana) => ({ diaSemana, inicio, fim }));
 }
 
-function competencia(
-  operadorId: OperadorId,
-  categorias: Categoria[],
-  tecnologias: Tecnologia[] = [],
-): Equipa["competencias"][number] {
-  return { operadorId, categorias, tecnologias };
-}
+const SERVEM_TODOS = [...OPERADORES_SERVIDOS_PADRAO];
+const COMPETENCIAS_TODOS = competenciasDeOperadores(SERVEM_TODOS);
 
-const AZUL = ["instalacao", "suporte", "adicional"] as Categoria[];
-const VERMELHO = ["instalacao", "suporte", "adicional"] as Categoria[];
-const VERDE = ["instalacao", "suporte", "adicional", "desligamento"] as Categoria[];
+function equipaDemo(
+  parcial: Omit<Equipa, "ativa" | "operadoresServidos" | "competencias" | "indisponibilidades"> & {
+    indisponibilidades?: Equipa["indisponibilidades"];
+  },
+): Equipa {
+  return {
+    ...parcial,
+    ativa: true,
+    operadoresServidos: SERVEM_TODOS,
+    competencias: COMPETENCIAS_TODOS,
+    indisponibilidades: parcial.indisponibilidades ?? [],
+  };
+}
 
 export function equipasDemonstracao(dia: string = diaDemonstracao()): Equipa[] {
   return [
-    {
+    equipaDemo({
       id: "eq-minho",
       codigo: "N01-MI",
       nome: "Equipa Minho",
       base: "Braga",
       areas: ["Braga", "Guimarães"],
-      ativa: true,
-      competencias: [
-        competencia("azul", AZUL),
-        competencia("vermelho", VERMELHO),
-        competencia("verde", VERDE, ["FTTH", "CABO", "ALARMES"]),
-      ],
       horarios: diasUteis("08:00", "21:00"),
-      indisponibilidades: [],
-    },
-    {
+    }),
+    equipaDemo({
       id: "eq-ave",
       codigo: "N06-AV",
       nome: "Equipa Ave",
       base: "Guimarães",
       areas: ["Braga", "Guimarães"],
-      ativa: true,
-      competencias: [competencia("azul", AZUL), competencia("vermelho", VERMELHO)],
       horarios: diasUteis("08:00", "20:00"),
-      indisponibilidades: [],
-    },
-    {
+    }),
+    equipaDemo({
       id: "eq-cavado",
       codigo: "N02-CA",
       nome: "Equipa Cávado",
       base: "Barcelos",
       areas: ["Barcelos", "Esposende", "Braga"],
-      ativa: true,
-      competencias: [competencia("azul", AZUL), competencia("vermelho", VERMELHO)],
       horarios: diasUteis("08:00", "18:00"),
       indisponibilidades: [
         {
@@ -119,66 +116,44 @@ export function equipasDemonstracao(dia: string = diaDemonstracao()): Equipa[] {
           motivo: "Formação de segurança",
         },
       ],
-    },
-    {
+    }),
+    equipaDemo({
       id: "eq-douro",
       codigo: "N03-DO",
       nome: "Equipa Douro",
       base: "Vila Real",
       areas: ["Vila Real", "Chaves", "Vila Pouca de Aguiar"],
-      ativa: true,
-      competencias: [
-        competencia("azul", AZUL),
-        competencia("vermelho", VERMELHO),
-        competencia("verde", ["instalacao", "suporte", "adicional"], ["FTTH", "DTH", "SEA"]),
-      ],
       horarios: diasUteis("08:00", "20:00"),
-      indisponibilidades: [],
-    },
-    {
+    }),
+    equipaDemo({
       id: "eq-beiras",
       codigo: "C01-BE",
       nome: "Equipa Beiras",
       base: "Viseu",
       areas: ["Viseu", "Guarda", "Covilhã"],
-      ativa: true,
-      competencias: [
-        competencia("azul", AZUL),
-        competencia("vermelho", VERMELHO),
-        competencia("verde", VERDE, ["FTTH", "CABO", "DTH", "SEA", "ALARMES"]),
-      ],
       horarios: diasUteis("08:00", "22:00"),
-      indisponibilidades: [],
-    },
-    {
+    }),
+    equipaDemo({
       id: "eq-litoral",
       codigo: "N04-LI",
       nome: "Equipa Litoral",
       base: "Aveiro",
       areas: ["Aveiro", "Águeda", "Oliveira de Azeméis"],
-      ativa: true,
-      competencias: [
-        competencia("azul", AZUL),
-        competencia("verde", VERDE, ["FTTH", "CABO", "ALARMES"]),
-      ],
       horarios: diasUteis("09:00", "18:00"),
-      indisponibilidades: [],
-    },
-    {
+    }),
+    equipaDemo({
       id: "eq-barroso",
       codigo: "N05-BA",
       nome: "Equipa Barroso",
       base: "Montalegre",
       areas: ["Chaves", "Boticas", "Montalegre"],
-      ativa: true,
-      competencias: [
-        competencia("vermelho", VERMELHO),
-        competencia("verde", ["instalacao", "suporte", "adicional"], ["FTTH", "DTH"]),
-      ],
       horarios: diasUteis("08:30", "17:30"),
-      indisponibilidades: [],
-    },
+    }),
   ];
+}
+
+function zonaArea(area: string): string {
+  return DEMO_AREA_PARA_DICOFRE[area] ?? "0303";
 }
 
 interface Rascunho {
@@ -223,7 +198,6 @@ function ordensIniciais(dia: string): Ordem[] {
     operadorId: OperadorId,
     referencia: string,
     area: string,
-    zonaId: string,
     equipaId: string | null,
     categoria: Categoria,
     tecnologia: Tecnologia | null,
@@ -242,7 +216,7 @@ function ordensIniciais(dia: string): Ordem[] {
       operadorId,
       referencia,
       area,
-      zonaId,
+      zonaId: zonaArea(area),
       equipaId,
       categoria,
       tecnologia,
@@ -259,40 +233,40 @@ function ordensIniciais(dia: string): Ordem[] {
     };
   };
   const linhas: Rascunho[] = [
-    linha("ord-az-26001", "azul", "AZ-26001", "Guimarães", "zn-n06", "eq-minho", "suporte", null, ontem, "08:00", "12:30", 45, "media", "agendada", "Rita Bonifácio", ""),
-    linha("ord-vr-26002", "vermelho", "VR-26002", "Barcelos", "zn-n02", "eq-cavado", "suporte", null, ontem, "09:00", "11:00", 100, "media", "agendada", "Vasco Leme", ""),
-    linha("ord-az-26003", "azul", "AZ-26003", "Vila Real", "zn-n03", "eq-douro", "instalacao", null, ontem, "10:00", "12:00", 180, "alta", "agendada", "Hélder Moutinho", ""),
-    linha("ord-vd-26004", "verde", "VD-26004", "Viseu", "zn-c01", "eq-beiras", "suporte", "FTTH", ontem, "13:00", "18:00", 40, "baixa", "agendada", "Catarina Seixas", "Visita já executada na demonstração."),
-    linha("ord-az-26005", "azul", "AZ-26005", "Águeda", "zn-n04", "eq-litoral", "suporte", null, ontem, "14:00", "17:30", 45, "alta", "agendada", "Nuno Guedelha", "O técnico marcou a visita como em curso."),
-    linha("ord-vr-26006", "vermelho", "VR-26006", "Chaves", "zn-n05", "eq-barroso", "adicional", null, ontem, "08:30", "13:00", 60, "baixa", "agendada", "Sara Vinagre", ""),
-    linha("ord-az-26007", "azul", "AZ-26007", "Guimarães", "zn-n06", "eq-ave", "adicional", null, ontem, "14:00", "18:00", 60, "media", "agendada", "Miguel Pestana", ""),
+    linha("ord-az-26001", "azul", "AZ-26001", "Guimarães",  "eq-minho", "suporte", null, ontem, "08:00", "12:30", 45, "media", "agendada", "Rita Bonifácio", ""),
+    linha("ord-vr-26002", "vermelho", "VR-26002", "Barcelos",  "eq-cavado", "suporte", null, ontem, "09:00", "11:00", 100, "media", "agendada", "Vasco Leme", ""),
+    linha("ord-az-26003", "azul", "AZ-26003", "Vila Real",  "eq-douro", "instalacao", null, ontem, "10:00", "12:00", 180, "alta", "agendada", "Hélder Moutinho", ""),
+    linha("ord-vd-26004", "verde", "VD-26004", "Viseu",  "eq-beiras", "suporte", "FTTH", ontem, "13:00", "18:00", 40, "baixa", "agendada", "Catarina Seixas", "Visita já executada na demonstração."),
+    linha("ord-az-26005", "azul", "AZ-26005", "Águeda",  "eq-litoral", "suporte", null, ontem, "14:00", "17:30", 45, "alta", "agendada", "Nuno Guedelha", "O técnico marcou a visita como em curso."),
+    linha("ord-vr-26006", "vermelho", "VR-26006", "Chaves",  "eq-barroso", "adicional", null, ontem, "08:30", "13:00", 60, "baixa", "agendada", "Sara Vinagre", ""),
+    linha("ord-az-26007", "azul", "AZ-26007", "Guimarães",  "eq-ave", "adicional", null, ontem, "14:00", "18:00", 60, "media", "agendada", "Miguel Pestana", ""),
 
-    linha("ord-az-24081", "azul", "AZ-24081", "Braga", "zn-n01", "eq-minho", "instalacao", null, dia, "10:00", "12:00", 180, "alta", "agendada", "Leonor Campos", "Instalação de 3 h. Começar às 10:00 ocupa a equipa até às 13:00."),
-    linha("ord-vr-90001", "vermelho", "VR-90001", "Braga", "zn-n01", "eq-minho", "instalacao", null, dia, "09:00", "12:00", 155, "alta", "agendada", "Duarte Pimentel", "Cabe com a instalação azul se o início desta deslizar dentro da janela."),
-    linha("ord-az-24120", "azul", "AZ-24120", "Barcelos", "zn-n02", "eq-cavado", "instalacao", null, dia, "08:00", "10:00", 180, "media", "agendada", "Ana Roriz", ""),
-    linha("ord-vr-88350", "vermelho", "VR-88350", "Barcelos", "zn-n02", "eq-cavado", "adicional", null, dia, "14:00", "18:00", 60, "baixa", "agendada", "Paulo Gameiro", "A formação das 12:00 às 14:00 impede encaixar aqui a instalação das 09:00."),
-    linha("ord-vr-88311", "vermelho", "VR-88311", "Vila Real", "zn-n03", "eq-douro", "instalacao", null, dia, "09:00", "12:00", 155, "media", "agendada", "Filipa Sardo", ""),
-    linha("ord-vd-55210", "verde", "VD-55210", "Vila Real", "zn-n03", "eq-douro", "instalacao", "FTTH", dia, "13:00", "18:00", 130, "media", "agendada", "Gonçalo Bentes", ""),
-    linha("ord-az-24090", "azul", "AZ-24090", "Vila Real", "zn-n03", "eq-douro", "suporte", null, dia, "14:00", "17:30", 45, "alta", "agendada", "Nádia Calçada", ""),
-    linha("ord-az-24102", "azul", "AZ-24102", "Viseu", "zn-c01", "eq-beiras", "instalacao", null, dia, "08:00", "10:00", 180, "media", "agendada", "Tiago Furtado", ""),
-    linha("ord-vr-88340", "vermelho", "VR-88340", "Viseu", "zn-c01", "eq-beiras", "suporte", null, dia, "11:00", "13:00", 100, "media", "agendada", "Inês Valadares", ""),
-    linha("ord-vd-55240", "verde", "VD-55240", "Guarda", "zn-c01", "eq-beiras", "suporte", "CABO", dia, "13:00", "18:00", 40, "baixa", "agendada", "Martim Coelho", ""),
-    linha("ord-az-24110", "azul", "AZ-24110", "Covilhã", "zn-c01", "eq-beiras", "adicional", null, dia, "17:00", "19:00", 60, "baixa", "agendada", "Olívia Branco", ""),
-    linha("ord-vd-55280", "verde", "VD-55280", "Aveiro", "zn-n04", "eq-litoral", "instalacao", "ALARMES", dia, "08:00", "13:00", 150, "alta", "agendada", "Diogo Lameira", ""),
-    linha("ord-az-24140", "azul", "AZ-24140", "Águeda", "zn-n04", "eq-litoral", "suporte", null, dia, "14:00", "17:30", 45, "media", "agendada", "Helena Pires", ""),
-    linha("ord-vr-88390", "vermelho", "VR-88390", "Chaves", "zn-n05", "eq-barroso", "suporte", null, dia, "09:00", "11:00", 100, "media", "agendada", "Rui Taborda", ""),
-    linha("ord-vd-55300", "verde", "VD-55300", "Chaves", "zn-n05", "eq-barroso", "instalacao", "DTH", dia, "13:00", "18:00", 90, "baixa", "agendada", "Clara Dinis", ""),
-    linha("ord-az-27020", "azul", "AZ-27020", "Guimarães", "zn-n06", "eq-ave", "adicional", null, dia, "14:00", "18:00", 60, "baixa", "agendada", "Simão Leal", "A manhã fica livre para receber uma instalação vinda da Equipa Minho."),
+    linha("ord-az-24081", "azul", "AZ-24081", "Braga",  "eq-minho", "instalacao", null, dia, "10:00", "12:00", 180, "alta", "agendada", "Leonor Campos", "Instalação de 3 h. Começar às 10:00 ocupa a equipa até às 13:00."),
+    linha("ord-vr-90001", "vermelho", "VR-90001", "Braga",  "eq-minho", "instalacao", null, dia, "09:00", "12:00", 155, "alta", "agendada", "Duarte Pimentel", "Cabe com a instalação azul se o início desta deslizar dentro da janela."),
+    linha("ord-az-24120", "azul", "AZ-24120", "Barcelos",  "eq-cavado", "instalacao", null, dia, "08:00", "10:00", 180, "media", "agendada", "Ana Roriz", ""),
+    linha("ord-vr-88350", "vermelho", "VR-88350", "Barcelos",  "eq-cavado", "adicional", null, dia, "14:00", "18:00", 60, "baixa", "agendada", "Paulo Gameiro", "A formação das 12:00 às 14:00 impede encaixar aqui a instalação das 09:00."),
+    linha("ord-vr-88311", "vermelho", "VR-88311", "Vila Real",  "eq-douro", "instalacao", null, dia, "09:00", "12:00", 155, "media", "agendada", "Filipa Sardo", ""),
+    linha("ord-vd-55210", "verde", "VD-55210", "Vila Real",  "eq-douro", "instalacao", "FTTH", dia, "13:00", "18:00", 130, "media", "agendada", "Gonçalo Bentes", ""),
+    linha("ord-az-24090", "azul", "AZ-24090", "Vila Real",  "eq-douro", "suporte", null, dia, "14:00", "17:30", 45, "alta", "agendada", "Nádia Calçada", ""),
+    linha("ord-az-24102", "azul", "AZ-24102", "Viseu",  "eq-beiras", "instalacao", null, dia, "08:00", "10:00", 180, "media", "agendada", "Tiago Furtado", ""),
+    linha("ord-vr-88340", "vermelho", "VR-88340", "Viseu",  "eq-beiras", "suporte", null, dia, "11:00", "13:00", 100, "media", "agendada", "Inês Valadares", ""),
+    linha("ord-vd-55240", "verde", "VD-55240", "Guarda",  "eq-beiras", "suporte", "CABO", dia, "13:00", "18:00", 40, "baixa", "agendada", "Martim Coelho", ""),
+    linha("ord-az-24110", "azul", "AZ-24110", "Covilhã",  "eq-beiras", "adicional", null, dia, "17:00", "19:00", 60, "baixa", "agendada", "Olívia Branco", ""),
+    linha("ord-vd-55280", "verde", "VD-55280", "Aveiro",  "eq-litoral", "instalacao", "ALARMES", dia, "08:00", "13:00", 150, "alta", "agendada", "Diogo Lameira", ""),
+    linha("ord-az-24140", "azul", "AZ-24140", "Águeda",  "eq-litoral", "suporte", null, dia, "14:00", "17:30", 45, "media", "agendada", "Helena Pires", ""),
+    linha("ord-vr-88390", "vermelho", "VR-88390", "Chaves",  "eq-barroso", "suporte", null, dia, "09:00", "11:00", 100, "media", "agendada", "Rui Taborda", ""),
+    linha("ord-vd-55300", "verde", "VD-55300", "Chaves",  "eq-barroso", "instalacao", "DTH", dia, "13:00", "18:00", 90, "baixa", "agendada", "Clara Dinis", ""),
+    linha("ord-az-27020", "azul", "AZ-27020", "Guimarães",  "eq-ave", "adicional", null, dia, "14:00", "18:00", 60, "baixa", "agendada", "Simão Leal", "A manhã fica livre para receber uma instalação vinda da Equipa Minho."),
 
-    linha("ord-az-24160", "azul", "AZ-24160", "Guimarães", "zn-n06", "eq-minho", "suporte", null, amanha, "08:00", "12:30", 45, "media", "agendada", "Matilde Noronha", ""),
-    linha("ord-vr-88420", "vermelho", "VR-88420", "Guimarães", "zn-n06", "eq-minho", "instalacao", null, amanha, "14:00", "17:00", 155, "media", "agendada", "Afonso Ribeiro", ""),
+    linha("ord-az-24160", "azul", "AZ-24160", "Guimarães",  "eq-minho", "suporte", null, amanha, "08:00", "12:30", 45, "media", "agendada", "Matilde Noronha", ""),
+    linha("ord-vr-88420", "vermelho", "VR-88420", "Guimarães",  "eq-minho", "instalacao", null, amanha, "14:00", "17:00", 155, "media", "agendada", "Afonso Ribeiro", ""),
 
-    linha("ord-vd-urg", "verde", "VD-URG", "Braga", "zn-n01", null, "instalacao", "FTTH", dia, "08:00", "13:00", 130, "alta", "em_espera", "Matilde Queirós", "Não cabe na Equipa Minho enquanto a instalação azul e a vermelha dividem o dia."),
-    linha("ord-vr-fila-01", "vermelho", "VR-FILA-01", "Chaves", "zn-n05", null, "instalacao", null, dia, "14:00", "17:00", 155, "media", "em_espera", "Lourenço Paiva", "À espera de um intervalo na Equipa Barroso."),
-    linha("ord-az-fila-01", "azul", "AZ-FILA-01", "Guarda", "zn-c01", null, "adicional", null, dia, "19:00", "21:00", 60, "baixa", "em_espera", "Diana Falcão", "Trabalho adicional, sem urgência."),
-    linha("ord-vd-fila-01", "verde", "VD-FILA-01", "Aveiro", "zn-n04", null, "suporte", "FTTH", dia, "13:00", "18:00", 40, "media", "em_espera", "Ivo Salgado", "A Equipa Litoral já tem alarmes de manhã."),
-    linha("ord-az-pend-01", "azul", "AZ-PEND-01", "Braga", "zn-n01", null, "instalacao", null, dia, "13:00", "15:00", 180, "media", "pendente", "Teresa Malhoa", "Registada pelo despachante, ainda sem tentativa de encaixe."),
-    linha("ord-vr-canc-01", "vermelho", "VR-CANC-01", "Braga", "zn-n01", "eq-minho", "suporte", null, dia, "16:00", "18:00", 100, "baixa", "cancelada", "Eduardo Vilar", ""),
+    linha("ord-vd-urg", "verde", "VD-URG", "Braga",  null, "instalacao", "FTTH", dia, "08:00", "13:00", 130, "alta", "em_espera", "Matilde Queirós", "Não cabe na Equipa Minho enquanto a instalação azul e a vermelha dividem o dia."),
+    linha("ord-vr-fila-01", "vermelho", "VR-FILA-01", "Chaves",  null, "instalacao", null, dia, "14:00", "17:00", 155, "media", "em_espera", "Lourenço Paiva", "À espera de um intervalo na Equipa Barroso."),
+    linha("ord-az-fila-01", "azul", "AZ-FILA-01", "Guarda",  null, "adicional", null, dia, "19:00", "21:00", 60, "baixa", "em_espera", "Diana Falcão", "Trabalho adicional, sem urgência."),
+    linha("ord-vd-fila-01", "verde", "VD-FILA-01", "Aveiro",  null, "suporte", "FTTH", dia, "13:00", "18:00", 40, "media", "em_espera", "Ivo Salgado", "A Equipa Litoral já tem alarmes de manhã."),
+    linha("ord-az-pend-01", "azul", "AZ-PEND-01", "Braga",  null, "instalacao", null, dia, "13:00", "15:00", 180, "media", "pendente", "Teresa Malhoa", "Registada pelo despachante, ainda sem tentativa de encaixe."),
+    linha("ord-vr-canc-01", "vermelho", "VR-CANC-01", "Braga",  "eq-minho", "suporte", null, dia, "16:00", "18:00", 100, "baixa", "cancelada", "Eduardo Vilar", ""),
   ];
   return linhas.map(rascunho);
 }
@@ -327,22 +301,18 @@ export function criarMundoDemonstracao(dia: string = diaDemonstracao()): Mundo {
 }
 
 export function regioesDemonstracao(): RegiaoDemo[] {
-  return [
-    { id: "rg-norte", nome: "Norte" },
-    { id: "rg-centro", nome: "Centro" },
-  ];
+  return regioesPorNuts2();
 }
 
+/** Zona = município (DICOFRE) com cobertura catalogada. */
 export function zonasDemonstracao(): ZonaDemo[] {
-  return [
-    { id: "zn-n01", regiaoId: "rg-norte", codigo: "N01", nome: "Braga" },
-    { id: "zn-n02", regiaoId: "rg-norte", codigo: "N02", nome: "Cávado" },
-    { id: "zn-n03", regiaoId: "rg-norte", codigo: "N03", nome: "Douro" },
-    { id: "zn-n04", regiaoId: "rg-norte", codigo: "N04", nome: "Litoral" },
-    { id: "zn-n05", regiaoId: "rg-norte", codigo: "N05", nome: "Barroso" },
-    { id: "zn-n06", regiaoId: "rg-norte", codigo: "N06", nome: "Guimarães" },
-    { id: "zn-c01", regiaoId: "rg-centro", codigo: "C01", nome: "Beiras" },
-  ];
+  const regioes = new Map(regioesPorNuts2().map((r) => [r.nome, r.id]));
+  return municipiosComCobertura().map((m) => ({
+    id: m.dicofre,
+    regiaoId: regioes.get(m.nuts2) ?? "rg-norte",
+    codigo: m.dicofre,
+    nome: m.nome,
+  }));
 }
 
 export function ccosDemonstracao(): CcoDemo[] {
@@ -364,19 +334,19 @@ export const EQUIPA_CCO: Record<string, string> = {
 };
 
 export function vigenciasDemonstracao(dia: string = diaDemonstracao()): VigenciaDemo[] {
+  const zonaBase: Record<string, string> = {
+    "eq-minho": "0303",
+    "eq-ave": "0308",
+    "eq-cavado": "0302",
+    "eq-douro": "1714",
+    "eq-litoral": "0105",
+    "eq-barroso": "1706",
+    "eq-beiras": "1823",
+  };
   return equipasDemonstracao(dia).map((equipa) => ({
     id: `vig-${equipa.id}`,
     equipaId: equipa.id,
-    zonaId:
-      {
-        "eq-minho": "zn-n01",
-        "eq-ave": "zn-n06",
-        "eq-cavado": "zn-n02",
-        "eq-douro": "zn-n03",
-        "eq-litoral": "zn-n04",
-        "eq-barroso": "zn-n05",
-        "eq-beiras": "zn-c01",
-      }[equipa.id] ?? "zn-n01",
+    zonaId: zonaBase[equipa.id] ?? zonaArea(equipa.base),
     // Em vigor desde há um ano: cobre o dia rico, os dias de ontem e de amanhã e os cenários dos dias seguintes.
     inicio: somarDias(dia, -365),
     fim: null,

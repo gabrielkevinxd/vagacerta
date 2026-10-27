@@ -1,20 +1,12 @@
-/** Localidades de demonstração. A área da ordem tem de ser uma destas. */
-export const AREAS = [
-  "Braga",
-  "Guimarães",
-  "Barcelos",
-  "Esposende",
-  "Vila Real",
-  "Chaves",
-  "Vila Pouca de Aguiar",
-  "Viseu",
-  "Guarda",
-  "Covilhã",
-  "Aveiro",
-  "Águeda",
-  "Oliveira de Azeméis",
-  "Boticas",
-  "Montalegre",
-] as const;
+import { nomesAreasCobertura } from "@/lib/zonas/catalogo";
+
+/**
+ * Localidades válidas para área de ordem/equipa: os 92 municípios com cobertura
+ * catalogada (RNG Norte + Alentejo/Algarve + demo-seed).
+ */
+export const AREAS = nomesAreasCobertura() as unknown as readonly [
+  string,
+  ...string[],
+];
 
 export type Area = (typeof AREAS)[number];
