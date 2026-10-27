@@ -149,6 +149,8 @@ const POR_TEXTO: Record<string, Chave> = {
   "A equipa tem de servir pelo menos um operador.": "motor.operadoresServidosMin",
   "A equipa não pode servir mais do que os três operadores.": "motor.operadoresServidosMax",
   "O intervalo já foi reservado por outro operador.": "motor.slotOcupado",
+  "O intervalo deixou de estar livre nesta equipa.": "motor.slotOcupadoIntervalo",
+  "Não pode deixar de servir operador(es) com ordens futuras nesta equipa.": "motor.operadorComOrdens",
   "A equipa não trabalha nesse dia.": "motor.equipaNaoTrabalha",
   "Nenhuma sequência de inícios respeita as janelas prometidas.": "motor.semSequencia",
   "Não encontrámos a ordem.": "motor.ordemNaoEncontrada",
@@ -206,9 +208,19 @@ const PADROES: Padrao[] = [
   { re: /^Este operador só marca até ([^.]+)\.$/, chave: "erros.HORIZONTE", nomes: ["limite"] },
   { re: /^A zona ([^.]+) não corresponde à área ([^.]+)\. Zonas possíveis: ([^.]+)\.$/, chave: "erros.zonaArea", nomes: ["zona", "area", "possiveis"] },
   {
+    re: /^Não pode deixar de servir operador\(es\) com ordens futuras nesta equipa\.$/,
+    chave: "motor.operadorComOrdens",
+    nomes: [],
+  },
+  {
     re: /^Não pode deixar de servir operador\(es\) com ordens futuras nesta equipa: (.+)\.$/,
     chave: "motor.operadorComOrdens",
     nomes: ["lista"],
+  },
+  {
+    re: /^O intervalo deixou de estar livre nesta equipa\.$/,
+    chave: "motor.slotOcupadoIntervalo",
+    nomes: [],
   },
   {
     re: /^O intervalo já foi reservado por outro operador\. Alternativa: (.+)\.$/,

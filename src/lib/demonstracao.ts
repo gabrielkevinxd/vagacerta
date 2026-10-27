@@ -1,7 +1,7 @@
 import { diaDemonstracao, diaUtilAnterior, diaUtilSeguinte } from "./demonstracao-dia";
 import { recalcularDia } from "./rules/dia";
 import { competenciasDeOperadores, OPERADORES_SERVIDOS_PADRAO } from "./rules/operadores-servidos";
-import { somarDias } from "./rules/tempo";
+import { hojeLisboa, somarDias } from "./rules/tempo";
 import type { Categoria, Equipa, Mundo, OperadorId, Ordem, Papel, Prioridade, Tecnologia } from "./rules/tipos";
 import { DEMO_AREA_PARA_DICOFRE, municipiosComCobertura, regioesPorNuts2 } from "./zonas/catalogo";
 
@@ -343,12 +343,13 @@ export function vigenciasDemonstracao(dia: string = diaDemonstracao()): Vigencia
     "eq-barroso": "1706",
     "eq-beiras": "1823",
   };
+  // Âncora = min(hoje, dia rico) para a vigência cobrir tanto o calendário real como o dia da demo.
+  const ancora = hojeLisboa() <= dia ? hojeLisboa() : dia;
   return equipasDemonstracao(dia).map((equipa) => ({
     id: `vig-${equipa.id}`,
     equipaId: equipa.id,
     zonaId: zonaBase[equipa.id] ?? zonaArea(equipa.base),
-    // Em vigor desde há um ano: cobre o dia rico, os dias de ontem e de amanhã e os cenários dos dias seguintes.
-    inicio: somarDias(dia, -365),
+    inicio: somarDias(ancora, -365),
     fim: null,
   }));
 }

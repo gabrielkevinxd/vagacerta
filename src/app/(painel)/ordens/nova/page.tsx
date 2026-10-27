@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { um } from "@/lib/consulta-pagina";
 import { JANELAS_INICIO } from "@/lib/rules";
 import { Carregamento } from "@/components/carregamento";
 import { FormularioOrdem } from "@/components/formulario-ordem";
@@ -8,7 +9,7 @@ import { diaDemonstracaoAtual } from "@/server/db";
 import { exigirAtorPagina } from "@/server/sessao";
 import { listarZonas } from "@/server/servicos";
 
-async function Conteudo() {
+async function Conteudo({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { t } = await i18nPedido();
   const ator = await exigirAtorPagina();
   if (ator.papel === "tecnico") {
@@ -21,7 +22,13 @@ async function Conteudo() {
       />
     );
   }
+  const consulta = await searchParams;
   const zonas = listarZonas();
+  const equipaId = um(consulta.equipaId) ?? null;
+  const area = um(consulta.area) ?? undefined;
+  const zonaId = um(consulta.zonaId) ?? undefined;
+  const inicio = um(consulta.inicio) ?? undefined;
+  const fim = um(consulta.fim) ?? undefined;
   return (
     <div className="space-y-5">
       <div>
@@ -32,16 +39,20 @@ async function Conteudo() {
         operadorFixo={ator.papel === "despachante" ? ator.operadorId : null}
         zonas={zonas}
         janelas={JANELAS_INICIO}
-        dataInicial={diaDemonstracaoAtual()}
+        dataInicial={um(consulta.data) ?? diaDemonstracaoAtual()}
+        equipaIdInicial={equipaId}
+        areaInicial={area}
+        zonaIdInicial={zonaId}
+        janelaInicial={inicio && fim ? { inicio, fim } : undefined}
       />
     </div>
   );
 }
 
-export default function Pagina() {
+export default function Pagina({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   return (
     <Suspense fallback={<Carregamento />}>
-      <Conteudo />
+      <Conteudo searchParams={searchParams} />
     </Suspense>
   );
 }

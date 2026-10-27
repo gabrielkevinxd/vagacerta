@@ -54,6 +54,7 @@ import {
 import {
   baseDados,
   definirMargem,
+  diaDemonstracaoAtual,
   lerMundo,
   ordemDeLinha,
   registarAuditoria,
@@ -325,15 +326,21 @@ function validarDataOperador(ator: Ator, operadorId: string, data: string): void
   }
 }
 
-function mensagemComAlternativa(codigo: string, mensagem: string, alternativa: string | null): string {
-  if (!alternativa) return mensagem;
-  if (codigo === "INVIAVEL" || codigo === "SLOT_OCUPADO") {
-    return `${mensagem} Alternativa: ${alternativa}.`;
-  }
-  return mensagem;
+export interface AlternativaReserva {
+  inicio: string;
+  fim: string;
+  equipaId: string;
+  equipa: string;
 }
 
-function alternativaDeReserva(mundo: Mundo, entrada: NovaOrdem): string | null {
+export interface OrdemFuturaDetalhe {
+  id: string;
+  referencia: string;
+  operadorId: OperadorId;
+  data: string;
+}
+
+function alternativaDeReserva(mundo: Mundo, entrada: NovaOrdem): AlternativaReserva | null {
   const publicacao = proporVagas(mundo, {
     operadorId: entrada.operadorId,
     data: entrada.data,
@@ -346,12 +353,43 @@ function alternativaDeReserva(mundo: Mundo, entrada: NovaOrdem): string | null {
     if (janela.estado === "indisponivel") continue;
     const livre = janela.equipas.find((e) => e.estado !== "indisponivel");
     if (!livre) continue;
-    return `${janela.inicio}–${janela.fim} na ${livre.nome}`;
+    return { inicio: janela.inicio, fim: janela.fim, equipaId: livre.equipaId, equipa: livre.nome };
   }
   const mesma = publicacao.janelas.find((j) => j.inicio === entrada.janelaInicio && j.fim === entrada.janelaFim);
   const outraEquipa = mesma?.equipas.find((e) => e.estado !== "indisponivel" && e.equipaId !== entrada.equipaId);
-  if (outraEquipa) return `${entrada.janelaInicio}–${entrada.janelaFim} na ${outraEquipa.nome}`;
+  if (outraEquipa) {
+    return {
+      inicio: entrada.janelaInicio,
+      fim: entrada.janelaFim,
+      equipaId: outraEquipa.equipaId,
+      equipa: outraEquipa.nome,
+    };
+  }
   return null;
+}
+
+function intervaloBloqueadoPorOutroOperador(mundo: Mundo, entrada: NovaOrdem): boolean {
+  const capazes = mundo.equipas.filter((equipa) =>
+    entrada.equipaId ? equipa.id === entrada.equipaId : true,
+  );
+  const candidatas = entrada.equipaId
+    ? capazes
+    : mundo.equipas.filter((equipa) =>
+        equipa.areas.includes(entrada.area) &&
+        (equipa.operadoresServidos?.includes(entrada.operadorId) ??
+          equipa.competencias.some((c) => c.operadorId === entrada.operadorId)),
+      );
+  const pedidoIni = parseHHMM(entrada.janelaInicio);
+  const pedidoFim = parseHHMM(entrada.janelaFim);
+  for (const equipa of candidatas) {
+    for (const ordem of ordensDoDia(mundo, equipa.id, entrada.data)) {
+      if (ordem.operadorId === entrada.operadorId) continue;
+      const ini = parseHHMM(ordem.inicioPlaneado ?? ordem.janelaInicio);
+      const fim = parseHHMM(ordem.fimPlaneado ?? ordem.janelaFim);
+      if (ini < pedidoFim && fim > pedidoIni) return true;
+    }
+  }
+  return false;
 }
 
 export function criarOrdem(ator: Ator, entrada: NovaOrdem): OrdemVista {
@@ -368,16 +406,18 @@ export function criarOrdem(ator: Ator, entrada: NovaOrdem): OrdemVista {
       const antes = lerMundo();
       const resultado = marcarOrdem(antes, { ...entrada, tecnologia: entrada.tecnologia });
       if (!resultado.ok) {
-        const alt = alternativaDeReserva(antes, entrada);
-        throw new ErroHttp(
-          estadoDoMotor(resultado.codigo === "INVIAVEL" ? "SLOT_OCUPADO" : resultado.codigo),
-          resultado.codigo === "INVIAVEL" ? "SLOT_OCUPADO" : resultado.codigo,
-          mensagemComAlternativa(
-            resultado.codigo === "INVIAVEL" ? "SLOT_OCUPADO" : resultado.codigo,
-            resultado.codigo === "INVIAVEL" ? "O intervalo já foi reservado por outro operador." : resultado.mensagem,
-            alt,
-          ),
-        );
+        if (resultado.codigo === "INVIAVEL") {
+          const porOutro = intervaloBloqueadoPorOutroOperador(antes, entrada);
+          const mensagem = porOutro
+            ? "O intervalo já foi reservado por outro operador."
+            : "O intervalo deixou de estar livre nesta equipa.";
+          const alternativa = alternativaDeReserva(antes, entrada);
+          throw new ErroHttp(409, "SLOT_OCUPADO", mensagem, {
+            causa: porOutro ? "outro_operador" : "intervalo",
+            alternativa,
+          });
+        }
+        throw new ErroHttp(estadoDoMotor(resultado.codigo), resultado.codigo, resultado.mensagem);
       }
       aplicarDiferença(ator, antes, resultado.mundo, "A ordem foi marcada.");
       vista = verOrdem(resultado.resultado);
@@ -722,12 +762,17 @@ export function listarZonas(): { id: string; codigo: string; nome: string; regia
   }));
 }
 
-export function listarEquipas(ator: Ator): Omit<EquipaVista, "membros" | "ocupacaoHoje" | "indisponibilidades">[] {
-  const hoje = hojeLisboa();
+export function listarEquipas(
+  ator: Ator,
+  dataRef?: string,
+): (Omit<EquipaVista, "membros" | "ocupacaoHoje" | "indisponibilidades"> & { tecnicos: number })[] {
+  const referencia = dataRef && eDataIso(dataRef) ? dataRef : diaDemonstracaoAtual();
   const db = baseDados();
   const linhas = db
     .prepare(
-      `SELECT e.*, c.nome AS cco FROM equipas e JOIN ccos c ON c.id = e.cco_id ORDER BY e.nome`,
+      `SELECT e.*, c.nome AS cco,
+        (SELECT COUNT(*) FROM tecnicos t WHERE t.equipa_id = e.id AND t.ativo = 1) AS tecnicos
+       FROM equipas e JOIN ccos c ON c.id = e.cco_id ORDER BY e.nome`,
     )
     .all() as Record<string, string | number>[];
   return linhas
@@ -736,7 +781,7 @@ export function listarEquipas(ator: Ator): Omit<EquipaVista, "membros" | "ocupac
       const periodos = db
         .prepare("SELECT id, zona_id AS chave, inicio, fim FROM equipa_zona WHERE equipa_id = ?")
         .all(String(linha.id)) as { id: string; chave: string; inicio: string; fim: string | null }[];
-      const vigente = vigenteEm(periodos, hoje);
+      const vigente = vigenteEm(periodos, referencia);
       const zonaLinha = vigente
         ? (db.prepare("SELECT id, codigo, nome FROM zonas WHERE id = ?").get(vigente.chave) as
             | { id: string; codigo: string; nome: string }
@@ -756,6 +801,7 @@ export function listarEquipas(ator: Ator): Omit<EquipaVista, "membros" | "ocupac
         ativa: Number(linha.ativa) === 1,
         areas: JSON.parse(String(linha.areas)) as string[],
         zona,
+        tecnicos: Number(linha.tecnicos ?? 0),
         competencias: competenciasDe(String(linha.id)),
         operadoresServidos: operadoresServidosDe(String(linha.id)),
         horarios: horariosDe(String(linha.id)),
@@ -791,7 +837,7 @@ function horariosDe(equipaId: string) {
 
 export function obterEquipa(ator: Ator, id: string, data = hojeLisboa()): EquipaVista {
   exigir(podeVerEquipa(ator, id), 404, "NAO_ENCONTRADO", "Não encontrámos esta equipa.");
-  const resumo = listarEquipas(ator).find((equipa) => equipa.id === id);
+  const resumo = listarEquipas(ator, data).find((equipa) => equipa.id === id);
   exigir(Boolean(resumo), 404, "NAO_ENCONTRADO", "Não encontrámos esta equipa.");
   const membros = baseDados()
     .prepare("SELECT id, nome, ativo FROM tecnicos WHERE equipa_id = ? ORDER BY nome")
@@ -814,8 +860,9 @@ export function obterEquipa(ator: Ator, id: string, data = hojeLisboa()): Equipa
     .filter((ordem) => !podeLerOrdem(ator, ordem) && ordem.inicioPlaneado && ordem.fimPlaneado)
     .reduce((soma, ordem) => soma + (parseHHMM(ordem.fimPlaneado!) - parseHHMM(ordem.inicioPlaneado!)), 0);
   const uso = utilizacaoDoDia(mundo, data).find((linha) => linha.equipaId === id);
+  const { tecnicos: _tecnicos, ...resto } = resumo!;
   return {
-    ...resumo!,
+    ...resto,
     membros: membros.map((membro) => ({ id: membro.id, nome: membro.nome, ativo: Number(membro.ativo) === 1 })),
     indisponibilidades,
     ocupacaoHoje: {
@@ -842,37 +889,54 @@ export function guardarEquipa(
   const existe = baseDados().prepare("SELECT id FROM equipas WHERE id = ?").get(id);
   exigir(Boolean(existe), 404, "NAO_ENCONTRADO", "Não encontrámos esta equipa.");
 
+  let competenciasEscrita = campos.competencias;
+  let seguintesOps: OperadorId[] | null = null;
+
   if (campos.operadoresServidos) {
     const validados = validarOperadoresServidos(campos.operadoresServidos);
     if ("ok" in validados) throw new ErroHttp(400, validados.codigo, validados.mensagem);
-    const seguintes = validados;
-    const atuais = operadoresServidosDe(id);
-    const removidos = atuais.filter((op) => !seguintes.includes(op));
-    if (removidos.length > 0) {
-      const hoje = hojeLisboa();
-      const futuras = baseDados()
-        .prepare(
-          `SELECT referencia, operador_id AS operadorId, data FROM ordens
-           WHERE equipa_id = ? AND operador_id IN (${removidos.map(() => "?").join(",")})
-             AND estado IN ('agendada','em_curso','em_espera','pendente')
-             AND data >= ?
-           ORDER BY data, referencia`,
-        )
-        .all(id, ...removidos, hoje) as { referencia: string; operadorId: string; data: string }[];
-      if (futuras.length > 0) {
-        const lista = futuras.map((o) => `${o.referencia} (${o.operadorId}, ${o.data})`).join("; ");
-        throw new ErroHttp(
-          409,
-          "OPERADOR_COM_ORDENS",
-          `Não pode deixar de servir operador(es) com ordens futuras nesta equipa: ${lista}.`,
-        );
-      }
-    }
-    campos.competencias = competenciasDeOperadores(seguintes);
+    seguintesOps = validados;
   }
 
-  transacao(() => {
+  const escrever = () => {
     const db = baseDados();
+    if (seguintesOps) {
+      const atuais = operadoresServidosDe(id);
+      const removidos = atuais.filter((op) => !seguintesOps!.includes(op));
+      if (removidos.length > 0) {
+        const hoje = hojeLisboa();
+        const futuras = db
+          .prepare(
+            `SELECT id, referencia, operador_id AS operadorId, data FROM ordens
+             WHERE equipa_id = ? AND operador_id IN (${removidos.map(() => "?").join(",")})
+               AND estado IN ('agendada','em_curso','em_espera','pendente')
+               AND data >= ?
+             ORDER BY data, referencia`,
+          )
+          .all(id, ...removidos, hoje) as unknown as OrdemFuturaDetalhe[];
+        if (futuras.length > 0) {
+          throw new ErroHttp(
+            409,
+            "OPERADOR_COM_ORDENS",
+            "Não pode deixar de servir operador(es) com ordens futuras nesta equipa.",
+            {
+              remocoes: removidos,
+              ordens: futuras.map((o) => ({
+                id: String(o.id),
+                referencia: String(o.referencia),
+                operadorId: o.operadorId as OperadorId,
+                data: String(o.data),
+              })),
+            },
+          );
+        }
+      }
+      const atuaisComp = competenciasDe(id);
+      const mantidas = atuaisComp.filter((c) => seguintesOps!.includes(c.operadorId));
+      const entrantes = seguintesOps.filter((op) => !atuais.includes(op));
+      competenciasEscrita = [...mantidas, ...competenciasDeOperadores(entrantes)];
+    }
+
     if (campos.ativa !== undefined) db.prepare("UPDATE equipas SET ativa = ? WHERE id = ?").run(campos.ativa ? 1 : 0, id);
     if (campos.areas) {
       exigir(campos.areas.length > 0, 400, "DADOS_INVALIDOS", "A equipa precisa de pelo menos uma área.");
@@ -890,12 +954,12 @@ export function guardarEquipa(
         );
       }
     }
-    if (campos.competencias) {
-      if (campos.competencias.length === 0) {
+    if (competenciasEscrita) {
+      if (competenciasEscrita.length === 0) {
         throw new ErroHttp(400, "OPERADORES_SERVIDOS", "A equipa tem de servir pelo menos um operador.");
       }
       db.prepare("DELETE FROM competencias WHERE equipa_id = ?").run(id);
-      for (const competencia of campos.competencias) {
+      for (const competencia of competenciasEscrita) {
         if (competencia.categorias.length === 0) continue;
         db.prepare("INSERT INTO competencias (equipa_id, operador_id, categorias, tecnologias) VALUES (?, ?, ?, ?)").run(
           id,
@@ -906,7 +970,10 @@ export function guardarEquipa(
       }
     }
     registarAuditoria(ator.id, "equipa", `Equipa ${id} atualizada.`);
-  });
+  };
+
+  if (seguintesOps) transacaoImediata(escrever);
+  else transacao(escrever);
 }
 
 export function mudarZona(

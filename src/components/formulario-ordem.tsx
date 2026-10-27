@@ -3,18 +3,23 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { OctagonX } from "lucide-react";
 import { toast } from "sonner";
 import { AREAS } from "@/lib/rules/areas";
 import { useT } from "@/components/idioma/provedor";
 import { CATEGORIAS, OPERADORES, PRIORIDADES, TECNOLOGIAS, type OperadorId } from "@/lib/rules/tipos";
 import type { PublicacaoVagas } from "@/lib/rules/vagas";
-import { enviar } from "@/lib/cliente";
+import { ErroApi, enviar } from "@/lib/cliente";
+import { Alerta } from "@/components/layout/alerta";
 import { SeletorData } from "@/components/seletor-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { traduzirMensagem } from "@/lib/i18n/motor";
+
+type AlternativaReserva = { inicio: string; fim: string; equipaId: string; equipa: string };
 
 export interface JanelaOpcao {
   operadorId: string;
@@ -60,30 +65,40 @@ export function FormularioOrdem({
   zonas,
   janelas,
   dataInicial,
+  equipaIdInicial = null,
+  areaInicial,
+  zonaIdInicial,
+  janelaInicial,
 }: {
   operadorFixo: OperadorId | null;
   zonas: { id: string; codigo: string; nome: string }[];
   janelas: JanelaOpcao[];
   dataInicial: string;
+  equipaIdInicial?: string | null;
+  areaInicial?: string;
+  zonaIdInicial?: string;
+  janelaInicial?: { inicio: string; fim: string };
 }) {
-  const { t } = useT();
+  const { t, m } = useT();
   const router = useRouter();
   const [operadorId, setOperadorId] = useState<OperadorId>(operadorFixo ?? "azul");
   const [categoria, setCategoria] = useState<(typeof CATEGORIAS)[number]>("instalacao");
   const [tecnologia, setTecnologia] = useState<string>("FTTH");
   const inicial = useMemo(
     () =>
+      janelaInicial ??
       primeiraJanela(
         janelas.filter(
           (linha) => linha.operadorId === (operadorFixo ?? "azul") && (linha.categoria === "instalacao" || linha.categoria === "qualquer"),
         ),
       ),
-    [janelas, operadorFixo],
+    [janelas, operadorFixo, janelaInicial],
   );
   const [janelaInicio, setJanelaInicio] = useState(inicial.inicio);
   const [janelaFim, setJanelaFim] = useState(inicial.fim);
-  const [area, setArea] = useState<string>(AREAS[0]);
-  const [zonaId, setZonaId] = useState(zonas[0]?.id ?? "");
+  const [area, setArea] = useState<string>(areaInicial && (AREAS as readonly string[]).includes(areaInicial) ? areaInicial : AREAS[0]);
+  const [zonaId, setZonaId] = useState(zonaIdInicial && zonas.some((z) => z.id === zonaIdInicial) ? zonaIdInicial : (zonas[0]?.id ?? ""));
+  const [equipaId, setEquipaId] = useState<string | null>(equipaIdInicial);
   const [prioridade, setPrioridade] = useState("media");
   const [modo, setModo] = useState("agendar");
   const [data, setData] = useState(dataInicial);
@@ -93,6 +108,7 @@ export function FormularioOrdem({
   const [referencia, setReferencia] = useState("");
   const [errosCampo, setErrosCampo] = useState<ErrosCampo>({});
   const [erro, setErro] = useState<string | null>(null);
+  const [alternativa, setAlternativa] = useState<AlternativaReserva | null>(null);
   const [aGuardar, setAGuardar] = useState(false);
   const [vagas, setVagas] = useState<PublicacaoVagas | null>(null);
 
@@ -154,6 +170,7 @@ export function FormularioOrdem({
     const dados = new FormData(evento.currentTarget);
     setAGuardar(true);
     setErro(null);
+    setAlternativa(null);
     try {
       const criada = await enviar<{ id: string }>("/api/ordens", {
         operadorId,
@@ -170,6 +187,7 @@ export function FormularioOrdem({
         clienteContacto: clienteContacto.trim(),
         morada: morada.trim(),
         nota: String(dados.get("nota") ?? ""),
+        equipaId,
         modo,
       });
       toast(t("toast.ordemCriada", { ref: referencia.trim() || criada.id }), {
@@ -178,7 +196,21 @@ export function FormularioOrdem({
       router.push(`/ordens/${criada.id}`);
       router.refresh();
     } catch (falha) {
-      setErro(falha instanceof Error ? falha.message : t("comum.pedidoFalhou"));
+      if (falha instanceof ErroApi && falha.codigo === "SLOT_OCUPADO") {
+        const detalhes = falha.detalhes as { causa?: string; alternativa?: AlternativaReserva | null } | undefined;
+        const mensagemBase =
+          detalhes?.causa === "intervalo" ? t("motor.slotOcupadoIntervalo") : t("motor.slotOcupado");
+        const alt = detalhes?.alternativa ?? null;
+        setAlternativa(alt);
+        setErro(
+          alt
+            ? `${mensagemBase} ${t("motor.alternativa", { inicio: alt.inicio, fim: alt.fim, equipa: alt.equipa })}.`
+            : mensagemBase,
+        );
+      } else {
+        const texto = falha instanceof Error ? falha.message : "";
+        setErro(traduzirMensagem(m, texto) || t("comum.pedidoFalhou"));
+      }
     } finally {
       setAGuardar(false);
     }
@@ -432,9 +464,31 @@ export function FormularioOrdem({
       </section>
 
       {erro ? (
-        <p role="alert" className="text-[13px]/5 text-destructive">
-          {erro}
-        </p>
+        <Alerta tom="erro" role="alert">
+          <div className="flex items-start gap-2">
+            <OctagonX className="mt-0.5 size-4 shrink-0" strokeWidth={1.75} aria-hidden />
+            <div className="space-y-2">
+              <p className="font-medium text-foreground">{t("motor.naoCriarTitulo")}</p>
+              <p>{erro}</p>
+              {alternativa ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-8"
+                  onClick={() => {
+                    setJanelaInicio(alternativa.inicio);
+                    setJanelaFim(alternativa.fim);
+                    setEquipaId(alternativa.equipaId);
+                    setErro(null);
+                    setAlternativa(null);
+                  }}
+                >
+                  {t("motor.usarAlternativa")}
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        </Alerta>
       ) : null}
 
       <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">

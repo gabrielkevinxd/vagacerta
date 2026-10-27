@@ -1,27 +1,35 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { ChevronLeft, ChevronRight, TriangleAlert } from "lucide-react";
 import { um } from "@/lib/consulta-pagina";
-import { hojeLisboa, OPERADORES, type OperadorId } from "@/lib/rules";
+import { eCentral, hojeLisboa, OPERADORES, type OperadorId } from "@/lib/rules";
 import { distritosComCobertura, municipiosDoDistrito, nomesAreasCobertura } from "@/lib/zonas/catalogo";
 import { Carregamento } from "@/components/carregamento";
 import { EstadoVazio } from "@/components/estado-vazio";
-import { EtiquetaOperador } from "@/components/etiquetas";
+import { FiltrosZona } from "@/components/filtros-zona";
 import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
 import { LegendaOperadores } from "@/components/legenda-operadores";
+import { EquipasFolhaSheet } from "@/components/equipas-folha-sheet";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 import { listarEquipas } from "@/server/servicos";
+import { cn } from "@/lib/utils";
 
 const POR_PAGINA = 24;
-const campo = "h-8 rounded-md border border-input bg-card px-2.5 text-[13px]/5";
+
+function ponto(operadorId: OperadorId) {
+  const cor =
+    operadorId === "azul" ? "bg-[color:var(--op-azul)]" : operadorId === "vermelho" ? "bg-[color:var(--op-vermelho)]" : "bg-[color:var(--op-verde)]";
+  return <span className={cn("inline-block size-2.5 rounded-full", cor)} aria-hidden />;
+}
 
 async function Conteudo({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { t } = await i18nPedido();
   const ator = await exigirAtorPagina();
   const consulta = await searchParams;
-  const q = (um(consulta.q) ?? "").trim().toLowerCase();
+  const qRaw = um(consulta.q) ?? "";
+  const q = qRaw.trim().toLowerCase();
   const operadorFiltro = um(consulta.operador);
   const operador = (OPERADORES as readonly string[]).includes(operadorFiltro ?? "")
     ? (operadorFiltro as OperadorId)
@@ -29,10 +37,13 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
   const distrito = um(consulta.distrito) ?? "";
   const municipio = um(consulta.municipio) ?? "";
   const paginaPedida = Number(um(consulta.pagina) ?? "1");
+  const abertaId = um(consulta.equipa) ?? "";
   const distritos = distritosComCobertura();
   const municipios = distrito ? municipiosDoDistrito(distrito).map((m) => m.nome) : nomesAreasCobertura();
+  const dataRef = um(consulta.data) && um(consulta.data)!.match(/^\d{4}-\d{2}-\d{2}$/) ? um(consulta.data)! : undefined;
+  const central = eCentral(ator);
 
-  const equipas = listarEquipas(ator).filter((equipa) => {
+  const equipas = listarEquipas(ator, dataRef).filter((equipa) => {
     if (operador && !equipa.operadoresServidos.includes(operador)) return false;
     if (distrito && equipa.distrito !== distrito) return false;
     if (municipio) {
@@ -40,19 +51,30 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
       if (!cobre) return false;
     }
     if (!q) return true;
-    const hay = `${equipa.nome} ${equipa.codigo} ${equipa.base} ${equipa.distrito ?? ""} ${equipa.areas.join(" ")} ${equipa.zona?.nome ?? ""}`.toLowerCase();
-    return hay.includes(q);
+    const hay = `${equipa.nome} ${equipa.codigo} ${equipa.base} ${equipa.distrito ?? ""} ${equipa.areas.join(" ")} ${equipa.zona?.nome ?? ""}`
+      .normalize("NFD")
+      .replace(/\p{M}/gu, "")
+      .toLowerCase();
+    const needle = q.normalize("NFD").replace(/\p{M}/gu, "");
+    return hay.includes(needle);
   });
   const totalPaginas = Math.max(1, Math.ceil(equipas.length / POR_PAGINA));
   const pagina = Number.isFinite(paginaPedida) ? Math.min(Math.max(1, Math.floor(paginaPedida)), totalPaginas) : 1;
   const fatia = equipas.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
+  const de = equipas.length === 0 ? 0 : (pagina - 1) * POR_PAGINA + 1;
+  const ate = Math.min(pagina * POR_PAGINA, equipas.length);
   const hoje = hojeLisboa();
+  const aberta = abertaId
+    ? (equipas.find((e) => e.id === abertaId) ?? fatia.find((e) => e.id === abertaId) ?? null)
+    : null;
+
   const baseQuery = (extra: Record<string, string | null>) => {
     const params = new URLSearchParams();
-    if (q) params.set("q", q);
+    if (qRaw) params.set("q", qRaw);
     if (operador) params.set("operador", operador);
     if (distrito) params.set("distrito", distrito);
     if (municipio) params.set("municipio", municipio);
+    if (pagina > 1) params.set("pagina", String(pagina));
     for (const [chave, valor] of Object.entries(extra)) {
       if (valor) params.set(chave, valor);
       else params.delete(chave);
@@ -64,7 +86,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
   return (
     <div className="space-y-6">
       <CabecalhoPagina
-        titulo={t("equipas.titulo")}
+        titulo={t("equipas.contagemCabecalho", { n: equipas.length })}
         descricao={
           <>
             <p>{t("equipas.intro")}</p>
@@ -74,63 +96,17 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
           </>
         }
       />
-      <form className="flex flex-wrap items-end gap-3" action="/equipas" method="get">
-        <div className="space-y-1.5">
-          <label htmlFor="q" className="text-[13px]/5 text-muted-foreground">
-            {t("equipas.pesquisar")}
-          </label>
-          <Input id="q" name="q" defaultValue={q} className="h-8 w-56" />
-        </div>
-        <div className="space-y-1.5">
-          <label htmlFor="distrito" className="text-[13px]/5 text-muted-foreground">
-            {t("equipas.filtrarDistrito")}
-          </label>
-          <select id="distrito" name="distrito" defaultValue={distrito} className={campo}>
-            <option value="">{t("equipas.filtrarTodos")}</option>
-            {distritos.map((nome) => (
-              <option key={nome} value={nome}>
-                {nome}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1.5">
-          <label htmlFor="municipio" className="text-[13px]/5 text-muted-foreground">
-            {t("equipas.filtrarMunicipio")}
-          </label>
-          <select id="municipio" name="municipio" defaultValue={municipio} className={campo}>
-            <option value="">{t("equipas.filtrarTodos")}</option>
-            {municipios.map((nome) => (
-              <option key={nome} value={nome}>
-                {nome}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1.5">
-          <span className="text-[13px]/5 text-muted-foreground">{t("equipas.filtrarOperador")}</span>
-          <div className="flex flex-wrap gap-1.5">
-            <Link
-              href={baseQuery({ operador: null, pagina: null })}
-              className={`inline-flex h-8 items-center rounded-md border px-2.5 text-[13px]/5 ${!operador ? "border-primary bg-muted" : "border-border bg-card"}`}
-            >
-              {t("equipas.filtrarTodos")}
-            </Link>
-            {OPERADORES.map((id) => (
-              <Link
-                key={id}
-                href={baseQuery({ operador: id, pagina: null })}
-                className={`inline-flex h-8 items-center rounded-md border px-2.5 text-[13px]/5 ${operador === id ? "border-primary bg-muted" : "border-border bg-card"}`}
-              >
-                {t(`operador.${id}`)}
-              </Link>
-            ))}
-          </div>
-        </div>
-        <Button type="submit" variant="outline" className="h-8">
-          {t("comum.ver")}
-        </Button>
-      </form>
+      <FiltrosZona
+        caminho="/equipas"
+        q={qRaw}
+        distrito={distrito}
+        municipio={municipio}
+        operador={operador}
+        distritos={distritos}
+        municipios={municipios}
+        mostrarOperador
+        mostrarPesquisa
+      />
       {fatia.length === 0 ? (
         <EstadoVazio
           titulo={equipas.length === 0 && !q && !operador && !distrito && !municipio ? t("equipas.semVisiveisTitulo") : t("equipas.semResultados")}
@@ -140,52 +116,95 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
               : t("equipas.semResultados")
           }
         />
-      ) : null}
-      <ul className="grid gap-3 md:grid-cols-2">
-        {fatia.map((equipa) => (
-          <li key={equipa.id}>
-            <Link
-              href={`/equipas/${equipa.id}?data=${hoje}`}
-              className="superficie block p-4 transition-colors hover:bg-muted/60"
-            >
-              <p className="text-base font-semibold tracking-tight">{equipa.nome}</p>
-              <p className="mt-0.5 text-[13px]/5 text-muted-foreground">
-                {equipa.codigo} · {equipa.base}
-                {equipa.distrito ? ` · ${equipa.distrito}` : ""} · {equipa.cco}
-              </p>
-              <p className="mt-3 text-[13px]/5">
-                {equipa.zona ? `${equipa.zona.codigo} ${equipa.zona.nome}` : t("equipas.semZona")} ·{" "}
-                <span className={equipa.ativa ? "text-[color:var(--success)]" : "text-muted-foreground"}>
-                  {equipa.ativa ? t("comum.ativa") : t("comum.inativa")}
-                </span>
-              </p>
-              <p className="mt-1 text-[13px]/5 text-muted-foreground">{equipa.areas.join(", ")}</p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {equipa.operadoresServidos.map((id) => (
-                  <EtiquetaOperador key={id} id={id} nome={t(`operador.${id}`)} />
-                ))}
-              </div>
-            </Link>
-          </li>
-        ))}
-      </ul>
-      {totalPaginas > 1 ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 text-[13px]/5">
-          <p>{t("equipas.paginaDe", { pagina, total: totalPaginas })}</p>
+      ) : (
+        <div className="overflow-x-auto superficie">
+          <table className="w-full min-w-[64rem] border-collapse text-left text-[13px]/5">
+            <thead className="border-b border-border text-muted-foreground">
+              <tr className="h-9">
+                <th className="px-3 font-medium">{t("equipas.colunaCodigo")}</th>
+                <th className="px-3 font-medium">{t("equipas.colunaEquipa")}</th>
+                <th className="px-3 font-medium">{t("equipas.colunaBase")}</th>
+                <th className="px-3 font-medium">{t("equipas.colunaDistrito")}</th>
+                <th className="px-3 font-medium">{t("equipas.colunaZona")}</th>
+                <th className="px-3 font-medium">{t("equipas.colunaOperadores")}</th>
+                <th className="px-3 font-medium">{t("equipas.colunaEstado")}</th>
+                {central ? <th className="px-3 font-medium tabular-nums">{t("equipas.colunaTecnicos")}</th> : null}
+              </tr>
+            </thead>
+            <tbody>
+              {fatia.map((equipa) => (
+                <tr key={equipa.id} className="h-9 border-b border-border/70 hover:bg-muted/50">
+                  <td className="px-3 font-mono text-[12px]">{equipa.codigo}</td>
+                  <td className="px-3">
+                    <Link href={baseQuery({ equipa: equipa.id })} className="font-medium underline-offset-2 hover:underline">
+                      {equipa.nome}
+                    </Link>
+                  </td>
+                  <td className="px-3">{equipa.base}</td>
+                  <td className="px-3">{equipa.distrito ?? "—"}</td>
+                  <td className="px-3">
+                    {equipa.zona ? (
+                      `${equipa.zona.codigo} · ${equipa.zona.nome}`
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[color:var(--warning)]">
+                        <TriangleAlert className="size-3.5" strokeWidth={1.75} aria-hidden />
+                        {t("equipas.semZonaAviso")}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-3">
+                    <span className="inline-flex items-center gap-1.5" aria-label={equipa.operadoresServidos.map((id) => t(`operador.${id}`)).join(", ")}>
+                      {OPERADORES.filter((id) => equipa.operadoresServidos.includes(id)).map((id) => (
+                        <span key={id}>{ponto(id)}</span>
+                      ))}
+                    </span>
+                  </td>
+                  <td className="px-3">
+                    <span className={equipa.ativa ? "text-[color:var(--success)]" : "text-muted-foreground"}>
+                      {equipa.ativa ? t("comum.ativa") : t("comum.inativa")}
+                    </span>
+                  </td>
+                  {central ? <td className="px-3 tabular-nums">{equipa.tecnicos}</td> : null}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {equipas.length > 0 ? (
+        <nav aria-label={t("equipas.paginacaoAria")} className="flex flex-wrap items-center justify-between gap-3 text-[13px]/5">
+          <p className="tabular-nums">{t("equipas.paginaIntervalo", { de, ate, total: equipas.length })}</p>
           <div className="flex gap-2">
-            {pagina > 1 ? (
-              <Link href={baseQuery({ pagina: String(pagina - 1) })} className="underline">
+            <Button asChild variant="outline" className="h-8" disabled={pagina <= 1}>
+              <Link
+                href={pagina <= 1 ? baseQuery({}) : baseQuery({ pagina: String(pagina - 1), equipa: null })}
+                aria-disabled={pagina <= 1}
+                className={pagina <= 1 ? "pointer-events-none opacity-50" : undefined}
+              >
+                <ChevronLeft className="size-4" strokeWidth={1.75} />
                 {t("equipas.anterior")}
               </Link>
-            ) : null}
-            {pagina < totalPaginas ? (
-              <Link href={baseQuery({ pagina: String(pagina + 1) })} className="underline">
+            </Button>
+            <Button asChild variant="outline" className="h-8" disabled={pagina >= totalPaginas}>
+              <Link
+                href={pagina >= totalPaginas ? baseQuery({}) : baseQuery({ pagina: String(pagina + 1), equipa: null })}
+                aria-disabled={pagina >= totalPaginas}
+                className={pagina >= totalPaginas ? "pointer-events-none opacity-50" : undefined}
+              >
                 {t("equipas.seguinte")}
+                <ChevronRight className="size-4" strokeWidth={1.75} />
               </Link>
-            ) : null}
+            </Button>
           </div>
-        </div>
+        </nav>
       ) : null}
+
+      <EquipasFolhaSheet
+        aberta={Boolean(aberta)}
+        fecharHref={baseQuery({ equipa: null })}
+        fichaHref={aberta ? `/equipas/${aberta.id}?data=${hoje}` : "/equipas"}
+        equipa={aberta}
+      />
     </div>
   );
 }
@@ -196,7 +215,7 @@ export default function Pagina({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   return (
-    <Suspense fallback={<Carregamento />}>
+    <Suspense fallback={<Carregamento variante="tabela" />}>
       <Conteudo searchParams={searchParams} />
     </Suspense>
   );

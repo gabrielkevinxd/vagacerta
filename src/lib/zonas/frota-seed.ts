@@ -34,7 +34,7 @@ function subsetConexo(rng: () => number, inicio: string, tamanho: number, permit
   return lista;
 }
 
-/** Distribuição determinística: ~70% servem 3, ~20% servem 2, ~10% servem 1. */
+/** Distribuição determinística: ~60% servem 3, ~20% servem 2, ~20% servem 1. */
 function operadoresParaIndice(indice: number): OperadorId[] {
   const resto = indice % 10;
   if (resto === 0) return ["azul"];

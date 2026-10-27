@@ -14,6 +14,7 @@ import { formatarDataLocale, formatarDataLongaLocale } from "@/lib/i18n/formatac
 import { i18nPedido } from "@/server/idioma";
 import { diaDemonstracaoAtual } from "@/server/db";
 import { exigirAtorPagina } from "@/server/sessao";
+import { dicofreDaArea } from "@/lib/zonas/catalogo";
 import { listarZonas, obterEquipa } from "@/server/servicos";
 
 const DIAS: Chave[] = [
@@ -158,6 +159,7 @@ async function Conteudo({
           ativa={equipa.ativa}
           zonas={zonas}
           zonaAtualId={equipa.zona?.id ?? null}
+          zonaPredefinidaId={dicofreDaArea(equipa.base) ?? null}
           horarios={equipa.horarios}
           membros={equipa.membros}
           indisponibilidades={equipa.indisponibilidades}

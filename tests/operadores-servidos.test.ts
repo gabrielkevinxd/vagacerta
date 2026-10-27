@@ -103,7 +103,10 @@ describe("operadoresServidos na base", () => {
     const erro = falha(() => guardarEquipa(central, "eq-minho", { operadoresServidos: ["azul"] }));
     expect(erro.status).toBe(409);
     expect(erro.codigo).toBe("OPERADOR_COM_ORDENS");
-    expect(erro.message).toMatch(/VR-90001|AZ-24081|VR-CANC|AZ-24160|VR-88420/);
+    const detalhes = erro.detalhes as { ordens?: { referencia: string }[]; remocoes?: string[] };
+    expect(detalhes.remocoes).toEqual(expect.arrayContaining(["vermelho", "verde"]));
+    const refs = (detalhes.ordens ?? []).map((o) => o.referencia);
+    expect(refs.some((r) => /VR-90001|AZ-24081|VR-CANC|AZ-24160|VR-88420/.test(r))).toBe(true);
   });
 
   it("duas reservas FCFS do mesmo intervalo: só uma ganha", () => {
@@ -143,8 +146,13 @@ describe("operadoresServidos na base", () => {
       }),
     );
     expect(segunda.status).toBe(409);
-    expect(["SLOT_OCUPADO", "INVIAVEL"]).toContain(segunda.codigo);
-    expect(segunda.message.toLowerCase()).toMatch(/alternativ|reservado|sequência|inviável|interval/);
+    expect(segunda.codigo).toBe("SLOT_OCUPADO");
+    expect(segunda.message.toLowerCase()).toMatch(/reservado|deixou de estar livre|interval/);
+    const detalhes = segunda.detalhes as { causa?: string; alternativa?: { inicio: string; fim: string; equipa: string } | null };
+    expect(detalhes.causa).toBe("outro_operador");
+    expect(detalhes.alternativa).toEqual(
+      expect.objectContaining({ inicio: expect.any(String), fim: expect.any(String), equipa: expect.any(String) }),
+    );
   });
 
   it("reencaixe não coloca ordem azul numa equipa que só serve vermelho", () => {
@@ -171,5 +179,62 @@ describe("operadoresServidos na base", () => {
     ).toBe(true);
     // Verde nunca vai para eq-so-vr
     expect(plano.movimentos.some((m) => m.referencia === "VD-URG" && m.paraEquipaId === "eq-so-vr")).toBe(false);
+  });
+
+  it("guardarOperadores mantém competências dos que ficam e só acrescenta predefinições aos novos", () => {
+    guardarEquipa(central, "eq-barroso", { operadoresServidos: ["vermelho", "verde"] });
+    guardarEquipa(central, "eq-barroso", {
+      competencias: [
+        { operadorId: "vermelho", categorias: ["instalacao"], tecnologias: [] },
+        { operadorId: "verde", categorias: ["instalacao"], tecnologias: ["FTTH"] },
+      ],
+    });
+    guardarEquipa(central, "eq-barroso", { operadoresServidos: ["vermelho", "verde", "azul"] });
+    const equipa = lerMundo().equipas.find((e) => e.id === "eq-barroso")!;
+    expect(new Set(equipa.operadoresServidos)).toEqual(new Set(["azul", "vermelho", "verde"]));
+    const vermelho = equipa.competencias.find((c) => c.operadorId === "vermelho")!;
+    expect(vermelho.categorias).toEqual(["instalacao"]);
+    const verde = equipa.competencias.find((c) => c.operadorId === "verde")!;
+    expect(verde.tecnologias).toEqual(["FTTH"]);
+    expect(equipa.competencias.some((c) => c.operadorId === "azul")).toBe(true);
+  });
+});
+
+describe("P1-9 despachante vê equipas sem OFSC/ordens alheias", () => {
+  const despachanteAzul: Ator = {
+    id: "usr-azul",
+    nome: "Clara Monteiro",
+    papel: "despachante",
+    operadorId: "azul",
+    tecnicoId: null,
+    equipaId: null,
+  };
+
+  beforeAll(() => {
+    baseDados();
+  });
+
+  it("vê equipa que só serve vermelho; não lê ordens nem dados OFSC do vermelho", async () => {
+    const { listarEquipas, obterEquipa } = await import("@/server/servicos");
+    const { podeVerEquipa, podeLerOrdem, podeMarcarOperador } = await import("@/lib/rules");
+    const alvo = listarEquipas(central).find((e) => e.id.startsWith("eq-m") && e.operadoresServidos.length === 3)!;
+    expect(alvo).toBeTruthy();
+    guardarEquipa(central, alvo.id, { operadoresServidos: ["vermelho"] });
+
+    expect(podeVerEquipa(despachanteAzul, alvo.id)).toBe(true);
+    expect(listarEquipas(despachanteAzul).some((e) => e.id === alvo.id)).toBe(true);
+    const ficha = obterEquipa(despachanteAzul, alvo.id);
+    expect(ficha.operadoresServidos).toEqual(["vermelho"]);
+    expect(ficha.competencias.map((c) => c.operadorId)).toEqual(["vermelho"]);
+
+    const ordemVr = lerMundo().ordens.find((o) => o.operadorId === "vermelho" && o.equipaId === "eq-minho");
+    expect(ordemVr).toBeTruthy();
+    expect(podeLerOrdem(despachanteAzul, ordemVr!)).toBe(false);
+    expect(podeMarcarOperador(despachanteAzul, "vermelho")).toBe(false);
+    expect(podeMarcarOperador(despachanteAzul, "azul")).toBe(true);
+
+    const minho = obterEquipa(despachanteAzul, "eq-minho");
+    expect(minho.ocupacaoHoje.proprias.every((o) => o.operadorId === "azul")).toBe(true);
+    expect(minho.ocupacaoHoje.minutosOutros).toBeGreaterThanOrEqual(0);
   });
 });

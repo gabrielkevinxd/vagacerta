@@ -1,11 +1,33 @@
 import { describe, expect, it } from "vitest";
 import { criarMundoDemonstracao } from "@/lib/demonstracao";
 import { detetarConflitos } from "@/lib/rules/dia";
+import { competenciasDeOperadores } from "@/lib/rules/operadores-servidos";
 import { aplicarPlano, reencaixar } from "@/lib/rules/reencaixe";
+import type { Equipa, Mundo, OperadorId } from "@/lib/rules/tipos";
 import { proporVagas } from "@/lib/rules/vagas";
 
 function mundo() {
   return criarMundoDemonstracao();
+}
+
+/** Fixture: só a Minho serve Verde em Braga — a Ave e a Cávado ficam sem Verde. */
+function mundoSemVerdeNasVizinhas(): Mundo {
+  const base = mundo();
+  function semVerde(equipa: Equipa): Equipa {
+    const ops = (equipa.operadoresServidos ?? []).filter((op) => op !== "verde") as OperadorId[];
+    const seguintes = ops.length > 0 ? ops : (["azul"] as OperadorId[]);
+    return {
+      ...equipa,
+      operadoresServidos: seguintes,
+      competencias: competenciasDeOperadores(seguintes),
+    };
+  }
+  return {
+    ...base,
+    equipas: base.equipas.map((equipa) =>
+      equipa.id === "eq-ave" || equipa.id === "eq-cavado" ? semVerde(equipa) : equipa,
+    ),
+  };
 }
 
 describe("reencaixe da fila sobre a demonstração", () => {
@@ -47,7 +69,6 @@ describe("reencaixe da fila sobre a demonstração", () => {
   it("encaixa a VD-URG na Equipa Ave (serve Verde) sem precisar da Cávado", () => {
     const base = mundo();
     const urgente = base.ordens.find((ordem) => ordem.referencia === "VD-URG")!;
-    // Com operadoresServidos=3 na Ave, a urgente cabe sem troca na Minho.
     const semTroca = reencaixar(base, { encaixarId: urgente.id, permitirTroca: false });
     expect(semTroca.viavel).toBe(true);
     const plano = reencaixar(base, { encaixarId: urgente.id, permitirTroca: true });
@@ -60,12 +81,34 @@ describe("reencaixe da fila sobre a demonstração", () => {
     expect(aplicado.resultado.ordens.find((ordem) => ordem.referencia === "VD-URG")?.equipaId).toBe("eq-ave");
   });
 
+  it("fixture: Ave/Cávado sem Verde — sem troca não cabe; com troca a VR vai para a Ave e a VD-URG entra na Minho", () => {
+    const base = mundoSemVerdeNasVizinhas();
+    const urgente = base.ordens.find((ordem) => ordem.referencia === "VD-URG")!;
+    const semTroca = reencaixar(base, { encaixarId: urgente.id, permitirTroca: false });
+    expect(semTroca.viavel).toBe(false);
+
+    const plano = reencaixar(base, { encaixarId: urgente.id, permitirTroca: true });
+    expect(plano.viavel).toBe(true);
+    expect(plano.movimentos.some((m) => m.referencia === "VR-90001" && m.paraEquipaId === "eq-ave")).toBe(true);
+    expect(plano.movimentos.some((m) => m.referencia === "VD-URG" && m.paraEquipaId === "eq-minho")).toBe(true);
+
+    const aplicado = aplicarPlano(base, plano);
+    expect(aplicado.ok).toBe(true);
+    if (!aplicado.ok) return;
+    const vd = aplicado.resultado.ordens.find((ordem) => ordem.referencia === "VD-URG")!;
+    const vr = aplicado.resultado.ordens.find((ordem) => ordem.referencia === "VR-90001")!;
+    const az = aplicado.resultado.ordens.find((ordem) => ordem.referencia === "AZ-24081")!;
+    expect(vd).toMatchObject({ estado: "agendada", equipaId: "eq-minho", inicioPlaneado: "08:00" });
+    expect(vr.equipaId).toBe("eq-ave");
+    expect(az.inicioPlaneado).toBe("10:25");
+  });
+
   it("o despachante verde encaixa a VD-URG na Ave sem mexer em ordens vermelhas", () => {
     const base = mundo();
     const urgente = base.ordens.find((ordem) => ordem.referencia === "VD-URG")!;
     const plano = reencaixar(base, { encaixarId: urgente.id, permitirTroca: true, apenasDoOperador: "verde" });
     expect(plano.viavel).toBe(true);
-    expect(plano.movimentos.every((m) => m.referencia.startsWith("VD") || m.referencia.startsWith("AZ") === false)).toBe(true);
+    expect(plano.movimentos.every((m) => m.referencia.startsWith("VD"))).toBe(true);
     expect(plano.movimentos.every((m) => !m.referencia.startsWith("VR"))).toBe(true);
   });
 
