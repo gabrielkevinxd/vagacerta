@@ -35,7 +35,8 @@ function textosDe(tipo: TipoNegado, idioma: Idioma) {
   }
   return {
     titulo: t(m, "integracao.titulo"),
-    corpo: t(m, "integracao.soCentral"),
+    // Só o técnico é bloqueado no proxy; despachante entra com scope D1 nas APIs.
+    corpo: t(m, "acesso.soNaoTecnico"),
     voltar: t(m, "integracao.voltarPainel"),
     destino: "/",
   };

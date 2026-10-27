@@ -8,14 +8,14 @@ Nothing in the integration is public.
 
 | Routes | Who may call |
 | --- | --- |
-| `POST /api/integracao/ofsc/eventos` (webhook) and `/api/ofsc/{operator}/…` (simulated OFSC) | Whoever presents the **integration secret**, or a **hub session** |
-| `GET/POST /api/integracao/{vagas,reserva,agente,consola,cenarios,reconciliar,saude}` and the `/integracao` page | A **hub session** only |
+| `POST /api/integracao/ofsc/eventos` (webhook) and `/api/ofsc/{operator}/…` (simulated OFSC) | Whoever presents the **shared secret** (`OFSC_WEBHOOK_SECRET`) — no browser session |
+| `GET/POST /api/integracao/{vagas,reserva,agente,consola}` and the `/integracao` page | Hub, or a **dispatcher for their own operator** (technician → 403) |
+| `POST /api/integracao/{cenarios,reconciliar,saude}` | **Hub session** only |
 
-- Secret: `x-vagacerta-ofsc-secret: <secret>` header or `Authorization: Bearer <secret>`; constant-time comparison.
-- The secret is `OFSC_WEBHOOK_SECRET`. Without the variable, a development secret is generated on first use, kept in the local database only (`definicoes.segredo_integracao`) and never printed nor returned. Set `OFSC_WEBHOOK_SECRET` in production.
-- No credentials, or a wrong secret: 401 `NAO_AUTENTICADO`. A dispatcher's or technician's session: 403 `SEM_PERMISSAO`. A correct secret does not open the hub-only routes.
-- The console is hub-only because it is cross-operator: three columns (the operator's OFSC, VagaCerta, the other OFSC instances), the eleven scenarios and reconciliation touch all three operators at once.
-- The console's scenarios and booking run inside the server with the hub session; only a real OFSC or an external script needs the secret.
+- Secret: `x-vagacerta-ofsc-secret: <secret>` header or `Authorization: Bearer <secret>`; constant-time comparison (`src/server/ofsc/segredo.ts`).
+- Outside production, missing `OFSC_WEBHOOK_SECRET` falls back to the demo value in `.env.example`. In production, unset → 503.
+- No credentials or a wrong secret on webhook/simulator: 401. A hub or dispatcher session without the secret does **not** open those routes.
+- Dispatchers never see another operator's OFSC JSON, logs with payloads, or retries body (D1). Hub scenarios remain cross-operator and hub-only.
 
 ## The 6 endpoints
 

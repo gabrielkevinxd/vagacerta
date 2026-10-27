@@ -102,28 +102,25 @@ describe("B4: ordem de outro operador ou inexistente dá a página «Ordem não 
   });
 });
 
-describe("B2: a página /integracao só abre à central (403 para os outros perfis)", () => {
-  it("despachantes e técnico recebem 403 com a explicação, sem a consola", async () => {
-    for (const perfil of ["azul", "vermelho", "verde", "tecnico"] as const) {
-      const resposta = proxy(pagina("/integracao", abrirSessao(CONTAS[perfil])));
-      expect(resposta.status, perfil).toBe(403);
-      const html = await corpo(resposta);
-      expect(html).toContain("<h1>Integração OFSC</h1>");
-      expect(html).toMatch(/só a central a usa/);
-      expect(html).not.toMatch(/OFSC do operador/);
-    }
-  });
-
-  it("em inglês explica que só a central a usa", async () => {
-    const resposta = proxy(pagina("/integracao", abrirSessao(CONTAS.verde), "en"));
+describe("B2: a página /integracao bloqueia o técnico; despachante e central entram", () => {
+  it("técnico recebe 403", async () => {
+    const resposta = proxy(pagina("/integracao", abrirSessao(CONTAS.tecnico)));
     expect(resposta.status).toBe(403);
-    expect(await corpo(resposta)).toMatch(/only the hub uses it/);
+    const html = await corpo(resposta);
+    expect(html).toContain("<h1>Integração OFSC</h1>");
+    expect(html).toMatch(/perfil de técnico|técnico/i);
   });
 
-  it("a central segue para a página", () => {
-    for (const perfil of ["admin", "supervisor"] as const) {
+  it("em inglês o técnico vê a mensagem do perfil", async () => {
+    const resposta = proxy(pagina("/integracao", abrirSessao(CONTAS.tecnico), "en"));
+    expect(resposta.status).toBe(403);
+    expect(await corpo(resposta)).toMatch(/technician/i);
+  });
+
+  it("despachante e central seguem para a página", () => {
+    for (const perfil of ["admin", "supervisor", "azul", "vermelho", "verde"] as const) {
       const resposta = proxy(pagina("/integracao", abrirSessao(CONTAS[perfil])));
-      expect(resposta.status).toBe(200);
+      expect(resposta.status, perfil).toBe(200);
       expect(segue(resposta)).toBe(true);
     }
   });
