@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { COOKIE_IDIOMA, COOKIE_SESSAO, eIdioma, IDIOMA_OMISSAO } from "@/lib/i18n";
-import { eCentral } from "@/lib/rules/permissoes";
 import { paginaNegada, type TipoNegado } from "@/server/pagina-negada";
 import { atorDaSessao, equipaVisivel, ordemLegivel } from "@/server/sessao-viva";
 
@@ -103,8 +102,8 @@ export function proxy(pedido: NextRequest) {
     if (ordem && ordem !== "nova" && !ordemLegivel(ator, ordem)) return negar(pedido, "ordem", 404);
     const equipa = identificador(PAGINA_EQUIPA.exec(caminho));
     if (equipa && !equipaVisivel(ator, equipa)) return negar(pedido, "equipa", 404);
-    // B2: a consola de integração é só da central.
-    if ((caminho === "/integracao" || caminho.startsWith("/integracao/")) && !eCentral(ator)) {
+    // Integração: técnico bloqueado; despachante entra (APIs já fazem scope D1).
+    if ((caminho === "/integracao" || caminho.startsWith("/integracao/")) && ator.papel === "tecnico") {
       return negar(pedido, "integracao", 403);
     }
   }

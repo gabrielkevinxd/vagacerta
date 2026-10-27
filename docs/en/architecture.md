@@ -19,7 +19,7 @@ Session is the httpOnly `vc_sessao` cookie. Idle timeout: 8 hours (slides on rea
 
 The `proxy` opens the database (Node runtime) to learn, before the page starts streaming, whether the requested order or team can be read by the actor (`src/server/sessao-viva.ts`). With `cacheComponents` Next sends the page shell first and can no longer change the HTTP status, so the 404 (“Order not found”, “Team not found”) and the 403 of `/integracao` are decided there and the response is self-contained HTML (`src/server/pagina-negada.ts`, which never echoes the requested id).
 
-The OFSC integration routes have three guards (`src/server/http.ts`): `api` (any session), `apiCentral` (administrator or supervisor) and `apiIntegracao` (integration secret or hub session, `src/server/integracao-auth.ts`).
+The OFSC integration routes use (`src/server/http.ts`): `api` (any session), `apiCentral` (administrator or supervisor) and `apiIntegracao` (shared secret only via `src/server/ofsc/segredo.ts` / `OFSC_WEBHOOK_SECRET`).
 
 UI strings live in `src/lib/i18n/pt-PT.ts` and `en.ts`. Keys must match (`tests/i18n.test.ts`). The pure engine still returns internal Portuguese; the HTTP boundary translates (`src/lib/i18n/motor.ts`: errors, order history, OFSC console lines, the agent note and the refit plan). `tests/i18n-cobertura.test.ts` guarantees that every error code and every log line has pt-PT and English text.
 

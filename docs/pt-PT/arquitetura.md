@@ -19,7 +19,7 @@ A sessão é o cookie httpOnly `vc_sessao`. Inactividade: 8 horas (desliza na le
 
 O `proxy` abre a base (runtime Node) para saber, antes de a página começar a ser enviada, se a ordem ou a equipa pedida pode ser lida pelo ator (`src/server/sessao-viva.ts`). Com `cacheComponents` o Next envia primeiro o esqueleto da página e já não consegue mudar o estado HTTP, por isso o 404 («Ordem não encontrada», «Equipa não encontrada») e o 403 de `/integracao` são decididos aí e a resposta é HTML autónomo (`src/server/pagina-negada.ts`, sem eco do identificador pedido).
 
-As rotas da integração OFSC têm três guardas (`src/server/http.ts`): `api` (qualquer sessão), `apiCentral` (administrador ou supervisor) e `apiIntegracao` (segredo da integração ou sessão da central, `src/server/integracao-auth.ts`).
+As rotas da integração OFSC usam (`src/server/http.ts`): `api` (qualquer sessão), `apiCentral` (administrador ou supervisor) e `apiIntegracao` (só o segredo partilhado via `src/server/ofsc/segredo.ts` / `OFSC_WEBHOOK_SECRET`).
 
 A UI lê `src/lib/i18n/pt-PT.ts` e `en.ts`. As chaves têm de coincidir (`tests/i18n.test.ts`). O motor puro ainda devolve texto interno em português; a fronteira HTTP traduz (`src/lib/i18n/motor.ts`: erros, histórico das ordens, linhas da consola OFSC, nota do agente e plano do reencaixe). `tests/i18n-cobertura.test.ts` garante que cada código de erro e cada linha de registo tem texto em pt-PT e em inglês.
 
