@@ -48,7 +48,7 @@ export function EquipasFolhaSheet({
             <SheetHeader>
               <SheetTitle>{equipa.nome}</SheetTitle>
             </SheetHeader>
-            <div className="mt-4 space-y-3 text-[13px]/5">
+            <div className="mt-4 space-y-3 px-4 text-[13px]/5">
               <p className="font-mono text-[12px] text-muted-foreground">{equipa.codigo}</p>
               <p>
                 {equipa.base}
@@ -66,9 +66,6 @@ export function EquipasFolhaSheet({
               <div className="flex flex-wrap gap-2 pt-2">
                 <Button asChild className="h-8">
                   <Link href={fichaHref}>{t("equipas.abrirFicha")}</Link>
-                </Button>
-                <Button asChild variant="outline" className="h-8">
-                  <Link href={fecharHref}>{t("comum.voltar")}</Link>
                 </Button>
               </div>
             </div>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { um } from "@/lib/consulta-pagina";
-import { eCentral, eDataIso, podeGerirEquipas } from "@/lib/rules";
+import { eCentral, eDataIso, OPERADORES, podeGerirEquipas } from "@/lib/rules";
 import { AcoesEquipa } from "@/components/acoes-equipa";
 import { Carregamento } from "@/components/carregamento";
 import { EstadoVazio } from "@/components/estado-vazio";
@@ -79,7 +79,7 @@ async function Conteudo({
         <div className="md:col-span-2">
           <dt className="text-muted-foreground">{t("equipas.operadoresServidos")}</dt>
           <dd className="mt-1 flex flex-wrap gap-1.5">
-            {equipa.operadoresServidos.map((id) => (
+            {OPERADORES.filter((id) => equipa.operadoresServidos.includes(id)).map((id) => (
               <EtiquetaOperador key={id} id={id} nome={t(`operador.${id}`)} />
             ))}
           </dd>
@@ -91,12 +91,15 @@ async function Conteudo({
           <dt className="text-muted-foreground">{t("equipas.competencias")}</dt>
           <dd>
             <ul className="mt-1 space-y-1">
-              {equipa.competencias.map((linha) => (
-                <li key={linha.operadorId}>
-                  {t(`operador.${linha.operadorId}`)}: {linha.categorias.map((item) => t(`categoria.${item}`)).join(", ")}
-                  {linha.tecnologias.length > 0 ? ` · ${linha.tecnologias.map((item) => t(`tecnologia.${item}`)).join(", ")}` : ""}
-                </li>
-              ))}
+              {OPERADORES.filter((id) => equipa.competencias.some((linha) => linha.operadorId === id)).map((id) => {
+                const linha = equipa.competencias.find((item) => item.operadorId === id)!;
+                return (
+                  <li key={linha.operadorId}>
+                    {t(`operador.${linha.operadorId}`)}: {linha.categorias.map((item) => t(`categoria.${item}`)).join(", ")}
+                    {linha.tecnologias.length > 0 ? ` · ${linha.tecnologias.map((item) => t(`tecnologia.${item}`)).join(", ")}` : ""}
+                  </li>
+                );
+              })}
             </ul>
           </dd>
         </div>

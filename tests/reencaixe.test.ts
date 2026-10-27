@@ -44,9 +44,14 @@ describe("reencaixe da fila sobre a demonstração", () => {
     const cancelada = aplicado.resultado.ordens.find((ordem) => ordem.referencia === "VR-90001")!;
     expect(cancelada.estado).toBe("cancelada");
     expect(urgente.estado).toBe("agendada");
-    expect(["eq-minho", "eq-ave"]).toContain(urgente.equipaId);
+    expect(urgente.equipaId).toBe("eq-ave");
     expect(urgente.inicioPlaneado).toBe("08:00");
-    expect(azul.inicioPlaneado).toMatch(/^10:/);
+    expect(urgente.fimPlaneado).toBe("10:10");
+    expect(azul.inicioPlaneado).toBe("10:00");
+    expect(azul.fimPlaneado).toBe("13:00");
+    expect(plano.mensagem).toBe(
+      "A VR-90001 sai da Equipa Minho. A VD-URG entra às 08:00. A AZ-24081 passa a começar às 10:00.",
+    );
     expect(base.ordens.find((ordem) => ordem.referencia === "VR-90001")?.estado).toBe("agendada");
   });
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Check, ChevronDown, X } from "lucide-react";
 import { useT } from "@/components/idioma/provedor";
 import { Button } from "@/components/ui/button";
@@ -60,43 +60,33 @@ function ChipPopover({
   const { t } = useT();
   return (
     <Popover open={aberto} onOpenChange={setAberto}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label={etiqueta}
-          aria-pressed={Boolean(valor)}
-          className={cn(
-            "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[13px]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-            valor ? "border-primary bg-muted font-medium" : "border-border bg-card",
-          )}
-        >
-          {valor ? `${etiqueta}: ${valor}` : etiqueta}
-          {valor ? (
-            <span
-              role="button"
-              tabIndex={0}
-              aria-label={t("equipas.limparFiltros")}
-              className="rounded-sm p-0.5 hover:bg-background"
-              onClick={(evento) => {
-                evento.preventDefault();
-                evento.stopPropagation();
-                onLimpar();
-              }}
-              onKeyDown={(evento) => {
-                if (evento.key === "Enter" || evento.key === " ") {
-                  evento.preventDefault();
-                  evento.stopPropagation();
-                  onLimpar();
-                }
-              }}
-            >
-              <X className="size-3.5" strokeWidth={1.75} />
-            </span>
-          ) : (
-            <ChevronDown className="size-3.5 opacity-60" strokeWidth={1.75} />
-          )}
-        </button>
-      </PopoverTrigger>
+      <div className="inline-flex h-8 items-stretch">
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={aberto}
+            className={cn(
+              "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[13px]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+              valor ? "border-primary bg-muted font-medium" : "border-border bg-card",
+              valor ? "rounded-r-none border-r-0" : undefined,
+            )}
+          >
+            {valor ? `${etiqueta}: ${valor}` : etiqueta}
+            {valor ? null : <ChevronDown className="size-3.5 opacity-60" strokeWidth={1.75} />}
+          </button>
+        </PopoverTrigger>
+        {valor ? (
+          <button
+            type="button"
+            aria-label={t("equipas.limparFiltros")}
+            className="inline-flex h-8 items-center rounded-r-md border border-primary bg-muted px-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            onClick={() => onLimpar()}
+          >
+            <X className="size-3.5" strokeWidth={1.75} />
+          </button>
+        ) : null}
+      </div>
       <PopoverContent className="w-64 p-1" align="start">
         <ul className="max-h-64 overflow-auto">
           <li>
@@ -147,29 +137,34 @@ export function FiltrosZona({
   const { t } = useT();
   const router = useRouter();
   const [, startTransition] = useTransition();
-  const [texto, setTexto] = useState(q);
+  const [textoLocal, setTextoLocal] = useState<string | null>(null);
+  const [qProp, setQProp] = useState(q);
+  if (q !== qProp) {
+    setQProp(q);
+    setTextoLocal(null);
+  }
+  const texto = textoLocal ?? q;
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    setTexto(q);
-  }, [q]);
-
-  function ir(parcial: {
-    q?: string;
-    distrito?: string;
-    municipio?: string;
-    operador?: string | null;
-  }) {
+  function ir(
+    parcial: {
+      q?: string;
+      distrito?: string;
+      municipio?: string;
+      operador?: string | null;
+    },
+    { substituir = false }: { substituir?: boolean } = {},
+  ) {
     startTransition(() => {
-      router.push(
-        montarUrl(caminho, extras, {
-          q: parcial.q ?? texto,
-          distrito: parcial.distrito ?? distrito,
-          municipio: parcial.municipio ?? municipio,
-          operador: parcial.operador === undefined ? operador : parcial.operador,
-          pagina: null,
-        }),
-      );
+      const url = montarUrl(caminho, extras, {
+        q: parcial.q ?? texto,
+        distrito: parcial.distrito ?? distrito,
+        municipio: parcial.municipio ?? municipio,
+        operador: parcial.operador === undefined ? operador : parcial.operador,
+        pagina: null,
+      });
+      if (substituir) router.replace(url);
+      else router.push(url);
     });
   }
 
@@ -183,9 +178,9 @@ export function FiltrosZona({
           className="h-8 w-56"
           onChange={(evento) => {
             const valor = evento.target.value;
-            setTexto(valor);
+            setTextoLocal(valor);
             if (debounce.current) clearTimeout(debounce.current);
-            debounce.current = setTimeout(() => ir({ q: valor.trim() }), 250);
+            debounce.current = setTimeout(() => ir({ q: valor.trim() }, { substituir: true }), 250);
           }}
         />
       ) : null}
@@ -238,9 +233,9 @@ export function FiltrosZona({
           variant="ghost"
           className="h-8"
           onClick={() => {
-            setTexto("");
+            setTextoLocal("");
             startTransition(() => {
-              router.push(montarUrl(caminho, extras, { q: "", distrito: "", municipio: "", operador: null, pagina: null }));
+              router.replace(montarUrl(caminho, extras, { q: "", distrito: "", municipio: "", operador: null, pagina: null }));
             });
           }}
         >

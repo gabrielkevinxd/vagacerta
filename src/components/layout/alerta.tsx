@@ -1,3 +1,4 @@
+import { OctagonX, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function Alerta({
@@ -17,9 +18,17 @@ export function Alerta({
     aviso: "border-[color:var(--warning)]/30 bg-[color:var(--warning)]/10 text-foreground",
     erro: "border-destructive/25 bg-destructive/8 text-destructive",
   } as const;
+  const Icone = tom === "erro" ? OctagonX : tom === "aviso" ? TriangleAlert : null;
   return (
     <div role={role} className={cn("superficie px-3.5 py-2.5 text-[13px]/5 leading-relaxed", tons[tom], className)}>
-      {children}
+      {Icone ? (
+        <div className="flex items-start gap-2">
+          <Icone className="mt-0.5 size-4 shrink-0" strokeWidth={1.75} aria-hidden />
+          <div className="min-w-0 flex-1">{children}</div>
+        </div>
+      ) : (
+        children
+      )}
     </div>
   );
 }

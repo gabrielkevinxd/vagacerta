@@ -136,7 +136,7 @@ function carga(mundo: Mundo, equipaId: string, data: string): number {
 }
 
 function nomeEquipa(mundo: Mundo, equipaId: string | null): string {
-  if (!equipaId) return "a equipa";
+  if (!equipaId) return "equipa";
   return mundo.equipas.find((equipa) => equipa.id === equipaId)?.nome ?? equipaId;
 }
 
@@ -303,9 +303,9 @@ function narrar(antes: Mundo, depois: Mundo, movimentos: Movimento[], data: stri
   const frases: string[] = [];
   for (const movimento of movimentos) {
     if (movimento.tipo === "cancelar") {
-      frases.push(`A ${movimento.referencia} sai de ${nomeEquipa(antes, movimento.deEquipaId)}.`);
+      frases.push(`A ${movimento.referencia} sai da ${nomeEquipa(antes, movimento.deEquipaId)}.`);
     } else if (movimento.tipo === "reagendar") {
-      frases.push(`A ${movimento.referencia} passa para ${nomeEquipa(depois, movimento.paraEquipaId)}.`);
+      frases.push(`A ${movimento.referencia} passa para a ${nomeEquipa(depois, movimento.paraEquipaId)}.`);
     } else if (movimento.tipo === "devolver") {
       frases.push(`A ${movimento.referencia} volta à fila de espera.`);
     } else {

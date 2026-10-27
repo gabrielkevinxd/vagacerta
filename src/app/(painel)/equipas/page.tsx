@@ -91,7 +91,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
           <>
             <p>{t("equipas.intro")}</p>
             <div className="mt-3">
-              <LegendaOperadores compacta apenas={ator.papel === "despachante" ? ator.operadorId : null} />
+              <LegendaOperadores compacta apenas={null} />
             </div>
           </>
         }
@@ -109,7 +109,11 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
       />
       {fatia.length === 0 ? (
         <EstadoVazio
-          titulo={equipas.length === 0 && !q && !operador && !distrito && !municipio ? t("equipas.semVisiveisTitulo") : t("equipas.semResultados")}
+          titulo={
+            equipas.length === 0 && !q && !operador && !distrito && !municipio
+              ? t("equipas.semVisiveisTitulo")
+              : t("comando.semResultados")
+          }
           detalhe={
             equipas.length === 0 && !q && !operador && !distrito && !municipio
               ? t("equipas.semVisiveisDetalhe")
@@ -128,7 +132,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
                 <th className="px-3 font-medium">{t("equipas.colunaZona")}</th>
                 <th className="px-3 font-medium">{t("equipas.colunaOperadores")}</th>
                 <th className="px-3 font-medium">{t("equipas.colunaEstado")}</th>
-                {central ? <th className="px-3 font-medium tabular-nums">{t("equipas.colunaTecnicos")}</th> : null}
+                {central ? <th className="px-3 text-right font-medium tabular-nums">{t("equipas.colunaTecnicos")}</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -153,7 +157,13 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
                     )}
                   </td>
                   <td className="px-3">
-                    <span className="inline-flex items-center gap-1.5" aria-label={equipa.operadoresServidos.map((id) => t(`operador.${id}`)).join(", ")}>
+                    <span
+                      role="img"
+                      className="inline-flex items-center gap-1.5"
+                      aria-label={OPERADORES.filter((id) => equipa.operadoresServidos.includes(id))
+                        .map((id) => t(`operador.${id}`))
+                        .join(", ")}
+                    >
                       {OPERADORES.filter((id) => equipa.operadoresServidos.includes(id)).map((id) => (
                         <span key={id}>{ponto(id)}</span>
                       ))}
@@ -164,7 +174,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
                       {equipa.ativa ? t("comum.ativa") : t("comum.inativa")}
                     </span>
                   </td>
-                  {central ? <td className="px-3 tabular-nums">{equipa.tecnicos}</td> : null}
+                  {central ? <td className="px-3 text-right tabular-nums">{equipa.tecnicos}</td> : null}
                 </tr>
               ))}
             </tbody>

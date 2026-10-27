@@ -237,4 +237,30 @@ describe("P1-9 despachante vê equipas sem OFSC/ordens alheias", () => {
     expect(minho.ocupacaoHoje.proprias.every((o) => o.operadorId === "azul")).toBe(true);
     expect(minho.ocupacaoHoje.minutosOutros).toBeGreaterThanOrEqual(0);
   });
+
+  it("vê técnicos, motivos de indisponibilidade e competências dos outros operadores (Diogo)", async () => {
+    const { obterEquipa } = await import("@/server/servicos");
+    const { podeLerOrdem } = await import("@/lib/rules");
+    const minho = obterEquipa(despachanteAzul, "eq-minho");
+
+    expect(minho.membros.length).toBeGreaterThan(0);
+    expect(minho.membros.every((m) => typeof m.nome === "string" && m.nome.length > 0)).toBe(true);
+
+    expect(minho.competencias.map((c) => c.operadorId).sort()).toEqual(["azul", "verde", "vermelho"]);
+    const verde = minho.competencias.find((c) => c.operadorId === "verde")!;
+    expect(verde.categorias).toEqual(expect.arrayContaining(["instalacao", "desligamento"]));
+    expect(verde.tecnologias.length).toBeGreaterThan(0);
+    const vermelho = minho.competencias.find((c) => c.operadorId === "vermelho")!;
+    expect(vermelho.categorias.length).toBeGreaterThan(0);
+
+    // A semente põe a formação na Cávado (não na Minho).
+    const cavado = obterEquipa(despachanteAzul, "eq-cavado");
+    expect(cavado.indisponibilidades.length).toBeGreaterThan(0);
+    expect(cavado.indisponibilidades.every((b) => typeof b.motivo === "string" && b.motivo.length > 0)).toBe(true);
+
+    const alheia = lerMundo().ordens.find((o) => o.equipaId === "eq-minho" && o.operadorId !== "azul");
+    expect(alheia).toBeTruthy();
+    expect(podeLerOrdem(despachanteAzul, alheia!)).toBe(false);
+    expect(minho.ocupacaoHoje.proprias.every((o) => o.operadorId === "azul")).toBe(true);
+  });
 });

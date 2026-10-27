@@ -53,4 +53,4 @@ Não há migração automática de `data/vagacerta.sqlite` pré-município. Se a
 npm run demo:reset
 ```
 
-Isto apaga a SQLite local e a recria na próxima arranque com DICOFRE + 200 equipas.
+Isto apaga a SQLite local e a recria no próximo arranque com DICOFRE + 200 equipas.

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { OctagonX } from "lucide-react";
 import { toast } from "sonner";
 import { AREAS } from "@/lib/rules/areas";
 import { useT } from "@/components/idioma/provedor";
@@ -122,6 +121,7 @@ export function FormularioOrdem({
 
   function aplicarOperador(valor: OperadorId) {
     setOperadorId(valor);
+    setEquipaId(null);
     const proximas = janelas.filter(
       (linha) => linha.operadorId === valor && (linha.categoria === categoria || linha.categoria === "qualquer"),
     );
@@ -315,7 +315,15 @@ export function FormularioOrdem({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="data">{t("comum.data")}</Label>
-            <SeletorData id="data" valor={data} onChange={setData} required />
+            <SeletorData
+              id="data"
+              valor={data}
+              onChange={(valor) => {
+                setData(valor);
+                setEquipaId(null);
+              }}
+              required
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="janela-inicio">{t("ordens.janelaInicioHora")}</Label>
@@ -413,7 +421,13 @@ export function FormularioOrdem({
           ) : null}
           <div className="space-y-1.5">
             <Label htmlFor="area">{t("ordens.area")}</Label>
-            <Select value={area} onValueChange={setArea}>
+            <Select
+              value={area}
+              onValueChange={(valor) => {
+                setArea(valor);
+                setEquipaId(null);
+              }}
+            >
               <SelectTrigger id="area" className="w-full text-[13px]/5">
                 <SelectValue />
               </SelectTrigger>
@@ -465,28 +479,29 @@ export function FormularioOrdem({
 
       {erro ? (
         <Alerta tom="erro" role="alert">
-          <div className="flex items-start gap-2">
-            <OctagonX className="mt-0.5 size-4 shrink-0" strokeWidth={1.75} aria-hidden />
-            <div className="space-y-2">
-              <p className="font-medium text-foreground">{t("motor.naoCriarTitulo")}</p>
-              <p>{erro}</p>
-              {alternativa ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-8"
-                  onClick={() => {
-                    setJanelaInicio(alternativa.inicio);
-                    setJanelaFim(alternativa.fim);
-                    setEquipaId(alternativa.equipaId);
-                    setErro(null);
-                    setAlternativa(null);
-                  }}
-                >
-                  {t("motor.usarAlternativa")}
-                </Button>
-              ) : null}
-            </div>
+          <div className="space-y-2">
+            <p className="font-medium text-foreground">{t("motor.naoCriarTitulo")}</p>
+            <p>{erro}</p>
+            {alternativa ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-8"
+                onClick={() => {
+                  setJanelaInicio(alternativa.inicio);
+                  setJanelaFim(alternativa.fim);
+                  setEquipaId(alternativa.equipaId);
+                  setErro(null);
+                  setAlternativa(null);
+                }}
+              >
+                {t("motor.usarAlternativaDetalhe", {
+                  inicio: alternativa.inicio,
+                  fim: alternativa.fim,
+                  equipa: alternativa.equipa,
+                })}
+              </Button>
+            ) : null}
           </div>
         </Alerta>
       ) : null}

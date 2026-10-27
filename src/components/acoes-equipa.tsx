@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
-import { OctagonX } from "lucide-react";
+import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useT } from "@/components/idioma/provedor";
 import type { Chave } from "@/lib/i18n";
@@ -70,6 +69,8 @@ export function AcoesEquipa({
   const [aTrabalhar, setATrabalhar] = useState(false);
   const [confirmarDesativar, setConfirmarDesativar] = useState(false);
   const [membroADesativar, setMembroADesativar] = useState<{ id: string; nome: string } | null>(null);
+  const chaveServidos = operadoresServidos.join(",");
+  const [servidosChave, setServidosChave] = useState(chaveServidos);
   const [servidos, setServidos] = useState<("azul" | "vermelho" | "verde")[]>(operadoresServidos);
   const [aConfirmarRemocao, setAConfirmarRemocao] = useState<OperadorId[] | null>(null);
   const nome = equipaNome;
@@ -80,9 +81,10 @@ export function AcoesEquipa({
         ? zonaPredefinidaId
         : (zonas[0]?.id ?? "");
 
-  useEffect(() => {
+  if (chaveServidos !== servidosChave) {
+    setServidosChave(chaveServidos);
     setServidos(operadoresServidos);
-  }, [operadoresServidos]);
+  }
 
   function mensagemOperadorComOrdens(detalhes: { remocoes?: OperadorId[]; ordens?: OrdemFutura[] } | undefined) {
     const ordens = detalhes?.ordens ?? [];
@@ -173,12 +175,9 @@ export function AcoesEquipa({
     <div className="space-y-8">
       {erro ? (
         <Alerta tom="erro" role="alert">
-          <div className="flex items-start gap-2">
-            <OctagonX className="mt-0.5 size-4 shrink-0" strokeWidth={1.75} aria-hidden />
-            <div className="space-y-1">
-              <p className="font-medium text-foreground">{t("equipas.naoGuardarTitulo")}</p>
-              <div>{erro}</div>
-            </div>
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">{t("equipas.naoGuardarTitulo")}</p>
+            <div>{erro}</div>
           </div>
         </Alerta>
       ) : null}
@@ -289,7 +288,7 @@ export function AcoesEquipa({
                   type="button"
                   aria-pressed={ativo}
                   disabled={aTrabalhar}
-                  className={`inline-flex h-8 items-center rounded-md border px-2.5 text-[13px]/5 ${
+                  className={`inline-flex h-8 items-center rounded-md border px-2.5 text-[13px]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
                     ativo ? "border-primary bg-muted font-medium" : "border-border bg-card text-muted-foreground"
                   }`}
                   onClick={() =>
@@ -445,13 +444,17 @@ export function AcoesEquipa({
           <DialogHeader>
             <DialogTitle>
               {t("equipas.deixarDeServirTitulo", {
-                operador: aConfirmarRemocao?.[0] ? t(`operador.${aConfirmarRemocao[0]}`) : "",
+                operador: new Intl.ListFormat(idioma === "en" ? "en" : "pt-PT", { type: "conjunction" }).format(
+                  (aConfirmarRemocao ?? []).map((id) => t(`operador.${id}`)),
+                ),
               })}
             </DialogTitle>
             <DialogDescription>
               {t("equipas.deixarDeServirDetalhe", {
                 equipa: nome,
-                operador: aConfirmarRemocao?.[0] ? t(`operador.${aConfirmarRemocao[0]}`) : "",
+                operador: new Intl.ListFormat(idioma === "en" ? "en" : "pt-PT", { type: "conjunction" }).format(
+                  (aConfirmarRemocao ?? []).map((id) => t(`operador.${id}`)),
+                ),
               })}
             </DialogDescription>
           </DialogHeader>

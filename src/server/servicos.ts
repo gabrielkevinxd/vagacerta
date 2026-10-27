@@ -860,7 +860,8 @@ export function obterEquipa(ator: Ator, id: string, data = hojeLisboa()): Equipa
     .filter((ordem) => !podeLerOrdem(ator, ordem) && ordem.inicioPlaneado && ordem.fimPlaneado)
     .reduce((soma, ordem) => soma + (parseHHMM(ordem.fimPlaneado!) - parseHHMM(ordem.inicioPlaneado!)), 0);
   const uso = utilizacaoDoDia(mundo, data).find((linha) => linha.equipaId === id);
-  const { tecnicos: _tecnicos, ...resto } = resumo!;
+  const { tecnicos, ...resto } = resumo!;
+  void tecnicos;
   return {
     ...resto,
     membros: membros.map((membro) => ({ id: membro.id, nome: membro.nome, ativo: Number(membro.ativo) === 1 })),
@@ -918,7 +919,7 @@ export function guardarEquipa(
           throw new ErroHttp(
             409,
             "OPERADOR_COM_ORDENS",
-            "Não pode deixar de servir operador(es) com ordens futuras nesta equipa.",
+            "Não pode deixar de servir operadores com ordens futuras nesta equipa.",
             {
               remocoes: removidos,
               ordens: futuras.map((o) => ({
