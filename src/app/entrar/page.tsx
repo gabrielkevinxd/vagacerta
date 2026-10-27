@@ -9,7 +9,7 @@ async function CabecalhoEntrada() {
   return (
     <header className="flex h-12 items-center justify-between gap-3 border-b border-border px-4 md:px-6">
       <div className="flex items-center gap-2">
-        <span className="flex size-6 items-center justify-center rounded-md bg-primary text-[10px] font-semibold text-primary-foreground">
+        <span className="flex size-6 items-center justify-center rounded-md bg-primary text-[11px] font-semibold text-primary-foreground">
           VC
         </span>
         <p className="text-[13px]/5 font-semibold tracking-tight">{t("marca.nome")}</p>

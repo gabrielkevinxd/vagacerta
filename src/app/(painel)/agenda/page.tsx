@@ -33,7 +33,7 @@ function ligacao(href: string, rotulo: string) {
   return (
     <Link
       href={href}
-      className="inline-flex h-8 items-center rounded-md border border-border bg-card px-3 text-sm font-medium transition-colors hover:bg-muted"
+      className="inline-flex h-8 items-center rounded-md border border-border bg-card px-3 text-[13px]/5 font-medium transition-colors hover:bg-muted"
     >
       {rotulo}
     </Link>
@@ -120,8 +120,8 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
       ) : null}
       {previsao && escolhida ? (
         <div id="mover" className="sticky top-2 z-30 space-y-3 superficie border-primary/40 p-4">
-          <p className="text-sm font-medium">{t("agenda.previsualizacao")}</p>
-          <p className="text-sm">
+          <p className="text-[13px]/5 font-medium">{t("agenda.previsualizacao")}</p>
+          <p className="text-[13px]/5">
             {t("agenda.antes", {
               equipa: escolhida.equipa.nome,
               data: formatarDataLocale(escolhida.data, idioma),
@@ -129,7 +129,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
               fim: escolhida.bloco.fim,
             })}
           </p>
-          <p className="text-sm">{traduzirNarrativa(m, previsao.mensagem)}</p>
+          <p className="text-[13px]/5">{traduzirNarrativa(m, previsao.mensagem)}</p>
           <div className="flex flex-wrap gap-2">
             <form action={confirmarArrasto}>
               <input type="hidden" name="ordem" value={ordemPedida} />
@@ -138,11 +138,11 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
               <input type="hidden" name="inicio" value={um(consulta.inicio)} />
               <input type="hidden" name="vista" value={vista} />
               <input type="hidden" name="data" value={data} />
-              <button type="submit" className="inline-flex h-10 items-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground">
+              <button type="submit" className="inline-flex h-10 items-center rounded-lg bg-primary px-4 text-[13px]/5 font-medium text-primary-foreground">
                 {t("agenda.guardarLugar")}
               </button>
             </form>
-            <Link href={base} className="inline-flex h-10 items-center rounded-lg border border-border bg-card px-4 text-sm">
+            <Link href={base} className="inline-flex h-10 items-center rounded-lg border border-border bg-card px-4 text-[13px]/5">
               {t("comum.voltar")}
             </Link>
           </div>
@@ -154,7 +154,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
           <input type="hidden" name="data" value={data} />
           <input type="hidden" name="ordem" value={escolhida.bloco.id} />
           <input type="hidden" name="prever" value="1" />
-          <label className="space-y-1 text-sm">
+          <label className="space-y-1 text-[13px]/5">
             <span className="font-medium">{t("comum.equipa")}</span>
             <select name="equipaId" defaultValue={escolhida.equipa.equipaId} className="h-10 w-full rounded-lg border border-input bg-background px-2">
               {agenda.dias
@@ -167,7 +167,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
                 ))}
             </select>
           </label>
-          <label className="space-y-1 text-sm">
+          <label className="space-y-1 text-[13px]/5">
             <span className="font-medium">{t("comum.dia")}</span>
             <select name="dia" defaultValue={escolhida.data} className="h-10 w-full rounded-lg border border-input bg-background px-2">
               {agenda.dias.map((dia) => (
@@ -177,11 +177,11 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
               ))}
             </select>
           </label>
-          <label className="space-y-1 text-sm">
+          <label className="space-y-1 text-[13px]/5">
             <span className="font-medium">{t("comum.inicio")}</span>
             <input name="inicio" type="time" step={300} required defaultValue={escolhida.bloco.inicio} className="h-10 w-full rounded-lg border border-input bg-background px-2" />
           </label>
-          <button type="submit" className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground">
+          <button type="submit" className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-[13px]/5 font-medium text-primary-foreground">
             {t("comum.previsualizar")}
           </button>
         </form>

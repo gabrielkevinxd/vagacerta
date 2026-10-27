@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-const campo = "h-9 w-full rounded-lg border border-input bg-card px-2.5 text-sm";
+const campo = "h-9 w-full rounded-lg border border-input bg-card px-2.5 text-[13px]/5";
 
 export function AcoesOrdem({
   ordemId,
@@ -63,11 +63,11 @@ export function AcoesOrdem({
   return (
     <div className="space-y-6">
       {erro ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-[13px]/5 text-destructive">
           {erro}
         </p>
       ) : null}
-      {aviso ? <p className="text-sm">{aviso}</p> : null}
+      {aviso ? <p className="text-[13px]/5">{aviso}</p> : null}
 
       {tecnico && estado === "agendada" ? (
         <Button disabled={aTrabalhar} onClick={() => executar(() => enviar(`/api/ordens/${ordemId}/estado`, { estado: "em_curso" }).then(() => undefined))}>

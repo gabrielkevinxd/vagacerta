@@ -38,16 +38,16 @@ async function Conteudo() {
               className="superficie block p-4 transition-colors hover:bg-muted/60"
             >
               <p className="text-base font-semibold tracking-tight">{equipa.nome}</p>
-              <p className="mt-0.5 text-sm text-muted-foreground">
+              <p className="mt-0.5 text-[13px]/5 text-muted-foreground">
                 {equipa.codigo} · {equipa.base} · {equipa.cco}
               </p>
-              <p className="mt-3 text-sm">
+              <p className="mt-3 text-[13px]/5">
                 {equipa.zona ? `${equipa.zona.codigo} ${equipa.zona.nome}` : t("equipas.semZona")} ·{" "}
                 <span className={equipa.ativa ? "text-[color:var(--success)]" : "text-muted-foreground"}>
                   {equipa.ativa ? t("comum.ativa") : t("comum.inativa")}
                 </span>
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">{equipa.areas.join(", ")}</p>
+              <p className="mt-1 text-[13px]/5 text-muted-foreground">{equipa.areas.join(", ")}</p>
               <p className="mt-2 text-xs text-muted-foreground">
                 {equipa.competencias.map((linha) => t(`operador.${linha.operadorId}`)).join(" · ") || t("equipas.semCompetencias")}
               </p>

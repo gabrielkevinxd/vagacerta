@@ -38,12 +38,12 @@ type OrdemCmd = { id: string; referencia: string; clienteNome: string; operadorI
 const DEMO_ORDENS: OrdemCmd[] = [
   { id: "ord-az-24081", referencia: "AZ-24081", clienteNome: "Leonor Campos", operadorId: "azul" },
   { id: "ord-vr-90001", referencia: "VR-90001", clienteNome: "Duarte Pimentel", operadorId: "vermelho" },
-  { id: "ord-vd-26004", referencia: "VD-26004", clienteNome: "Catarina Seixas", operadorId: "verde" },
-  { id: "ord-az-27020", referencia: "AZ-27020", clienteNome: "Simão Leal", operadorId: "azul" },
+  { id: "ord-vd-55210", referencia: "VD-55210", clienteNome: "Gonçalo Bentes", operadorId: "verde" },
+  { id: "ord-az-24102", referencia: "AZ-24102", clienteNome: "Tiago Furtado", operadorId: "azul" },
   { id: "ord-vr-88350", referencia: "VR-88350", clienteNome: "Paulo Gameiro", operadorId: "vermelho" },
   { id: "ord-vd-urg", referencia: "VD-URG", clienteNome: "Matilde Queirós", operadorId: "verde" },
-  { id: "ord-az-pend-01", referencia: "AZ-PEND-01", clienteNome: "Filipa Nogueira", operadorId: "azul" },
-  { id: "ord-vr-espera", referencia: "VR-ESPERA", clienteNome: "Rui Mendes", operadorId: "vermelho" },
+  { id: "ord-az-pend-01", referencia: "AZ-PEND-01", clienteNome: "Teresa Malhoa", operadorId: "azul" },
+  { id: "ord-vr-fila-01", referencia: "VR-FILA-01", clienteNome: "Lourenço Paiva", operadorId: "vermelho" },
 ];
 
 function eMac(): boolean {
@@ -65,16 +65,10 @@ export function ComandoPalette({ destinos }: { destinos: Destino[] }) {
         evento.preventDefault();
         setAberto((v) => !v);
       }
-      if (evento.key.toLowerCase() === "c" && !evento.metaKey && !evento.ctrlKey && !evento.altKey) {
-        const alvo = evento.target as HTMLElement | null;
-        if (alvo && (alvo.tagName === "INPUT" || alvo.tagName === "TEXTAREA" || alvo.isContentEditable)) return;
-        evento.preventDefault();
-        router.push("/ordens/nova");
-      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [router]);
+  }, []);
 
   const icones: Record<string, React.ComponentType<{ className?: string }>> = {
     painel: LayoutDashboard,

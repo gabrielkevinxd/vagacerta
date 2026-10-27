@@ -15,7 +15,7 @@ export function ItemListaDados({
   className?: string;
 }) {
   const classes = cn(
-    "flex flex-wrap items-center gap-2 px-4 py-3 text-sm transition-colors duration-150",
+    "flex flex-wrap items-center gap-2 px-4 py-3 text-[13px]/5 transition-colors duration-150",
     href ? "hover:bg-muted/70" : "",
     className,
   );

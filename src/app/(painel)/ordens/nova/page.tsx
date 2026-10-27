@@ -26,7 +26,7 @@ async function Conteudo() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight md:text-[1.75rem]">{t("ordens.novaTitulo")}</h1>
-        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{t("ordens.novaAjuda")}</p>
+        <p className="mt-1 max-w-2xl text-[13px]/5 text-muted-foreground">{t("ordens.novaAjuda")}</p>
       </div>
       <FormularioOrdem
         operadorFixo={ator.papel === "despachante" ? ator.operadorId : null}

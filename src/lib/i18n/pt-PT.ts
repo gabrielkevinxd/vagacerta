@@ -174,6 +174,7 @@ export const ptPT = {
     operador: "Operador",
     equipa: "Equipa",
     inicio: "Início",
+    hora: "Hora",
     fim: "Fim",
     motivo: "Motivo",
     minutos: "min",

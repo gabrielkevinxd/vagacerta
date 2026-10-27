@@ -81,7 +81,7 @@ async function Lista({ searchParams }: { searchParams: Promise<Record<string, st
       }
     : null;
 
-  const restoQs = { estado, data, q, operador, ordem: ordemAberta };
+  const restoQs = { q, operador, ordem: ordemAberta };
 
   return (
     <div className={`space-y-4 ${abertaLinha ? "xl:pr-[440px]" : ""}`}>
@@ -96,7 +96,7 @@ async function Lista({ searchParams }: { searchParams: Promise<Record<string, st
         accoes={
           <div className="flex flex-wrap items-center gap-2">
             <Segmentos etiqueta={t("ordens.titulo")}>
-              <SegmentoLigacao href={qsVista("todas", restoQs)} ativo={vista === "todas"}>
+              <SegmentoLigacao href={qsVista("todas", { ...restoQs, estado, data })} ativo={vista === "todas"}>
                 {t("vistas.todas")}
               </SegmentoLigacao>
               <SegmentoLigacao href={qsVista("hoje", restoQs)} ativo={vista === "hoje"}>
@@ -122,6 +122,7 @@ async function Lista({ searchParams }: { searchParams: Promise<Record<string, st
         data={data || (vista === "hoje" ? hoje : undefined)}
         q={q}
         operador={operador}
+        vista={vista === "todas" ? undefined : vista}
         mostrarOperador={eCentral(ator)}
         idioma={idioma}
       />

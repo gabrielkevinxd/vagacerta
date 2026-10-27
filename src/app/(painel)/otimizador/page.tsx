@@ -99,11 +99,11 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
       <form action="/otimizador" className="superficie space-y-4 p-4">
         <input type="hidden" name="prever" value="1" />
         <div className="grid gap-3 md:grid-cols-2">
-          <label className="space-y-1.5 text-sm" htmlFor="data">
+          <label className="space-y-1.5 text-[13px]/5" htmlFor="data">
             <span className="font-medium">{t("comum.dia")}</span>
             <input id="data" name="data" type="date" defaultValue={data} className={campo} />
           </label>
-          <label className="space-y-1.5 text-sm" htmlFor="modo">
+          <label className="space-y-1.5 text-[13px]/5" htmlFor="modo">
             <span className="font-medium">{t("reencaixe.pedido")}</span>
             <select id="modo" name="modo" defaultValue={modo} className={campo}>
               <option value="encaixar">{t("reencaixe.modoEncaixarFila")}</option>
@@ -111,7 +111,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
               {central ? <option value="falta">{t("reencaixe.modoFaltaEquipa")}</option> : null}
             </select>
           </label>
-          <label className="space-y-1.5 text-sm" htmlFor="ordemId">
+          <label className="space-y-1.5 text-[13px]/5" htmlFor="ordemId">
             <span className="font-medium">{t("reencaixe.ordem")}</span>
             <select id="ordemId" name="ordemId" defaultValue={ordemId} className={campo}>
               {espera.length === 0 && agendadas.length === 0 ? <option value="">{t("comum.nadaNesteDia")}</option> : null}
@@ -137,7 +137,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
             </select>
           </label>
           {central ? (
-            <label className="space-y-1.5 text-sm" htmlFor="equipaId">
+            <label className="space-y-1.5 text-[13px]/5" htmlFor="equipaId">
               <span className="font-medium">{t("reencaixe.equipaFalta")}</span>
               <select id="equipaId" name="equipaId" defaultValue={equipaId} className={campo}>
                 {equipas.map((equipa) => (
@@ -150,16 +150,16 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
           ) : null}
         </div>
         {central ? (
-          <label className="flex items-center gap-2 text-sm" htmlFor="troca">
+          <label className="flex items-center gap-2 text-[13px]/5" htmlFor="troca">
             <input id="troca" name="troca" type="checkbox" value="1" defaultChecked={trocaMarcada} />
             {t("reencaixe.permitirTroca")}
           </label>
         ) : (
-          <p className="text-sm text-muted-foreground">{t("reencaixe.despachoSoProprio")}</p>
+          <p className="text-[13px]/5 text-muted-foreground">{t("reencaixe.despachoSoProprio")}</p>
         )}
-        <label className="block space-y-1.5 text-sm" htmlFor="motivo">
+        <label className="block space-y-1.5 text-[13px]/5" htmlFor="motivo">
           <span className="font-medium">{t("reencaixe.motivoCancelamento")}</span>
-          <textarea id="motivo" name="motivo" defaultValue={motivo} rows={3} className="w-full rounded-lg border border-input bg-card px-2.5 py-2 text-sm" />
+          <textarea id="motivo" name="motivo" defaultValue={motivo} rows={3} className="w-full rounded-lg border border-input bg-card px-2.5 py-2 text-[13px]/5" />
           <span className="block text-muted-foreground">{t("reencaixe.motivoObrigatorio")}</span>
         </label>
         <button type="submit" className={botao}>
@@ -168,7 +168,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
       </form>
 
       {aviso ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-[13px]/5 text-destructive">
           {aviso}
         </p>
       ) : null}

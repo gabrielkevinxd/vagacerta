@@ -8,7 +8,7 @@ export default function ErroPagina({ error, reset }: { error: Error & { digest?:
   return (
     <div className="superficie max-w-lg space-y-3 p-6">
       <h1 className="text-xl font-semibold tracking-tight">{t("erroPagina.titulo")}</h1>
-      <p className="text-sm text-muted-foreground">{error.message || t("erroPagina.inesperado")}</p>
+      <p className="text-[13px]/5 text-muted-foreground">{error.message || t("erroPagina.inesperado")}</p>
       <Button type="button" variant="outline" size="sm" onClick={reset}>
         {t("comum.tentarDeNovo")}
       </Button>

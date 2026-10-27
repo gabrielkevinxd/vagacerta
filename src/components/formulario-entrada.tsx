@@ -38,7 +38,7 @@ export function FormularioEntrada() {
       <form action="/api/sessao/entrar" method="post" className="superficie w-full max-w-[360px] space-y-4 p-4">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <span className="flex size-7 items-center justify-center rounded-md bg-primary text-[10px] font-semibold text-primary-foreground">
+            <span className="flex size-7 items-center justify-center rounded-md bg-primary text-[11px] font-semibold text-primary-foreground">
               VC
             </span>
             <p className="text-base font-semibold tracking-tight">{t("marca.nome")}</p>

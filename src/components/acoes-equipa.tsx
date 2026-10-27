@@ -132,7 +132,7 @@ export function AcoesEquipa({
             const dia = t(DIAS[linha.diaSemana] ?? "diaSemana.d1");
             return (
               <li key={linha.diaSemana} className="grid grid-cols-[7rem_1fr_1fr] items-center gap-2">
-                <span className="text-sm capitalize">{dia}</span>
+                <span className="text-[13px]/5 capitalize">{dia}</span>
                 <Input name={`inicio-${linha.diaSemana}`} defaultValue={linha.inicio} aria-label={t("equipas.inicioDe", { dia })} />
                 <Input name={`fim-${linha.diaSemana}`} defaultValue={linha.fim} aria-label={t("equipas.fimDe", { dia })} />
               </li>
@@ -179,7 +179,7 @@ export function AcoesEquipa({
           <Label htmlFor="fim-zona">{t("comum.ate")}</Label>
           <Input id="fim-zona" name="fim" type="date" />
         </div>
-        <label className="flex items-center gap-2 text-sm md:col-span-2">
+        <label className="flex items-center gap-2 text-[13px]/5 md:col-span-2">
           <input type="checkbox" name="confirmacao" />
           {t("equipas.confirmarPassado")}
         </label>
@@ -192,7 +192,7 @@ export function AcoesEquipa({
 
       <div className="space-y-3">
         <h2 className="text-base font-semibold tracking-tight">{t("equipas.membros")}</h2>
-        <ul className="space-y-2 text-sm">
+        <ul className="space-y-2 text-[13px]/5">
           {membros.map((membro) => (
             <li key={membro.id} className="flex items-center justify-between gap-3">
               <span>
@@ -236,7 +236,7 @@ export function AcoesEquipa({
 
       <div className="space-y-3">
         <h2 className="text-base font-semibold tracking-tight">{t("equipas.indisponibilidades")}</h2>
-        <ul className="space-y-2 text-sm">
+        <ul className="space-y-2 text-[13px]/5">
           {indisponibilidades.length === 0 ? <li className="text-muted-foreground">{t("equipas.nenhumaIndisp")}</li> : null}
           {indisponibilidades.map((bloco) => (
             <li key={bloco.id} className="flex flex-wrap items-center justify-between gap-2">

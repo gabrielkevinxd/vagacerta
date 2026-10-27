@@ -62,9 +62,9 @@ type Fantasma = {
 };
 
 const primario =
-  "inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50";
+  "inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-[13px]/5 font-medium text-primary-foreground disabled:opacity-50";
 const secundario =
-  "inline-flex h-10 items-center justify-center rounded-lg border border-border bg-card px-4 text-sm font-medium disabled:opacity-50";
+  "inline-flex h-10 items-center justify-center rounded-lg border border-border bg-card px-4 text-[13px]/5 font-medium disabled:opacity-50";
 
 const LigacaoAgenda = createContext({ vista: "dia" as "dia" | "semana", ancora: "" });
 
@@ -343,7 +343,7 @@ export function GanttAgenda({
         }}
       >
         <details className="superficie px-4 py-3 md:hidden">
-          <summary className="cursor-pointer text-sm font-medium">{t("agenda.comoLer")}</summary>
+          <summary className="cursor-pointer text-[13px]/5 font-medium">{t("agenda.comoLer")}</summary>
           <div className="pt-3">
             <LegendaGantt perfil={perfil} margem={agenda.margemDeslocacaoMin} podeMover={podeMover} embutida />
           </div>
@@ -354,25 +354,25 @@ export function GanttAgenda({
         <p className="sr-only" aria-live="polite">
           {aCalcular ? t("agenda.aValidar") : ""} {erro ?? ""} {aviso ?? ""} {proposta?.mensagem ?? ""}
         </p>
-        {aCalcular ? <p className="text-sm text-muted-foreground">{t("agenda.aValidar")}</p> : null}
+        {aCalcular ? <p className="text-[13px]/5 text-muted-foreground">{t("agenda.aValidar")}</p> : null}
         {erro ? (
-          <p role="alert" className="rounded-lg border border-destructive/40 bg-card px-3 py-2 text-sm text-destructive">
+          <p role="alert" className="rounded-lg border border-destructive/40 bg-card px-3 py-2 text-[13px]/5 text-destructive">
             {erro}
           </p>
         ) : null}
         {aviso && !proposta ? (
-          <p role="status" className="rounded-lg border border-border bg-card px-3 py-2 text-sm">
+          <p role="status" className="rounded-lg border border-border bg-card px-3 py-2 text-[13px]/5">
             {aviso}
           </p>
         ) : null}
         {proposta ? (
           <div className="sticky top-2 z-30 space-y-3 superficie border-primary/40 p-4">
-            <p className="text-sm font-medium">{t("agenda.previsualizacao")}</p>
-            <p className="text-sm">
+            <p className="text-[13px]/5 font-medium">{t("agenda.previsualizacao")}</p>
+            <p className="text-[13px]/5">
               {localizar(agenda, proposta.ordemId)?.bloco.referencia ?? t("agenda.visita")} → {nomeDaEquipa(agenda, proposta.equipaId)},{" "}
               {formatarDataLocale(proposta.data, idioma)} · {proposta.inicioPlaneado}.
             </p>
-            <p className="text-sm">{traduzirNarrativa(m, proposta.mensagem)}</p>
+            <p className="text-[13px]/5">{traduzirNarrativa(m, proposta.mensagem)}</p>
             <div className="flex flex-wrap gap-2">
               <button type="button" className={primario} disabled={aCalcular} onClick={() => void confirmar()}>
                 {t("agenda.guardarLugar")}
@@ -453,7 +453,7 @@ function LegendaGantt({
   return (
     <div className={embutida ? "space-y-3" : "space-y-3 superficie p-4"}>
       <LegendaOperadores compacta />
-      <ul className="grid gap-2 text-sm sm:grid-cols-2">
+      <ul className="grid gap-2 text-[13px]/5 sm:grid-cols-2">
         {!tecnico ? (
           <li className="flex items-center gap-2">
             <span className="h-4 w-8 rounded-sm border border-border bg-[repeating-linear-gradient(135deg,var(--muted)_0_5px,var(--border)_5px_10px)]" aria-hidden />
@@ -472,7 +472,7 @@ function LegendaGantt({
         ) : null}
         <li>{t("agenda.margemLegenda", { n: margem })}</li>
       </ul>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-[13px]/5 text-muted-foreground">
         {tecnico ? t("agenda.ajudaTecnico") : podeMover ? t("agenda.ajudaMover") : null}
         {perfil === "despachante" ? t("agenda.ajudaDespacho") : ""}
       </p>
@@ -508,14 +508,14 @@ function QuadroDia({
   ) => void;
 }) {
   const { t, m, idioma } = useT();
-  if (!dia) return <p className="text-sm text-muted-foreground">{t("agenda.semDia")}</p>;
+  if (!dia) return <p className="text-[13px]/5 text-muted-foreground">{t("agenda.semDia")}</p>;
   const eixo = eixoDasLinhas(dia.equipas);
   const conflitos = dia.equipas.flatMap((equipa) => equipa.conflitos.map((conflito) => ({ ...conflito, equipa: equipa.nome })));
   const mostrarAgora = dia.data === hoje;
   return (
     <section className="space-y-2" aria-label={formatarDataLongaLocale(dia.data, idioma)}>
       {conflitos.length > 0 ? (
-        <ul className="space-y-1 rounded-lg border border-destructive/40 bg-card px-3 py-2 text-sm text-destructive">
+        <ul className="space-y-1 rounded-lg border border-destructive/40 bg-card px-3 py-2 text-[13px]/5 text-destructive">
           {conflitos.map((conflito) => (
             <li key={`${conflito.equipa}-${conflito.ordemId}-${conflito.tipo}`}>
               {traduzirConflito(m, conflito.tipo, conflito.mensagem)}
@@ -523,7 +523,7 @@ function QuadroDia({
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-muted-foreground">{t(podeMover ? "agenda.semConflitosDia" : "agenda.semConflitosDiaSo")}</p>
+        <p className="text-[13px]/5 text-muted-foreground">{t(podeMover ? "agenda.semConflitosDia" : "agenda.semConflitosDiaSo")}</p>
       )}
       <div className="overflow-x-auto superficie">
         <div className="min-w-[58rem]">
@@ -534,7 +534,7 @@ function QuadroDia({
           {dia.equipas.map((equipa) => (
             <div key={equipa.equipaId} className="grid grid-cols-[11rem_1fr] border-b border-border last:border-b-0">
               <div className="sticky left-0 z-10 flex flex-col justify-center border-r border-border bg-card px-3 py-2">
-                <p className="text-sm font-medium leading-tight">{equipa.nome.replace(/^Equipa /, "")}</p>
+                <p className="text-[13px]/5 font-medium leading-tight">{equipa.nome.replace(/^Equipa /, "")}</p>
                 <p className="text-xs text-muted-foreground">
                   {equipa.turno ? `${equipa.turno.inicio}–${equipa.turno.fim}` : t("comum.naoTrabalha")}
                 </p>
@@ -590,7 +590,7 @@ function QuadroSemana({
   return (
     <div className="space-y-2">
       {conflitos.length > 0 ? (
-        <ul className="space-y-1 rounded-lg border border-destructive/40 bg-card px-3 py-2 text-sm text-destructive">
+        <ul className="space-y-1 rounded-lg border border-destructive/40 bg-card px-3 py-2 text-[13px]/5 text-destructive">
           {conflitos.map((conflito) => (
             <li key={`${conflito.data}-${conflito.equipa}-${conflito.ordemId}-${conflito.tipo}`}>
               {formatarDataLocale(conflito.data, idioma)} · {conflito.equipa}: {traduzirConflito(m, conflito.tipo, conflito.mensagem)}
@@ -598,7 +598,7 @@ function QuadroSemana({
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-muted-foreground">{t(podeMover ? "agenda.semConflitosSemana" : "agenda.semConflitosSemanaSo")}</p>
+        <p className="text-[13px]/5 text-muted-foreground">{t(podeMover ? "agenda.semConflitosSemana" : "agenda.semConflitosSemanaSo")}</p>
       )}
       <div className="overflow-x-auto superficie">
         <div className="min-w-[86rem]">
@@ -612,7 +612,7 @@ function QuadroSemana({
           </div>
           {[...nomes.entries()].map(([equipaId, nome]) => (
             <div key={equipaId} className="grid border-b border-border last:border-b-0" style={colunas}>
-              <div className="sticky left-0 z-20 flex items-center border-r border-border bg-card px-3 py-2 text-sm font-medium">
+              <div className="sticky left-0 z-20 flex items-center border-r border-border bg-card px-3 py-2 text-[13px]/5 font-medium">
                 {nome.replace(/^Equipa /, "")}
               </div>
               {dias.map((dia) => {
@@ -1037,7 +1037,7 @@ function Ficha({
       {bloco.vista === "ocupada" ? (
         <div>
           <h2 className="text-base font-semibold tracking-tight">{t("comum.ocupada")}</h2>
-          <p className="mt-1 text-sm">
+          <p className="mt-1 text-[13px]/5">
             {t("agenda.ocupadaDetalhe", {
               equipa: equipa.nome,
               data: formatarDataLocale(data, idioma),
@@ -1054,22 +1054,22 @@ function Ficha({
               {bloco.referencia}
               {bloco.operadorId ? <span className="ml-2 text-base font-sans font-medium">{t(`operador.${bloco.operadorId}`)}</span> : null}
             </h2>
-            <p className="mt-1 text-sm">
+            <p className="mt-1 text-[13px]/5">
               {bloco.clienteNome} · {bloco.morada}
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-[13px]/5 text-muted-foreground">
               {equipa.nome} · {formatarDataLocale(data, idioma)} · {bloco.inicio}–{bloco.fim}
               {bloco.categoria ? ` · ${t(`categoria.${bloco.categoria}`)}` : ""}
               {bloco.janelaInicio ? ` · ${t("agenda.janelaInicio", { inicio: bloco.janelaInicio, fim: bloco.janelaFim ?? "" })}` : ""}
             </p>
           </div>
-          <Link href={`/ordens/${bloco.id}`} className="text-sm underline">
+          <Link href={`/ordens/${bloco.id}`} className="text-[13px]/5 underline">
             {t("comum.abrirOrdem")}
           </Link>
         </div>
       )}
       {conflitos.map((conflito) => (
-        <p key={conflito.tipo} className="text-sm text-destructive">
+        <p key={conflito.tipo} className="text-[13px]/5 text-destructive">
           {traduzirConflito(m, conflito.tipo, conflito.mensagem)}
         </p>
       ))}
@@ -1108,8 +1108,8 @@ function FormularioMover({
       <input type="hidden" name="data" value={ancora} />
       <input type="hidden" name="ordem" value={ordemId} />
       <input type="hidden" name="prever" value="1" />
-      <p className="text-sm font-medium md:col-span-4">{t("agenda.enviarEquipa")}</p>
-      <label className="space-y-1 text-sm">
+      <p className="text-[13px]/5 font-medium md:col-span-4">{t("agenda.enviarEquipa")}</p>
+      <label className="space-y-1 text-[13px]/5">
         <span className="font-medium">{t("comum.equipa")}</span>
         <select name="equipaId" defaultValue={equipaInicial} className="h-10 w-full rounded-lg border border-input bg-background px-2">
           {agenda.dias
@@ -1122,7 +1122,7 @@ function FormularioMover({
             ))}
         </select>
       </label>
-      <label className="space-y-1 text-sm">
+      <label className="space-y-1 text-[13px]/5">
         <span className="font-medium">{t("comum.dia")}</span>
         <select name="dia" defaultValue={dataInicial} className="h-10 w-full rounded-lg border border-input bg-background px-2">
           {agenda.dias.map((dia) => (
@@ -1132,7 +1132,7 @@ function FormularioMover({
           ))}
         </select>
       </label>
-      <label className="space-y-1 text-sm">
+      <label className="space-y-1 text-[13px]/5">
         <span className="font-medium">{t("comum.inicio")}</span>
         <input name="inicio" type="time" step={300} required defaultValue={inicioInicial} className="h-10 w-full rounded-lg border border-input bg-background px-2" />
       </label>
@@ -1150,7 +1150,7 @@ function ListaMovel({ agenda, podeMover }: { agenda: Agenda; podeMover: boolean 
   for (const dia of agenda.dias) for (const equipa of dia.equipas) nomes.set(equipa.equipaId, equipa.nome);
   return (
     <div className="space-y-4 md:hidden">
-      {podeMover ? <p className="text-sm text-muted-foreground">{t("agenda.listaTelemovel")}</p> : null}
+      {podeMover ? <p className="text-[13px]/5 text-muted-foreground">{t("agenda.listaTelemovel")}</p> : null}
       {[...nomes.entries()].map(([equipaId, nome]) => {
         const entradas = agenda.dias.flatMap((dia) => {
           const linha = dia.equipas.find((equipa) => equipa.equipaId === equipaId);
@@ -1167,7 +1167,7 @@ function ListaMovel({ agenda, podeMover }: { agenda: Agenda; podeMover: boolean 
         return (
           <section key={equipaId} className="space-y-3">
             <h2 className="text-base font-semibold tracking-tight">{nome}</h2>
-            {entradas.length === 0 ? <p className="text-sm text-muted-foreground">{t("agenda.semVisitasPeriodo")}</p> : null}
+            {entradas.length === 0 ? <p className="text-[13px]/5 text-muted-foreground">{t("agenda.semVisitasPeriodo")}</p> : null}
             {[...porData.entries()].map(([data, doDia]) => (
               <div key={data} className="space-y-2">
                 <h3 className="text-xs font-medium text-muted-foreground">{formatarDataLongaLocale(data, idioma)}</h3>
@@ -1183,21 +1183,21 @@ function ListaMovel({ agenda, podeMover }: { agenda: Agenda; podeMover: boolean 
                           {ocupada ? ` · ${t("comum.ocupada")}` : ` · ${bloco.referencia}`}
                         </p>
                         {ocupada ? (
-                          <p className="text-sm text-muted-foreground">{t("agenda.semFicha", { n: bloco.duracaoMin })}</p>
+                          <p className="text-[13px]/5 text-muted-foreground">{t("agenda.semFicha", { n: bloco.duracaoMin })}</p>
                         ) : (
                           <div className="mt-1 space-y-1">
                             {bloco.operadorId ? <EtiquetaOperador id={bloco.operadorId} soPonto /> : null}
-                            <p className="text-sm">
+                            <p className="text-[13px]/5">
                               {bloco.clienteNome}
                               {bloco.morada ? ` · ${bloco.morada}` : ""}
                             </p>
                           </div>
                         )}
                         {conflito ? (
-                          <p className="mt-1 text-sm text-destructive">{traduzirConflito(m, conflito.tipo, conflito.mensagem)}</p>
+                          <p className="mt-1 text-[13px]/5 text-destructive">{traduzirConflito(m, conflito.tipo, conflito.mensagem)}</p>
                         ) : null}
                         {!ocupada ? (
-                          <Link href={`/ordens/${bloco.id}`} className="mt-1 inline-block text-sm underline">
+                          <Link href={`/ordens/${bloco.id}`} className="mt-1 inline-block text-[13px]/5 underline">
                             {t("comum.abrirOrdem")}
                           </Link>
                         ) : null}

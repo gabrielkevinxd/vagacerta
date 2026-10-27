@@ -39,13 +39,13 @@ export function FormularioMargem({ minutos }: { minutos: number }) {
         <Label htmlFor="margem">{t("definicoes.margem")}</Label>
         <Input id="margem" name="margem" type="number" min={0} max={180} defaultValue={minutos} required />
       </div>
-      <p className="text-sm text-muted-foreground">{t("definicoes.ajuda")}</p>
+      <p className="text-[13px]/5 text-muted-foreground">{t("definicoes.ajuda")}</p>
       {erro ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-[13px]/5 text-destructive">
           {erro}
         </p>
       ) : null}
-      {aviso ? <p className="text-sm">{aviso}</p> : null}
+      {aviso ? <p className="text-[13px]/5">{aviso}</p> : null}
       <Button type="submit" disabled={aGuardar}>
         {aGuardar ? t("comum.aGuardar") : t("comum.guardar")}
       </Button>

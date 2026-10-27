@@ -176,6 +176,7 @@ export const en = {
     operador: "Operator",
     equipa: "Team",
     inicio: "Start",
+    hora: "Time",
     fim: "End",
     motivo: "Reason",
     minutos: "min",

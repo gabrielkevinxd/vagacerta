@@ -24,7 +24,7 @@ async function Conteudo() {
   }
   return (
     <div className="space-y-4">
-      <CabecalhoPagina titulo={t("assistente.titulo")} descricao={t("assistente.corpo")} />
+      <CabecalhoPagina titulo={t("assistente.titulo")} />
       <EstadoVazio
         titulo={t("assistente.emBreve")}
         detalhe={t("assistente.emBreveDetalhe")}

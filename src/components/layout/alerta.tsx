@@ -18,7 +18,7 @@ export function Alerta({
     erro: "border-destructive/25 bg-destructive/8 text-destructive",
   } as const;
   return (
-    <div role={role} className={cn("superficie px-3.5 py-2.5 text-sm leading-relaxed", tons[tom], className)}>
+    <div role={role} className={cn("superficie px-3.5 py-2.5 text-[13px]/5 leading-relaxed", tons[tom], className)}>
       {children}
     </div>
   );

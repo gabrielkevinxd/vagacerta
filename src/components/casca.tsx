@@ -102,7 +102,7 @@ function chaveDeHref(href: string): Chave {
 }
 
 function migalhasDe(caminho: string, traduzir: (chave: Chave) => string) {
-  const partes = [{ href: "/", rotulo: traduzir("migalhas.inicio") }];
+  const partes = [{ href: "/", rotulo: traduzir("nav.painel") }];
   if (caminho === "/" || caminho === "") {
     return [{ href: "/", rotulo: traduzir("nav.painel") }];
   }
