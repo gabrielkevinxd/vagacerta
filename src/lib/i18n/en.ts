@@ -809,8 +809,8 @@ export const en = {
     indispParte: "This unavailability splits an already booked day.",
     periodoDatas: "Period dates must be in YYYY-MM-DD format.",
     periodoIntervalo: "The period end cannot be before the start.",
-    soCentralIntegracao: "Only the hub uses the OFSC integration.",
-    integracaoAutenticacao: "Authentication required: send the integration secret or use a hub session.",
+    soCentralIntegracao: "Only the hub can run this OFSC integration action.",
+    integracaoAutenticacao: "Authentication required: send the OFSC secret (x-vagacerta-ofsc-secret header or Bearer).",
     zonaArea: "Zone {zona} does not match area {area}. Possible zones: {possiveis}.",
     metodoNaoPermitido: "This address only accepts POST requests.",
   },
@@ -826,7 +826,7 @@ export const en = {
     titulo: "OFSC integration",
     voltarPainel: "Back to the dashboard",
     soCentral:
-      "The integration console shows the OFSC of all three operators at once: the three columns, the eleven scenarios and reconciliation. That is why only the hub uses it. A dispatcher sees only their own operator and a technician only their own team.",
+      "The hub console has three columns (operator OFSC, VagaCerta, other OFSC), the eleven scenarios and reconciliation. A dispatcher opens integration for their operator only (two columns, no “other OFSC”). Technicians have no access.",
     corpo:
       "The operator picks a slot on the grid (zone, technician, type and window) and confirms a structured booking. VagaCerta answers Booking confirmed (PATCH with resourceId) or Booking refused, with a reason and an alternative. Quotas are 3 installations or 8 maintenance jobs per technician per day. Natural language is only a shortcut: it shows extracted fields and asks for missing ones, and never invents values. OFSC address fields are marked as to be confirmed with the operator.",
     escolherOperador: "Operator",

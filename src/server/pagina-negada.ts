@@ -1,3 +1,5 @@
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { mensagensDe, t, type Idioma } from "@/lib/i18n";
 
 /**
@@ -14,6 +16,72 @@ export type TipoNegado = "ordem" | "equipa" | "integracao";
 
 const ESCAPES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 const escapar = (texto: string) => texto.replace(/[&<>"']/g, (caractere) => ESCAPES[caractere] ?? caractere);
+
+const TOKENS_OMISSAO: Record<string, string> = {
+  background: "#ffffff",
+  foreground: "#18181b",
+  "muted-foreground": "#52525b",
+  border: "#e4e4e7",
+  primary: "#6e56cf",
+  ring: "#6e56cf",
+};
+
+/** Lê as variáveis `:root` de `globals.css` para o HTML do proxy não divergir do design system. */
+export function tokensDeGlobals(cssBruto?: string): Record<string, string> {
+  const css =
+    cssBruto ??
+    (() => {
+      try {
+        return readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
+      } catch {
+        return "";
+      }
+    })();
+  const bloco = /:root\s*\{([^}]+)\}/.exec(css)?.[1] ?? "";
+  const tokens = { ...TOKENS_OMISSAO };
+  for (const chave of Object.keys(TOKENS_OMISSAO)) {
+    const m = new RegExp(`--${chave}\\s*:\\s*([^;]+);`).exec(bloco);
+    if (m) tokens[chave] = m[1].trim();
+  }
+  return tokens;
+}
+
+/**
+ * Inclui o `@font-face` da Inter gerado pelo `next/font`, com URLs absolutas em `/_next/...`.
+ * Se o build ainda não existir, fica `Inter, system-ui` (item 1: sem serifa).
+ */
+export function cssFonteInter(raiz = process.cwd()): string {
+  const pastas = [
+    { chunks: join(raiz, ".next/static/chunks"), media: "/_next/static/media" },
+    { chunks: join(raiz, ".next/dev/static/chunks"), media: "/_next/dev/static/media" },
+  ];
+  for (const pasta of pastas) {
+    if (!existsSync(pasta.chunks)) continue;
+    let ficheiros: string[] = [];
+    try {
+      ficheiros = readdirSync(pasta.chunks);
+    } catch {
+      continue;
+    }
+    const inter = ficheiros.find((nome) => /inter/i.test(nome) && nome.endsWith(".css"));
+    if (!inter) continue;
+    try {
+      const bruto = readFileSync(join(pasta.chunks, inter), "utf8");
+      const faces = [...bruto.matchAll(/@font-face\s*\{[^}]+\}/g)].map((m) => m[0]);
+      if (!faces.length) continue;
+      return faces
+        .map((face) =>
+          face
+            .replace(/url\("(?:\.\.\/)+media\/([^"]+)"\)/g, `url("${pasta.media}/$1")`)
+            .replace(/url\('(?:\.\.\/)+media\/([^']+)'\)/g, `url('${pasta.media}/$1')`),
+        )
+        .join("\n");
+    } catch {
+      continue;
+    }
+  }
+  return "/* Inter: system-ui até haver build Next com next/font */";
+}
 
 function textosDe(tipo: TipoNegado, idioma: Idioma) {
   const m = mensagensDe(idioma);
@@ -45,6 +113,8 @@ function textosDe(tipo: TipoNegado, idioma: Idioma) {
 export function paginaNegada(tipo: TipoNegado, idioma: Idioma): string {
   const m = mensagensDe(idioma);
   const { titulo, corpo, voltar, destino } = textosDe(tipo, idioma);
+  const tokens = tokensDeGlobals();
+  const fonte = cssFonteInter();
   return `<!doctype html>
 <html lang="${idioma}">
 <head>
@@ -53,7 +123,8 @@ export function paginaNegada(tipo: TipoNegado, idioma: Idioma): string {
 <meta name="robots" content="noindex">
 <title>${escapar(titulo)} · ${escapar(t(m, "marca.nome"))}</title>
 <style>
-:root{--background:#fff;--foreground:#18181b;--muted-foreground:#52525b;--border:#e4e4e7;--primary:#6e56cf;--ring:#6e56cf}
+${fonte}
+:root{--background:${tokens.background};--foreground:${tokens.foreground};--muted-foreground:${tokens["muted-foreground"]};--border:${tokens.border};--primary:${tokens.primary};--ring:${tokens.ring}}
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;background:var(--background);color:var(--foreground);font-family:Inter,system-ui,sans-serif;font-size:13px;line-height:1.5}
 header{border-bottom:1px solid var(--border)}

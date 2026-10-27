@@ -65,5 +65,6 @@ export interface PedidoAssistente {
   /** Pré-visualiza este pedido, sem gravar. O servidor volta a validar o perfil. */
   propor?: PedidoRealocacao;
   data?: string;
+  /** Ignorado: o histórico vive no servidor (`assistente_historico`). Mantido só por compatibilidade do schema. */
   historico?: { papel: "utilizador" | "assistente"; texto: string }[];
 }

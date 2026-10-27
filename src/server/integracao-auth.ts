@@ -2,7 +2,7 @@ import "server-only";
 
 /**
  * Mensagem partilhada pelas rotas `apiCentral` (cenários, saúde, reconciliar, …).
- * O webhook OFSC e `/api/ofsc/*` autenticam só com `OFSC_WEBHOOK_SECRET`
- * (`src/server/ofsc/segredo.ts`) — não há segundo segredo nem auth por sessão nessas rotas.
+ * A página `/integracao` e as APIs de vagas/reserva/consola aceitam também o despachante (D1).
+ * O webhook OFSC e `/api/ofsc/*` autenticam só com `OFSC_WEBHOOK_SECRET`.
  */
-export const MENSAGEM_SO_CENTRAL_INTEGRACAO = "Só a central usa a integração OFSC.";
+export const MENSAGEM_SO_CENTRAL_INTEGRACAO = "Só a central pode executar esta ação.";

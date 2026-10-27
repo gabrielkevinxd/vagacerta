@@ -808,8 +808,8 @@ export const ptPT = {
     indispParte: "Esta indisponibilidade parte o dia já marcado.",
     periodoDatas: "As datas do período têm de estar no formato AAAA-MM-DD.",
     periodoIntervalo: "O fim do período não pode ser anterior ao início.",
-    soCentralIntegracao: "Só a central usa a integração OFSC.",
-    integracaoAutenticacao: "Autenticação em falta: envie o segredo da integração ou use uma sessão da central.",
+    soCentralIntegracao: "Só a central pode executar esta ação na integração OFSC.",
+    integracaoAutenticacao: "Autenticação em falta: envie o segredo OFSC (cabeçalho x-vagacerta-ofsc-secret ou Bearer).",
     zonaArea: "A zona {zona} não corresponde à área {area}. Zonas possíveis: {possiveis}.",
     metodoNaoPermitido: "Este endereço só aceita pedidos POST.",
   },
@@ -825,7 +825,7 @@ export const ptPT = {
     titulo: "Integração OFSC",
     voltarPainel: "Voltar ao painel",
     soCentral:
-      "A consola de integração mostra o OFSC dos três operadores ao mesmo tempo: as três colunas, os onze cenários e a reconciliação. Por isso só a central a usa. Um despachante vê apenas o seu operador e o técnico só a sua equipa.",
+      "A consola da central tem três colunas (OFSC do operador, VagaCerta, OFSC dos outros), os onze cenários e a reconciliação. O despachante entra na integração só do seu operador (duas colunas, sem «OFSC dos outros»). O técnico não acede.",
     corpo:
       "O operador escolhe uma vaga na grelha (zona, técnico, tipo e janela) e confirma a reserva estruturada. A VagaCerta responde Reserva Confirmada (PATCH com resourceId) ou Reserva Recusada, com motivo e alternativa. As quotas são 3 instalações ou 8 manutenções por técnico e por dia. O texto em linguagem natural é só um atalho: mostra o que foi extraído e pede o que falta, sem inventar valores. Os campos de morada OFSC ficam por confirmar com o operador.",
     escolherOperador: "Operador",

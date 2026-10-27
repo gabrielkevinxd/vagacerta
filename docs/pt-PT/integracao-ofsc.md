@@ -58,7 +58,7 @@ Nenhum ponto da integração é público.
 { "resourceId": "AZ_RES_MINHO" }
 ```
 
-Confirma a atribuição no simulador. Também aceita `status` e `timeSlot` no fluxo interno de actualização.
+Confirma a atribuição no simulador. Também aceita `status` e `timeSlot` no fluxo interno de atualização.
 
 ### 3–5. Ausências (VagaCerta → OFSC dos outros)
 
@@ -87,6 +87,8 @@ Grelha em tempo real: `GET /api/integracao/vagas`. Confirmação: `POST /api/int
 
 ## Cenários (`POST /api/integracao/cenarios`)
 
+Só a **central** corre cenários, reconciliação e saúde OFSC.
+
 | id | O que prova |
 | --- | --- |
 | `vaga_livre` | Reserva Confirmada e PATCH `resourceId` |
@@ -101,6 +103,6 @@ Grelha em tempo real: `GET /api/integracao/vagas`. Confirmação: `POST /api/int
 | `evento_duplicado` | Segundo webhook ignorado |
 | `ofsc_em_baixo` | Fila de tentativas e reconciliação |
 
-A consola (`GET /api/integracao/consola`) tem três colunas para a central: OFSC do operador, VagaCerta, OFSC dos outros. O despachante vê só a sua coluna (D1: sem «OFSC dos outros»).
+A consola (`GET /api/integracao/consola`) tem três colunas para a central: OFSC do operador, VagaCerta, OFSC dos outros. O despachante vê **duas** colunas (OFSC do operador e VagaCerta) e **não** vê a coluna «OFSC dos outros» (D1).
 
 Idioma: as linhas da consola («Reserva Confirmada: …», «Evento duplicado … ignorado.», «… em baixo; ficou na fila.», …) saem em português ou em inglês conforme o idioma escolhido («Booking confirmed: …», «Duplicate event …: ignored.», «… OFSC is down; queued for retry.»). O que é contrato OFSC — os JSON dos painéis `<pre>` e os valores `Reserva Confirmada`, `Reserva Recusada`, `Capacidade Esgotada`… — não se traduz. O contador da linha de confirmação aparece uma só vez: `Reserva Confirmada: AZ-1 na Equipa Minho. Inês Caldeira, 2026-11-03, instalações = 2 vagas (3 → 2)`.
