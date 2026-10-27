@@ -304,7 +304,8 @@ function migrar(db: DatabaseSync): void {
   db.exec(
     "CREATE INDEX IF NOT EXISTS idx_assistente_historico_sessao ON assistente_historico (sessao_token, seq)",
   );
-  limparSessoesExpiradas(db);
+  // Não limpar sessões aqui: new Date() no open bloqueia o prerender (Next 16).
+  // limparSessoesExpiradas corre no login (entrar).
   migrarLogsOperador(db);
   exigirZonasMunicipio(db);
   semearOfsc(db);

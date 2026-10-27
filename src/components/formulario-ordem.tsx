@@ -65,6 +65,7 @@ export function FormularioOrdem({
   janelas,
   dataInicial,
   equipaIdInicial = null,
+  equipaNomeInicial = null,
   areaInicial,
   zonaIdInicial,
   janelaInicial,
@@ -75,6 +76,7 @@ export function FormularioOrdem({
   janelas: JanelaOpcao[];
   dataInicial: string;
   equipaIdInicial?: string | null;
+  equipaNomeInicial?: string | null;
   areaInicial?: string;
   zonaIdInicial?: string;
   janelaInicial?: { inicio: string; fim: string };
@@ -100,7 +102,13 @@ export function FormularioOrdem({
   const [area, setArea] = useState<string>(areaInicial && (AREAS as readonly string[]).includes(areaInicial) ? areaInicial : AREAS[0]);
   const [zonaId, setZonaId] = useState(zonaIdInicial && zonas.some((z) => z.id === zonaIdInicial) ? zonaIdInicial : (zonas[0]?.id ?? ""));
   const [equipaId, setEquipaId] = useState<string | null>(equipaIdInicial);
+  const [equipaNome, setEquipaNome] = useState<string | null>(equipaNomeInicial);
   const [prioridade, setPrioridade] = useState("media");
+
+  function limparEquipa() {
+    setEquipaId(null);
+    setEquipaNome(null);
+  }
   const [modo, setModo] = useState("agendar");
   const [data, setData] = useState(dataInicial);
   const [clienteNome, setClienteNome] = useState("");
@@ -123,7 +131,7 @@ export function FormularioOrdem({
 
   function aplicarOperador(valor: OperadorId) {
     setOperadorId(valor);
-    setEquipaId(null);
+    limparEquipa();
     const proximas = janelas.filter(
       (linha) => linha.operadorId === valor && (linha.categoria === categoria || linha.categoria === "qualquer"),
     );
@@ -284,6 +292,18 @@ export function FormularioOrdem({
 
       <section className="space-y-3">
         <h2 className="text-[13px]/5 font-semibold tracking-tight">{t("ordens.seccaoVisita")}</h2>
+        {equipaId && equipaNome ? (
+          <div className="inline-flex h-8 items-center gap-2 rounded-md border border-border bg-muted/60 px-2.5 text-[13px]/5">
+            <span>{t("ordens.equipaReservada", { nome: equipaNome })}</span>
+            <button
+              type="button"
+              className="text-muted-foreground underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              onClick={limparEquipa}
+            >
+              {t("ordens.limparEquipa")}
+            </button>
+          </div>
+        ) : null}
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="categoria">{t("ordens.tipoServico")}</Label>
@@ -322,7 +342,7 @@ export function FormularioOrdem({
               valor={data}
               onChange={(valor) => {
                 setData(valor);
-                setEquipaId(null);
+                limparEquipa();
               }}
               required
             />
@@ -427,7 +447,7 @@ export function FormularioOrdem({
               value={area}
               onValueChange={(valor) => {
                 setArea(valor);
-                setEquipaId(null);
+                limparEquipa();
               }}
             >
               <SelectTrigger id="area" className="w-full text-[13px]/5">
@@ -493,6 +513,7 @@ export function FormularioOrdem({
                   setJanelaInicio(alternativa.inicio);
                   setJanelaFim(alternativa.fim);
                   setEquipaId(alternativa.equipaId);
+                  setEquipaNome(alternativa.equipa);
                   setErro(null);
                   setAlternativa(null);
                 }}

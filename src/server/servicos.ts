@@ -15,6 +15,7 @@ import {
   hojeLisboa,
   marcarOrdem,
   NOME_OPERADOR,
+  OPERADORES,
   ordensDoDia,
   parseHHMM,
   estadoEditavel,
@@ -916,12 +917,15 @@ export function guardarEquipa(
           )
           .all(id, ...removidos, hoje) as unknown as OrdemFuturaDetalhe[];
         if (futuras.length > 0) {
+          const bloqueantes = new Set(futuras.map((o) => o.operadorId as OperadorId));
+          // Só os operadores com ordens a bloquear, na ordem azul → vermelho → verde.
+          const remocoes = OPERADORES.filter((op) => bloqueantes.has(op));
           throw new ErroHttp(
             409,
             "OPERADOR_COM_ORDENS",
             "Não pode deixar de servir operadores com ordens futuras nesta equipa.",
             {
-              remocoes: removidos,
+              remocoes,
               ordens: futuras.map((o) => ({
                 id: String(o.id),
                 referencia: String(o.referencia),

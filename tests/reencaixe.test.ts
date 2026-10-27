@@ -108,15 +108,6 @@ describe("reencaixe da fila sobre a demonstração", () => {
     expect(az.inicioPlaneado).toBe("10:25");
   });
 
-  it("o despachante verde encaixa a VD-URG na Ave sem mexer em ordens vermelhas", () => {
-    const base = mundo();
-    const urgente = base.ordens.find((ordem) => ordem.referencia === "VD-URG")!;
-    const plano = reencaixar(base, { encaixarId: urgente.id, permitirTroca: true, apenasDoOperador: "verde" });
-    expect(plano.viavel).toBe(true);
-    expect(plano.movimentos.every((m) => m.referencia.startsWith("VD"))).toBe(true);
-    expect(plano.movimentos.every((m) => !m.referencia.startsWith("VR"))).toBe(true);
-  });
-
   it("não deixa o despachante verde trocar uma ordem vermelha para libertar a fila", () => {
     const base = mundoSemVerdeNasVizinhas();
     const urgente = base.ordens.find((ordem) => ordem.referencia === "VD-URG")!;

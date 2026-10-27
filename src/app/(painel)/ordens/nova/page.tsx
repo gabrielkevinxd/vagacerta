@@ -7,7 +7,7 @@ import { SemAcesso } from "@/components/sem-acesso";
 import { i18nPedido } from "@/server/idioma";
 import { diaDemonstracaoAtual } from "@/server/db";
 import { exigirAtorPagina } from "@/server/sessao";
-import { listarZonas } from "@/server/servicos";
+import { listarEquipas, listarZonas } from "@/server/servicos";
 
 async function Conteudo({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { t } = await i18nPedido();
@@ -25,6 +25,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
   const consulta = await searchParams;
   const zonas = listarZonas();
   const equipaId = um(consulta.equipaId) ?? null;
+  const equipaNome = equipaId ? (listarEquipas(ator).find((e) => e.id === equipaId)?.nome ?? null) : null;
   const area = um(consulta.area) ?? undefined;
   const zonaId = um(consulta.zonaId) ?? undefined;
   const inicio = um(consulta.inicio) ?? undefined;
@@ -48,6 +49,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
         janelas={JANELAS_INICIO}
         dataInicial={um(consulta.data) ?? diaDemonstracaoAtual()}
         equipaIdInicial={equipaId}
+        equipaNomeInicial={equipaNome}
         areaInicial={area}
         zonaIdInicial={zonaId}
         janelaInicial={inicio && fim ? { inicio, fim } : undefined}

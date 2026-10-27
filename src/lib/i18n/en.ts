@@ -352,6 +352,8 @@ export const en = {
     duracao: "Duration {n} min",
     janelaDe: "Window {inicio}–{fim}",
     semEquipa: "No team",
+    equipaReservada: "Team: {nome}",
+    limparEquipa: "Clear team",
     gravarFicha: "Save record",
     mudarEstado: "Change status",
     marcar: "Book",
@@ -428,9 +430,9 @@ export const en = {
     deixarDeServirDetalhe: "{equipa} will stop accepting bookings from {operador}.",
     deixarDeServir: "Stop serving",
     operadorComOrdens_um:
-      "Can't stop serving {operador}: {n} future order on this team ({lista}). Reassign or cancel it first.",
+      "Cannot stop serving {operador}: there is {n} future order on this team ({lista}). Reassign or cancel it first.",
     operadorComOrdens_outros:
-      "Can't stop serving {operador}: {n} future orders on this team ({lista}). Reassign or cancel them first.",
+      "Cannot stop serving {operador}: there are {n} future orders on this team ({lista}). Reassign or cancel them first.",
     ordemFuturaItem: "{referencia} on {data}",
     indisponibilidades: "Unavailability",
     zona: "Zone",
