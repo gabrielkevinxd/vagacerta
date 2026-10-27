@@ -1,5 +1,6 @@
 import type { AlertaAssistente, TipoAlerta } from "@/lib/contratos/assistente";
-import { t, type Chave, type Mensagens } from "@/lib/i18n";
+import { idiomaDe, t, tp, type Chave, type Mensagens } from "@/lib/i18n";
+import { formatarDataLocale } from "@/lib/i18n/formatacao";
 import type { FactoAlerta } from "./analise";
 import type { Leitura } from "./regras";
 
@@ -57,7 +58,9 @@ export function motivoLegivel(m: Mensagens, motivo: string): string {
   return motivo;
 }
 
+/** Rótulo de estado em minúsculas para texto corrido («está em fila», não «está Em fila»). */
 function rotuloEstado(m: Mensagens, estado: string): string {
+  const idioma = idiomaDe(m);
   switch (estado) {
     case "pendente":
     case "agendada":
@@ -65,7 +68,7 @@ function rotuloEstado(m: Mensagens, estado: string): string {
     case "concluida":
     case "cancelada":
     case "em_espera":
-      return t(m, `estado.${estado}`);
+      return t(m, `estado.${estado}`).toLocaleLowerCase(idioma === "en" ? "en-GB" : "pt-PT");
     default:
       return estado;
   }
@@ -87,6 +90,35 @@ export function descreverAlertas(m: Mensagens, factos: FactoAlerta[]): AlertaAss
   });
 }
 
+function dataLegivel(m: Mensagens, data: string | number | undefined): string {
+  const valor = String(data ?? "");
+  if (/^\d{4}-\d{2}-\d{2}$/.test(valor)) return formatarDataLocale(valor, idiomaDe(m));
+  return valor;
+}
+
+export function montarResumoDia(
+  m: Mensagens,
+  entrada: {
+    data: string;
+    agendadas: number;
+    espera: number;
+    pendentes: number;
+    curso: number;
+    margem: number;
+    alertas: number;
+  },
+): string {
+  return t(m, "assistente.resumoDia", {
+    data: dataLegivel(m, entrada.data),
+    agendadas: tp(m, "assistente.contagem.agendadas", entrada.agendadas),
+    espera: tp(m, "assistente.contagem.espera", entrada.espera),
+    pendentes: tp(m, "assistente.contagem.pendentes", entrada.pendentes),
+    curso: tp(m, "assistente.contagem.curso", entrada.curso),
+    margem: entrada.margem,
+    alertas: tp(m, "assistente.contagem.alertas", entrada.alertas),
+  });
+}
+
 function varsProntos(m: Mensagens, vars: Record<string, string | number>): Record<string, string | number> {
   const saida: Record<string, string | number> = { ...vars };
   const operador = saida.operadorId;
@@ -95,14 +127,38 @@ function varsProntos(m: Mensagens, vars: Record<string, string | number>): Recor
   }
   if (typeof saida.estado === "string") saida.estadoRotulo = rotuloEstado(m, saida.estado);
   if (typeof saida.motivo === "string") saida.motivo = motivoLegivel(m, saida.motivo);
+  if (typeof saida.data === "string" || typeof saida.data === "number") {
+    saida.data = dataLegivel(m, saida.data);
+  }
   return saida;
 }
 
 export function textoDe(m: Mensagens, leitura: Exclude<Leitura, { tipo: "ambiguo" }>, alertas: AlertaAssistente[] = []): string {
   const vars = varsProntos(m, "vars" in leitura ? leitura.vars : {});
   const chave: Chave = leitura.chave;
-  let base = t(m, chave, vars);
-  if (chave === "assistente.verAlertas") {
+
+  if (chave === "assistente.resumoDia") {
+    return montarResumoDia(m, {
+      data: String(vars.data ?? ""),
+      agendadas: Number(vars.agendadas ?? 0),
+      espera: Number(vars.espera ?? 0),
+      pendentes: Number(vars.pendentes ?? 0),
+      curso: Number(vars.curso ?? 0),
+      margem: Number(vars.margem ?? 0),
+      alertas: Number(vars.alertas ?? 0),
+    });
+  }
+
+  let base: string;
+  if (chave === ("assistente.verAlertas" as Chave)) {
+    base = tp(m, "assistente.verAlertas", Number(vars.n ?? 0), vars);
+  } else if (chave === ("assistente.generico" as Chave)) {
+    base = tp(m, "assistente.generico", Number(vars.n ?? 0), vars);
+  } else {
+    base = t(m, chave, vars);
+  }
+
+  if (chave === ("assistente.verAlertas" as Chave)) {
     const linhas = alertas
       .slice(0, 5)
       .map((alerta) => `${alerta.titulo}: ${alerta.detalhe}`)

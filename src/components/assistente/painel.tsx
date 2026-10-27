@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CircleAlert, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/components/idioma/provedor";
 import { Alerta as Faixa } from "@/components/layout/alerta";
@@ -158,8 +159,8 @@ export function PainelAssistenteCliente({ inicial }: { inicial: PainelAssistente
                 key={exemplo.rotulo}
                 type="button"
                 variant="outline"
-                size="sm"
-                className="h-auto whitespace-normal py-1.5 text-left"
+                size="default"
+                className="h-8 max-w-full truncate whitespace-nowrap text-left"
                 disabled={aTrabalhar}
                 onClick={() => void perguntar(exemplo.rotulo, exemplo.propor)}
               >
@@ -189,7 +190,7 @@ export function PainelAssistenteCliente({ inicial }: { inicial: PainelAssistente
             }}
           >
             <label className="block text-[13px]/5" htmlFor="pergunta-assistente">
-              {t("assistente.chatTitulo")}
+              {t("assistente.pergunta")}
             </label>
             <Textarea
               id="pergunta-assistente"
@@ -247,9 +248,17 @@ function CartaoAlerta({
   return (
     <li className="superficie space-y-2 p-3">
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant={alerta.gravidade === "alta" ? "destructive" : "secondary"}>
-          {alerta.gravidade === "alta" ? t("assistente.gravidadeAlta") : t("assistente.gravidadeMedia")}
-        </Badge>
+        {alerta.gravidade === "alta" ? (
+          <Badge variant="destructive" className="gap-1">
+            <TriangleAlert className="size-3" strokeWidth={1.75} aria-hidden />
+            {t("assistente.gravidadeAlta")}
+          </Badge>
+        ) : (
+          <Badge variant="secondary" className="gap-1">
+            <CircleAlert className="size-3" strokeWidth={1.75} aria-hidden />
+            {t("assistente.gravidadeMedia")}
+          </Badge>
+        )}
         <p className="text-[13px]/5 font-medium">{alerta.titulo}</p>
       </div>
       <p className="text-[13px]/5 text-muted-foreground">{alerta.detalhe}</p>

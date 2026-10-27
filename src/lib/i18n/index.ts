@@ -20,10 +20,34 @@ export function mensagensDe(idioma: Idioma): Mensagens {
   return CATALOGO[idioma] ?? CATALOGO[IDIOMA_OMISSAO];
 }
 
+export function idiomaDe(mensagens: Mensagens): Idioma {
+  return mensagens === en ? "en" : "pt-PT";
+}
+
+/** Categoria `um` / `outros` via Intl.PluralRules (pt-PT e en). */
+export function sufixoPlural(idioma: Idioma, n: number): "um" | "outros" {
+  const categoria = new Intl.PluralRules(idioma === "en" ? "en" : "pt-PT").select(n);
+  return categoria === "one" ? "um" : "outros";
+}
+
 export function t(mensagens: Mensagens, chave: Chave, vars?: Record<string, string | number>): string {
   const valor = valorEm(mensagens, chave);
   if (typeof valor !== "string") return chave;
   return interpolar(valor, vars);
+}
+
+/**
+ * Traduz uma chave com variantes `_um` / `_outros` escolhidas por Intl.PluralRules.
+ * Ex.: `tp(m, "assistente.contagem.pendentes", 1)` → `assistente.contagem.pendentes_um`.
+ */
+export function tp(
+  mensagens: Mensagens,
+  chaveBase: string,
+  n: number,
+  vars?: Record<string, string | number>,
+): string {
+  const chave = `${chaveBase}_${sufixoPlural(idiomaDe(mensagens), n)}` as Chave;
+  return t(mensagens, chave, { n, ...vars });
 }
 
 export function traduzir(idioma: Idioma, chave: Chave, vars?: Record<string, string | number>): string {
