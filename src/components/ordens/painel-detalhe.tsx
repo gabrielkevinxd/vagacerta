@@ -40,6 +40,7 @@ export function PainelDetalheOrdem({ ordem, idioma }: { ordem: LinhaOrdem | null
   const xl = useXl();
   const aberto = Boolean(ordem);
   const [confirmarCancelar, setConfirmarCancelar] = useState(false);
+  const [refACancelar, setRefACancelar] = useState("");
 
   const fechar = () => {
     const sp = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
@@ -48,10 +49,17 @@ export function PainelDetalheOrdem({ ordem, idioma }: { ordem: LinhaOrdem | null
     router.push(q ? `/ordens?${q}` : "/ordens", { scroll: false });
   };
 
-  const cancelar = () => {
+  const pedirCancelar = () => {
     if (!ordem) return;
+    setRefACancelar(ordem.referencia);
+    setConfirmarCancelar(true);
+  };
+
+  const cancelar = () => {
+    const ref = refACancelar || ordem?.referencia;
+    if (!ref) return;
     setConfirmarCancelar(false);
-    toast(t("toast.ordemCancelada", { ref: ordem.referencia }), {
+    toast(t("toast.ordemCancelada", { ref }), {
       action: { label: t("comum.anular"), onClick: () => undefined },
       duration: 6000,
     });
@@ -98,7 +106,7 @@ export function PainelDetalheOrdem({ ordem, idioma }: { ordem: LinhaOrdem | null
                 <Button type="button" variant="outline" size="sm" disabled>
                   {t("tabela.reagendar")}
                 </Button>
-                <Button type="button" variant="destructive" size="sm" onClick={() => setConfirmarCancelar(true)}>
+                <Button type="button" variant="destructive" size="sm" onClick={pedirCancelar}>
                   {t("tabela.cancelarOrdem")}
                 </Button>
               </SheetFooter>
@@ -110,7 +118,7 @@ export function PainelDetalheOrdem({ ordem, idioma }: { ordem: LinhaOrdem | null
       <Dialog open={confirmarCancelar} onOpenChange={setConfirmarCancelar}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("confirmar.cancelarOrdemTitulo", { ref: ordem?.referencia ?? "" })}</DialogTitle>
+            <DialogTitle>{t("confirmar.cancelarOrdemTitulo", { ref: refACancelar || ordem?.referencia || "—" })}</DialogTitle>
             <DialogDescription>{t("confirmar.cancelarOrdemDetalhe")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
