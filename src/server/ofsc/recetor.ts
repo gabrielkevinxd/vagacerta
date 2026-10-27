@@ -223,7 +223,7 @@ function aplicar(evento: EventoOfsc) {
     criarAusenciasOutros(origem, act.activityId, vista.equipaId, vista.data, vista.inicioPlaneado, vista.fimPlaneado, contador);
   }
   marcarProcessado(act.activityId, assinatura, evento.eventType, "Reserva Confirmada");
-  registarLog("vagacerta", `Reserva Confirmada: ${vista.referencia} na ${celula.equipaNome}. ${contador} (${avaliacao.vagasDe} → ${avaliacao.vagasPara}).`, {
+  registarLog("vagacerta", `Reserva Confirmada: ${vista.referencia} na ${celula.equipaNome}. ${contador}.`, {
     operadorId: vista.operadorId,
   });
   return {
@@ -367,6 +367,6 @@ export function publicarFaltaEquipa(equipaId: string, data: string, motivo: stri
     );
   }
   registarLog("vagacerta", `Falta da equipa ${equipaId} em ${data}: ausências em todos os operadores.`, {
-    operadorId: null,
+    operadorId: "*",
   });
 }

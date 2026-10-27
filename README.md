@@ -389,6 +389,8 @@ Contrato OFSC (não há outros endpoints OFSC):
   - `PATCH /api/ofsc/{operador}/resources/{resourceId}/absences/{id}`
   - `DELETE /api/ofsc/{operador}/resources/{resourceId}/absences/{id}`
 
+Estas rotas exigem o segredo partilhado `OFSC_WEBHOOK_SECRET` (cabeçalho `x-vagacerta-ofsc-secret` ou `Authorization: Bearer …`). Em demonstração, o valor por omissão é `vagacerta-demo-ofsc` (ver `.env.example`). As chamadas internas do motor usam `aplicarChamadaOfsc` e não passam pelo HTTP.
+
 Cada equipa partilhada tem um `resourceId` distinto em cada operador (`AZ_RES_MINHO`, `VR_RES_MINHO`, `VD_RES_MINHO`, …).
 
 Em `/integracao` escolhe-se primeiro a vaga na grelha (tempo real: `GET /api/integracao/vagas`) e depois confirma-se (`POST /api/integracao/reserva`). O texto em linguagem natural (`POST /api/integracao/agente`) só preenche campos; não inventa data, zona, janela nem técnico.

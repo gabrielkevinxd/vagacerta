@@ -45,6 +45,24 @@ const browser = await chromium.launch({
   await page.waitForTimeout(300);
   await shot(page, join(OUT, "central-1440", "29-motivo-unico.png"));
 
+  // 30: restore kept planned time — Agendada must show Ficha, Reagendar, Cancelar
+  await page.goto(`${BASE}/ordens/ord-az-24140`, { waitUntil: "networkidle" });
+  await page.getByRole("heading", { name: /^Ficha$/i }).waitFor({ state: "visible", timeout: 10000 });
+  await page.getByRole("heading", { name: /^Reagendar$/i }).waitFor({ state: "visible", timeout: 5000 });
+  await page.getByRole("heading", { name: /^Ficha$/i }).scrollIntoViewIfNeeded();
+  await page.evaluate(() => window.scrollBy(0, -160));
+  await page.waitForTimeout(300);
+  await shot(page, join(OUT, "central-1440", "30-restaurar-hora.png"));
+
+  // P1: sidebar active from route (not stuck on Painel)
+  await page.goto(`${BASE}/ordens`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(300);
+  await shot(page, join(OUT, "central-1440", "31-sidebar-ordens-ativo.png"));
+
+  await page.goto(`${BASE}/agenda?vista=dia&data=2026-10-27`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(300);
+  await shot(page, join(OUT, "central-1440", "32-agenda-barra-alturas.png"));
+
   // Seed OFSC events as central for dispatcher console evidence
   await page.request.post(`${BASE}/api/integracao/cenarios`, { data: { id: "dois_operadores" } }).catch(() => undefined);
   await page.request.post(`${BASE}/api/integracao/cenarios`, { data: { id: "vaga_livre" } }).catch(() => undefined);
@@ -60,6 +78,7 @@ const browser = await chromium.launch({
 
   await page.goto(`${BASE}/agenda?vista=dia&data=2026-10-27`, { waitUntil: "networkidle" });
   await shot(page, join(OUT, "despacho-1440", "06-agenda.png"));
+  await shot(page, join(OUT, "despacho-1440", "31-sidebar-agenda-ativo.png"));
 
   await page.keyboard.press("Control+k");
   await page.waitForTimeout(600);
@@ -78,6 +97,17 @@ const browser = await chromium.launch({
   await page.goto(`${BASE}/ordens/ord-az-24081`, { waitUntil: "networkidle" });
   await shot(page, join(OUT, "despacho-1440", "12-ordem-detalhe.png"));
   await despacho.close();
+}
+
+{
+  // Dispatcher Verde — Sheet on completed VD-26004: no Reagendar/Cancelar footer
+  const verde = await contextoComSessao(browser, "verde@vagacerta.exemplo", "vagacerta-verde");
+  const page = await verde.newPage();
+  await page.goto(`${BASE}/ordens?ordem=ord-vd-26004`, { waitUntil: "networkidle" });
+  await page.getByText("VD-26004").first().waitFor({ state: "visible", timeout: 10000 });
+  await page.waitForTimeout(500);
+  await shot(page, join(OUT, "despacho-1440", "27b-ordem-concluida-sheet.png"));
+  await verde.close();
 }
 
 await browser.close();

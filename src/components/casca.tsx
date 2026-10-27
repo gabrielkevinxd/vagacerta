@@ -53,7 +53,7 @@ async function Sessao({ children }: { children: React.ReactNode }) {
         >
           {t("marca.saltar")}
         </a>
-        <Navegacao grupos={grupos} caminho={caminho} marca={t("marca.nome")} rodape={rodape} />
+        <Navegacao grupos={grupos} marca={t("marca.nome")} rodape={rodape} />
         <SidebarInset className="min-w-0">
           <header className="sticky top-0 z-20 flex h-12 shrink-0 items-center gap-3 border-b border-border bg-background px-4 md:px-6">
             <SidebarTrigger className="size-8" />

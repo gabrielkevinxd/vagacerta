@@ -261,6 +261,10 @@ export function incrementarRetry(id: string, erro: string): void {
 
 export type ColunaConsola = "origem" | "vagacerta" | "outros";
 
+/** Marcador explícito de log global (visível a todos os despachantes). `null` nunca é global. */
+export const OPERADOR_LOG_GLOBAL = "*" as const;
+export type OperadorLog = OperadorOfsc | typeof OPERADOR_LOG_GLOBAL;
+
 export type LinhaLog = {
   id: string;
   quando: string;
@@ -271,7 +275,7 @@ export type LinhaLog = {
   pedido: string | null;
   resposta: string | null;
   codigo: number | null;
-  operador_id: OperadorOfsc | null;
+  operador_id: OperadorLog | null;
 };
 
 export function registarLog(
@@ -283,7 +287,7 @@ export function registarLog(
     pedido?: unknown;
     resposta?: unknown;
     codigo?: number;
-    operadorId?: OperadorOfsc | null;
+    operadorId?: OperadorLog | null;
   },
 ): void {
   baseDados()
@@ -304,7 +308,36 @@ export function registarLog(
     );
 }
 
-export function listarLogs(depoisDe?: string, limite = 120): LinhaLog[] {
+export function listarLogs(
+  depoisDe?: string,
+  limite = 120,
+  filtro?: { operadorId: string },
+): LinhaLog[] {
+  if (filtro?.operadorId) {
+    const op = filtro.operadorId;
+    if (depoisDe) {
+      return baseDados()
+        .prepare(
+          `SELECT * FROM integracao_logs
+           WHERE quando > ?
+             AND coluna != 'outros'
+             AND (operador_id = ? OR operador_id = ?)
+           ORDER BY quando
+           LIMIT ?`,
+        )
+        .all(depoisDe, op, OPERADOR_LOG_GLOBAL, limite) as LinhaLog[];
+    }
+    return baseDados()
+      .prepare(
+        `SELECT * FROM integracao_logs
+         WHERE coluna != 'outros'
+           AND (operador_id = ? OR operador_id = ?)
+         ORDER BY quando DESC
+         LIMIT ?`,
+      )
+      .all(op, OPERADOR_LOG_GLOBAL, limite)
+      .reverse() as LinhaLog[];
+  }
   if (depoisDe) {
     return baseDados()
       .prepare("SELECT * FROM integracao_logs WHERE quando > ? ORDER BY quando LIMIT ?")
@@ -313,12 +346,12 @@ export function listarLogs(depoisDe?: string, limite = 120): LinhaLog[] {
   return baseDados().prepare("SELECT * FROM integracao_logs ORDER BY quando DESC LIMIT ?").all(limite).reverse() as LinhaLog[];
 }
 
-/** Logs visíveis ao despachante: nunca «outros»; só o próprio operador; globais sem JSON. */
+/** Logs visíveis ao despachante: nunca «outros»; só o próprio operador; globais só com marcador explícito. */
 export function filtrarLogsDespachante(logs: LinhaLog[], operadorId: string): LinhaLog[] {
   return logs.filter(
     (log) =>
       log.coluna !== "outros" &&
-      (log.operador_id === operadorId || (log.operador_id == null && !log.pedido)),
+      (log.operador_id === operadorId || log.operador_id === OPERADOR_LOG_GLOBAL),
   );
 }
 

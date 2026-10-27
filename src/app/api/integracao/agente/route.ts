@@ -1,5 +1,6 @@
 import { eOperadorOfsc } from "@/lib/ofsc/tipos";
 import { interpretarComXai } from "@/lib/ofsc/xai";
+import { exigirIntegracao } from "@/server/autorizacao";
 import { ErroHttp } from "@/server/erros";
 import { hojeLisboa } from "@/lib/rules";
 import { api, lerJson } from "@/server/http";
@@ -11,6 +12,7 @@ const esquema = z.object({
 });
 
 export const POST = api(async (ator, pedido) => {
+  exigirIntegracao(ator);
   const corpo = await lerJson(esquema, pedido);
   if (!eOperadorOfsc(corpo.operadorId)) throw new Error("operador");
   if (ator.papel === "despachante" && ator.operadorId !== corpo.operadorId) {

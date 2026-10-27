@@ -15,6 +15,7 @@ import {
   NOME_OPERADOR,
   ordensDoDia,
   parseHHMM,
+  estadoEditavel,
   podeGerirEquipas,
   podeLerOrdem,
   podeMarcarOperador,
@@ -331,7 +332,8 @@ function gravarDiferença(ator: Ator, antes: Mundo, depois: Mundo, detalheAudito
 function descrever(antes: Ordem | undefined, depois: Ordem): { acao: string; detalhe: string } {
   if (!antes) return { acao: "criada", detalhe: `${depois.referencia} criada (${ROTULO_ESTADO[depois.estado]}).` };
   if (antes.estado !== depois.estado) {
-    const motivo = depois.motivoCancelamento ? ` Motivo: ${depois.motivoCancelamento}.` : "";
+    const motivoLimpo = depois.motivoCancelamento?.replace(/[.!?]\s*$/, "") ?? "";
+    const motivo = motivoLimpo ? ` Motivo: ${motivoLimpo}.` : "";
     return {
       acao: depois.estado,
       detalhe: `Estado: ${ROTULO_ESTADO[antes.estado]} → ${ROTULO_ESTADO[depois.estado]}.${motivo}`,
@@ -435,6 +437,9 @@ export function reagendar(ator: Ator, id: string, alteracao: Parameters<typeof r
   const antes = lerMundo();
   const ordem = antes.ordens.find((linha) => linha.id === id);
   exigir(Boolean(ordem), 404, "NAO_ENCONTRADO", "Não encontrámos esta ordem.");
+  if (!estadoEditavel(ordem!.estado)) {
+    throw new ErroHttp(409, "CONFLITO", "Uma ordem concluída ou cancelada não pode ser alterada.");
+  }
   exigir(podeReagendar(ator, ordem!), 403, "SEM_PERMISSAO", "Não pode reagendar esta ordem.");
   if (alteracao.data) validarDataOperador(ator, ordem!.operadorId, alteracao.data);
   const resultado = reagendarOrdem(antes, id, alteracao);
@@ -451,6 +456,9 @@ export function preverReagendamento(
   const antes = lerMundo();
   const ordem = antes.ordens.find((linha) => linha.id === id);
   exigir(Boolean(ordem), 404, "NAO_ENCONTRADO", "Não encontrámos esta ordem.");
+  if (!estadoEditavel(ordem!.estado)) {
+    throw new ErroHttp(409, "CONFLITO", "Uma ordem concluída ou cancelada não pode ser alterada.");
+  }
   exigir(podeReagendar(ator, ordem!), 403, "SEM_PERMISSAO", "Não pode reagendar esta ordem.");
   if (alteracao.data) validarDataOperador(ator, ordem!.operadorId, alteracao.data);
   const resultado = reagendarOrdem(antes, id, alteracao);

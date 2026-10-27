@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Bot,
   CalendarDays,
@@ -26,6 +27,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { useT } from "@/components/idioma/provedor";
+import { navItemAtivo } from "@/lib/nav-ativo";
 
 type Item = { href: string; rotulo: string; icone: string };
 type Grupo = { id: string; rotulo: string; itens: Item[] };
@@ -44,16 +46,17 @@ const ICONES = {
 
 export function Navegacao({
   grupos,
-  caminho,
   marca,
   rodape,
 }: {
   grupos: Grupo[];
-  caminho: string;
+  /** @deprecated Active state uses `usePathname`; kept optional for call-site compatibility. */
+  caminho?: string;
   marca: string;
   rodape?: React.ReactNode;
 }) {
   const { t } = useT();
+  const pathname = usePathname() || "/";
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="h-12 justify-center border-b border-sidebar-border px-3">
@@ -75,7 +78,7 @@ export function Navegacao({
             <SidebarGroupContent>
               <SidebarMenu>
                 {grupo.itens.map((item) => {
-                  const ativo = item.href === "/" ? caminho === "/" : caminho === item.href || caminho.startsWith(`${item.href}/`);
+                  const ativo = navItemAtivo(pathname, item.href);
                   const Icone = ICONES[item.icone as keyof typeof ICONES] ?? LayoutDashboard;
                   return (
                     <SidebarMenuItem key={item.href}>

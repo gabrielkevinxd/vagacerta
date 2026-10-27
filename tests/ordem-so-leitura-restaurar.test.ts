@@ -5,7 +5,12 @@ vi.mock("server-only", () => ({}));
 import { criarMundoDemonstracao } from "@/lib/demonstracao";
 import { cancelarOrdem, restaurarCancelamento } from "@/lib/rules/dia";
 import { estadoEditavel, podeEditarFicha, type Ator } from "@/lib/rules/permissoes";
-import { atualizarOrdem, restaurarCancelamento as restaurarServico } from "@/server/servicos";
+import {
+  atualizarOrdem,
+  mudarEstado,
+  reagendar,
+  restaurarCancelamento as restaurarServico,
+} from "@/server/servicos";
 import { baseDados } from "@/server/db";
 import { ErroHttp } from "@/server/erros";
 
@@ -49,11 +54,20 @@ describe("V15 ordem só de leitura", () => {
   });
 
   it("atualizarOrdem devolve 409 para concluída", () => {
-    expect(() =>
-      atualizarOrdem(admin, "ord-vd-26004", { nota: "tentativa" }),
-    ).toThrowError(ErroHttp);
+    expect(() => atualizarOrdem(admin, "ord-vd-26004", { nota: "tentativa" })).toThrowError(ErroHttp);
     try {
       atualizarOrdem(admin, "ord-vd-26004", { nota: "tentativa" });
+    } catch (erro) {
+      expect(erro).toBeInstanceOf(ErroHttp);
+      expect((erro as ErroHttp).status).toBe(409);
+      expect((erro as ErroHttp).message).toContain("não pode ser alterada");
+    }
+  });
+
+  it("reagendar concluída devolve 409 e não 403", () => {
+    try {
+      reagendar(admin, "ord-vd-26004", { data: "2026-10-28" });
+      expect.fail("devia falhar");
     } catch (erro) {
       expect(erro).toBeInstanceOf(ErroHttp);
       expect((erro as ErroHttp).status).toBe(409);
@@ -85,14 +99,31 @@ describe("/restaurar", () => {
   it("técnico não repõe; despachante só o próprio operador; slot ocupado dá 409", () => {
     expect(() => restaurarServico(tecnico, "ord-vr-canc-01")).toThrowError(/técnico/i);
 
+    try {
+      restaurarServico(despachanteAzul, "ord-vr-canc-01");
+      expect.fail("despachante azul não restaura ordem vermelha");
+    } catch (erro) {
+      expect(erro).toBeInstanceOf(ErroHttp);
+      expect((erro as ErroHttp).status).toBe(403);
+    }
+
+    // Despachante azul restaura ordem azul cancelada.
+    let alvoId = "ord-az-24140";
+    try {
+      mudarEstado(admin, alvoId, "cancelada", "restaurar despachante", "central");
+    } catch {
+      alvoId = "ord-az-24081";
+      mudarEstado(admin, alvoId, "cancelada", "restaurar despachante", "central");
+    }
+    const reposta = restaurarServico(despachanteAzul, alvoId);
+    expect(reposta.estado).toBe("agendada");
+    expect(reposta.operadorId).toBe("azul");
+
     const mundo = criarMundoDemonstracao();
     const vermelha = mundo.ordens.find((ordem) => ordem.referencia === "VR-90001")!;
     const cancelada = cancelarOrdem(mundo, vermelha.id, "fora", "operador");
     expect(cancelada.ok).toBe(true);
     if (!cancelada.ok) return;
-
-    // Despachante azul não lê ordem vermelha → servico 403 via podeLerOrdem.
-    // Usamos o domínio para o conflito de horário: ocupar o slot antes de restaurar.
     const aposCancel = cancelada.mundo;
     const azul = aposCancel.ordens.find((ordem) => ordem.referencia === "AZ-24081")!;
     azul.inicioPlaneado = vermelha.inicioPlaneado;
@@ -105,7 +136,5 @@ describe("/restaurar", () => {
     if (conflito.ok) return;
     expect(conflito.codigo).toBe("CONFLITO");
     expect(conflito.mensagem).toContain("ocupado");
-
-    void despachanteAzul;
   });
 });

@@ -110,7 +110,7 @@ async function Lista({ searchParams }: { searchParams: Promise<Record<string, st
               </SegmentoLigacao>
             </Segmentos>
             {ator.papel === "tecnico" ? null : (
-              <Button asChild size="sm">
+              <Button asChild>
                 <Link href="/ordens/nova">{t("painel.novaOrdem")}</Link>
               </Button>
             )}

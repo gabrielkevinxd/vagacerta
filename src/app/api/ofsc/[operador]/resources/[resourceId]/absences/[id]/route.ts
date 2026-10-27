@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { eOperadorOfsc } from "@/lib/ofsc/tipos";
 import { aplicarChamadaOfsc } from "@/server/ofsc/cliente";
+import { respostaSeSegredoOfscInvalido } from "@/server/ofsc/segredo";
 
 type P = { params: Promise<{ operador: string; resourceId: string; id: string }> };
 
 export async function PATCH(pedido: Request, contexto: P) {
+  const negado = respostaSeSegredoOfscInvalido(pedido);
+  if (negado) return negado;
   const { operador, resourceId, id } = await contexto.params;
   if (!eOperadorOfsc(operador)) return NextResponse.json({ mensagem: "operador desconhecido" }, { status: 404 });
   const corpo = (await pedido.json().catch(() => ({}))) as Record<string, unknown>;
@@ -12,7 +15,9 @@ export async function PATCH(pedido: Request, contexto: P) {
   return NextResponse.json(resultado.corpo, { status: resultado.codigo });
 }
 
-export async function DELETE(_pedido: Request, contexto: P) {
+export async function DELETE(pedido: Request, contexto: P) {
+  const negado = respostaSeSegredoOfscInvalido(pedido);
+  if (negado) return negado;
   const { operador, resourceId, id } = await contexto.params;
   if (!eOperadorOfsc(operador)) return NextResponse.json({ mensagem: "operador desconhecido" }, { status: 404 });
   const resultado = aplicarChamadaOfsc(operador, "DELETE", `/resources/${resourceId}/absences/${id}`, undefined);
