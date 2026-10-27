@@ -39,12 +39,20 @@ function paraAtor(linha: LinhaAtor): Ator {
   };
 }
 
+/** Token da sessão do cookie, se ainda estiver viva. */
+export async function obterTokenSessao(): Promise<string | null> {
+  await connection();
+  const jar = await cookies();
+  const token = jar.get(COOKIE)?.value;
+  if (!token) return null;
+  return sessaoViva(token) ? token : null;
+}
+
 export async function obterAtor(): Promise<Ator | null> {
   await connection();
   const jar = await cookies();
   const token = jar.get(COOKIE)?.value;
   if (!token) return null;
-  if (!sessaoViva(token)) return null;
   const linha = baseDados()
     .prepare(
       `SELECT u.id, u.nome, u.papel, u.operador_id, u.tecnico_id, u.ativo, t.equipa_id, s.expira_em
@@ -54,8 +62,15 @@ export async function obterAtor(): Promise<Ator | null> {
        WHERE s.token = ?`,
     )
     .get(token) as LinhaAtor | undefined;
-  if (!linha || Number(linha.ativo) !== 1) return null;
+  if (!linha || Number(linha.ativo) !== 1) {
+    if (linha) {
+      limparHistoricoAssistente(token);
+      baseDados().prepare("DELETE FROM sessoes WHERE token = ?").run(token);
+    }
+    return null;
+  }
   if (new Date(String(linha.expira_em)).getTime() < Date.now()) {
+    limparHistoricoAssistente(token);
     baseDados().prepare("DELETE FROM sessoes WHERE token = ?").run(token);
     return null;
   }
@@ -107,10 +122,7 @@ export async function sair(): Promise<void> {
   const jar = await cookies();
   const token = jar.get(COOKIE)?.value;
   if (token) {
-    const linha = baseDados()
-      .prepare("SELECT utilizador_id AS utilizadorId FROM sessoes WHERE token = ?")
-      .get(token) as { utilizadorId: string } | undefined;
-    if (linha?.utilizadorId) limparHistoricoAssistente(linha.utilizadorId);
+    limparHistoricoAssistente(token);
     baseDados().prepare("DELETE FROM sessoes WHERE token = ?").run(token);
   }
   jar.delete(COOKIE);

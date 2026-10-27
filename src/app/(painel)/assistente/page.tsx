@@ -20,7 +20,7 @@ async function Conteudo() {
       />
     );
   }
-  const painel = painelAssistente(ator, hojeLisboa());
+  const painel = await painelAssistente(ator, hojeLisboa());
   return <PainelAssistenteCliente inicial={painel} />;
 }
 

@@ -27,7 +27,9 @@ export function PainelAssistenteCliente({ inicial }: { inicial: PainelAssistente
   const { t } = useT();
   const [painel, setPainel] = useState(inicial);
   const [data, setData] = useState(inicial.data);
-  const [linhas, setLinhas] = useState<LinhaChat[]>([]);
+  const [linhas, setLinhas] = useState<LinhaChat[]>(() =>
+    inicial.historico.map((linha) => ({ papel: linha.papel, texto: linha.texto })),
+  );
   const [texto, setTexto] = useState("");
   const [plano, setPlano] = useState<PlanoVista | null>(null);
   const [pedidoPlano, setPedidoPlano] = useState<PedidoRealocacao | null>(null);

@@ -168,12 +168,12 @@ function criarEsquema(db: DatabaseSync): void {
     );
     CREATE TABLE IF NOT EXISTS assistente_historico (
       seq INTEGER PRIMARY KEY AUTOINCREMENT,
-      utilizador_id TEXT NOT NULL REFERENCES utilizadores(id),
+      sessao_token TEXT NOT NULL REFERENCES sessoes(token) ON DELETE CASCADE,
       papel TEXT NOT NULL,
       texto TEXT NOT NULL,
       em TEXT NOT NULL
     );
-    CREATE INDEX IF NOT EXISTS idx_assistente_historico_utilizador ON assistente_historico (utilizador_id, seq);
+    CREATE INDEX IF NOT EXISTS idx_assistente_historico_sessao ON assistente_historico (sessao_token, seq);
     CREATE TABLE IF NOT EXISTS definicoes (
       chave TEXT PRIMARY KEY,
       valor TEXT NOT NULL
@@ -306,23 +306,28 @@ function migrar(db: DatabaseSync): void {
 }
 
 function migrarAssistenteHistorico(db: DatabaseSync): void {
-  // O CREATE fica só em `criarEsquema` — aqui só migramos BD antigas com `id TEXT`.
+  // O CREATE fica só em `criarEsquema`. Aqui: BD antigas (id TEXT ou utilizador_id) → sessão.
+  // Histórico antigo por utilizador é descartável (não mapeia para sessões).
   const colunas = db.prepare("PRAGMA table_info(assistente_historico)").all() as { name: string }[];
-  if (colunas.length === 0 || colunas.some((c) => c.name === "seq")) return;
-  db.exec(`
-    CREATE TABLE assistente_historico_novo (
-      seq INTEGER PRIMARY KEY AUTOINCREMENT,
-      utilizador_id TEXT NOT NULL REFERENCES utilizadores(id),
-      papel TEXT NOT NULL,
-      texto TEXT NOT NULL,
-      em TEXT NOT NULL
-    );
-    INSERT INTO assistente_historico_novo (utilizador_id, papel, texto, em)
-      SELECT utilizador_id, papel, texto, em FROM assistente_historico ORDER BY em ASC, id ASC;
-    DROP TABLE assistente_historico;
-    ALTER TABLE assistente_historico_novo RENAME TO assistente_historico;
-    CREATE INDEX IF NOT EXISTS idx_assistente_historico_utilizador ON assistente_historico (utilizador_id, seq);
-  `);
+  if (colunas.length === 0 || colunas.some((c) => c.name === "sessao_token")) return;
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    db.exec(`
+      DROP TABLE assistente_historico;
+      CREATE TABLE assistente_historico (
+        seq INTEGER PRIMARY KEY AUTOINCREMENT,
+        sessao_token TEXT NOT NULL REFERENCES sessoes(token) ON DELETE CASCADE,
+        papel TEXT NOT NULL,
+        texto TEXT NOT NULL,
+        em TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_assistente_historico_sessao ON assistente_historico (sessao_token, seq);
+    `);
+    db.exec("COMMIT");
+  } catch (erro) {
+    db.exec("ROLLBACK");
+    throw erro;
+  }
 }
 
 /** Backfill `operador_id` quando dedutível; apaga o resto. Globais passam a `*`. Exportada para testes. */

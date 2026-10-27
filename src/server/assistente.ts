@@ -13,6 +13,7 @@ import { acrescentarHistoricoAssistente, lerHistoricoAssistente } from "./assist
 import { baseDados, lerMundo } from "./db";
 import { ErroHttp } from "./erros";
 import { idiomaAtual, mensagensAtuais } from "./idioma";
+import { obterTokenSessao } from "./sessao";
 import { confirmarPlano, previsualizar } from "./servicos";
 
 function agora(): string {
@@ -53,9 +54,10 @@ function contexto(ator: Ator, data: string): ContextoRegras {
   return prepararContexto(lerMundo(), ator, data, tecnicosAtivos());
 }
 
-export function painelAssistente(ator: Ator, data: string): PainelAssistente {
+export async function painelAssistente(ator: Ator, data: string): Promise<PainelAssistente> {
   const m = mensagensAtuais();
   const ctx = contexto(ator, data);
+  const token = await obterTokenSessao();
   return {
     data,
     modoChat: chaveXai() ? "ia" : "sem_ia",
@@ -71,6 +73,8 @@ export function painelAssistente(ator: Ator, data: string): PainelAssistente {
       alertas: ctx.factos.length,
     }),
     alertas: descreverAlertas(m, ctx.factos),
+    // Mesmas linhas que o LLM vê — a UI não fica vazia após recarregar.
+    historico: token ? lerHistoricoAssistente(token) : [],
   };
 }
 
@@ -103,29 +107,31 @@ function prever(ator: Ator, pedido: PedidoRealocacao, prefixo: string, modo: "ia
   }
 }
 
-function registarTurno(ator: Ator, pergunta: string, resposta: RespostaAssistente): RespostaAssistente {
-  acrescentarHistoricoAssistente(ator.id, "utilizador", pergunta);
-  acrescentarHistoricoAssistente(ator.id, "assistente", resposta.mensagem.texto);
+function registarTurno(sessaoToken: string, pergunta: string, resposta: RespostaAssistente): RespostaAssistente {
+  acrescentarHistoricoAssistente(sessaoToken, "utilizador", pergunta);
+  acrescentarHistoricoAssistente(sessaoToken, "assistente", resposta.mensagem.texto);
   return resposta;
 }
 
-export function responderAssistente(ator: Ator, corpo: PedidoAssistente): Promise<RespostaAssistente> | RespostaAssistente {
+export async function responderAssistente(ator: Ator, corpo: PedidoAssistente): Promise<RespostaAssistente> {
   const m = mensagensAtuais();
   const data = diaDoAssistente(corpo.data);
   const ctx = contexto(ator, data);
+  const token = await obterTokenSessao();
+  if (!token) throw new ErroHttp(401, "NAO_AUTENTICADO", "Inicie sessão para continuar.");
 
   if (corpo.confirmar) {
     if (ator.papel === "tecnico") {
-      return registarTurno(ator, corpo.texto, deLeitura(ator, { tipo: "recusar", chave: "assistente.tecnicoNaoGrava", vars: {} }, ctx, "sem_ia"));
+      return registarTurno(token, corpo.texto, deLeitura(ator, { tipo: "recusar", chave: "assistente.tecnicoNaoGrava", vars: {} }, ctx, "sem_ia"));
     }
     try {
       const plano = traduzirPlanoVista(m, confirmarPlano(ator, corpo.confirmar.pedido, corpo.confirmar.selo));
       const texto = `${t(m, "assistente.gravado")} ${plano.mensagem}`.replace(/\s+/g, " ").trim();
-      return registarTurno(ator, corpo.texto, responder(texto, { tipo: "reencaixar", pedido: corpo.confirmar.pedido }, plano, "sem_ia", true));
+      return registarTurno(token, corpo.texto, responder(texto, { tipo: "reencaixar", pedido: corpo.confirmar.pedido }, plano, "sem_ia", true));
     } catch (erro) {
       if (erro instanceof ErroHttp) {
         const texto = traduzirMensagem(m, erro.message, erro.codigo);
-        return registarTurno(ator, corpo.texto, responder(texto, { tipo: "recusar", mensagem: texto }, null, "sem_ia", false));
+        return registarTurno(token, corpo.texto, responder(texto, { tipo: "recusar", mensagem: texto }, null, "sem_ia", false));
       }
       throw erro;
     }
@@ -147,14 +153,14 @@ export function responderAssistente(ator: Ator, corpo: PedidoAssistente): Promis
         equipa: ctx.equipas.find((linha) => linha.id === pedido.equipaEmFalta)?.nome ?? "",
       },
     });
-    return registarTurno(ator, corpo.texto, prever(ator, pedido, prefixo, "sem_ia"));
+    return registarTurno(token, corpo.texto, prever(ator, pedido, prefixo, "sem_ia"));
   }
 
   const leitura = responderPorRegras(corpo.texto, ctx);
-  if (leitura.tipo !== "ambiguo") return registarTurno(ator, corpo.texto, deLeitura(ator, leitura, ctx, "sem_ia"));
+  if (leitura.tipo !== "ambiguo") return registarTurno(token, corpo.texto, deLeitura(ator, leitura, ctx, "sem_ia"));
 
-  // Histórico só do servidor — o campo `historico` do cliente é ignorado de propósito.
-  const historico = lerHistoricoAssistente(ator.id);
+  // Histórico só do servidor (por sessão) — o campo `historico` do cliente é ignorado de propósito.
+  const historico = lerHistoricoAssistente(token);
 
   return falarComXai({
     texto: corpo.texto,
@@ -169,7 +175,7 @@ export function responderAssistente(ator: Ator, corpo: PedidoAssistente): Promis
   }).then((resultado) => {
     if (resultado.modo === "sem_ia") {
       return registarTurno(
-        ator,
+        token,
         corpo.texto,
         deLeitura(ator, { tipo: "esclarecer", chave: "assistente.generico", vars: { n: ctx.factos.length }, pergunta: corpo.texto }, ctx, "sem_ia"),
       );
@@ -182,17 +188,17 @@ export function responderAssistente(ator: Ator, corpo: PedidoAssistente): Promis
         const ref = ctx.espera.find((linha) => linha.id === pedido.encaixarId)?.referencia ?? "";
         const equipa = ctx.equipas.find((linha) => linha.id === pedido.equipaEmFalta)?.nome ?? "";
         const prefixo = textoDe(m, { tipo: "reencaixar", pedido, chave, vars: { ref, equipa } });
-        return registarTurno(ator, corpo.texto, prever(ator, pedido, prefixo, "ia"));
+        return registarTurno(token, corpo.texto, prever(ator, pedido, prefixo, "ia"));
       }
     }
     const livre = resultado.texto.trim();
-    if (livre) return registarTurno(ator, corpo.texto, responder(livre, { tipo: "esclarecer", pergunta: corpo.texto }, null, "ia", false));
+    if (livre) return registarTurno(token, corpo.texto, responder(livre, { tipo: "esclarecer", pergunta: corpo.texto }, null, "ia", false));
     if (resultado.ferramentas.some((chamada) => chamada.nome === "listar_alertas")) {
       const leituraAlertas = responderPorRegras("conflitos", ctx);
-      if (leituraAlertas.tipo !== "ambiguo") return registarTurno(ator, corpo.texto, deLeitura(ator, leituraAlertas, ctx, "ia"));
+      if (leituraAlertas.tipo !== "ambiguo") return registarTurno(token, corpo.texto, deLeitura(ator, leituraAlertas, ctx, "ia"));
     }
     return registarTurno(
-      ator,
+      token,
       corpo.texto,
       deLeitura(ator, { tipo: "esclarecer", chave: "assistente.generico", vars: { n: ctx.factos.length }, pergunta: corpo.texto }, ctx, "sem_ia"),
     );
