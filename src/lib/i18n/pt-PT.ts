@@ -14,6 +14,7 @@ export const ptPT = {
     fecharMenu: "Fechar menu",
     grupoOperacao: "Operação",
     grupoCentral: "Central",
+    grupoFerramentas: "Ferramentas",
     grupoPlaneamento: "Planeamento",
     grupoSistema: "Sistema",
     painel: "Painel",
@@ -443,7 +444,7 @@ export const ptPT = {
   },
   definicoes: {
     titulo: "Definições",
-    soCentral: "A margem de deslocação é da central. O despacho e o técnico vêem o efeito na agenda, sem a poder alterar.",
+    soCentral: "A margem de deslocação é da central. O despacho e o técnico veem o efeito na agenda, sem a poder alterar.",
     intro:
       "A margem é o tempo de deslocação entre duas visitas da mesma equipa. Mudá-la recalcula os dias já marcados. Não empurra a primeira visita do turno.",
     margem: "Margem de deslocação (minutos)",
@@ -458,6 +459,7 @@ export const ptPT = {
     alertasIntro: "Calculados com as regras do dia, sem modelo. O despachante só vê o seu operador.",
     alertasVazios: "Não há conflitos neste dia para o seu perfil.",
     chatTitulo: "Conversa",
+    pergunta: "A sua pergunta",
     placeholder: "Ex.: que quotas estão esgotadas? Encaixa a ordem em espera.",
     enviar: "Enviar",
     aPensar: "A consultar…",
@@ -493,11 +495,26 @@ export const ptPT = {
     perfilDespacho: "Entra como despachante. Vê e marca só o {operador}. A ocupação dos outros aparece sem ficha.",
     perfilCentral: "Entra na central. Vê os três operadores e pode registar a falta de uma equipa.",
     perfilTecnico: "Entra como técnico. Vê a agenda da sua equipa e não reorganiza o dia.",
-    verAlertas: "{n} alertas no dia {data}.",
+    verAlertas_um: "{n} alerta no dia {data}.",
+    verAlertas_outros: "{n} alertas no dia {data}.",
     alertasNenhum: "Não há conflitos calculados para {data}.",
     resumoDia:
-      "Dia {data}: {agendadas} agendadas, {espera} em espera, {pendentes} pendentes, {curso} em curso. Margem {margem} min. {alertas} alertas.",
-    generico:
+      "Dia {data}: {agendadas}, {espera}, {pendentes}, {curso}. Margem {margem} min. {alertas}.",
+    contagem: {
+      agendadas_um: "{n} agendada",
+      agendadas_outros: "{n} agendadas",
+      espera_um: "{n} em espera",
+      espera_outros: "{n} em espera",
+      pendentes_um: "{n} pendente",
+      pendentes_outros: "{n} pendentes",
+      curso_um: "{n} em curso",
+      curso_outros: "{n} em curso",
+      alertas_um: "{n} alerta",
+      alertas_outros: "{n} alertas",
+    },
+    generico_um:
+      "Posso explicar o dia, listar conflitos e propor um reencaixe. Nada fica gravado sem confirmação. Há {n} alerta no dia escolhido.",
+    generico_outros:
       "Posso explicar o dia, listar conflitos e propor um reencaixe. Nada fica gravado sem confirmação. Há {n} alertas no dia escolhido.",
     reencaixeEncaixe: "Pré-visualização para encaixar {ref}.",
     reencaixeFalta: "Pré-visualização da falta de {equipa}.",
@@ -523,8 +540,10 @@ export const ptPT = {
       sobreposicao: "Sobreposição",
     },
     factos: {
-      sobrelotacao: "{equipa} ocupa {minutos} min, acima do turno ({percentagem}%).",
-      quota: "{equipa} já não tem folga de quota: restam {inst} instalações e {man} manutenções.",
+      sobrelotacao:
+        "{equipa} ocupa {minutos} min, acima do turno ({percentagem}%). O valor inclui ocupação de outros operadores.",
+      quota:
+        "{equipa} já não tem folga de quota: restam {inst} instalações e {man} manutenções. O valor inclui ocupação de outros operadores.",
       ausencia: "{equipa} tem ausência parcial: {motivo}.",
       ausenciaTotal: "{equipa} não cobre o turno ({motivo}).",
       semTecnico: "{ref} está {estado} e sem técnico.",

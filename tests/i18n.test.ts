@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { en, folhasDe, ptPT, t } from "@/lib/i18n";
+import { montarResumoDia, textoDe } from "@/lib/assistente/frases";
+import { en, folhasDe, ptPT, sufixoPlural, t, tp } from "@/lib/i18n";
 import { traduzirNarrativa } from "@/lib/i18n/motor";
 
 describe("catálogos i18n", () => {
@@ -20,5 +21,40 @@ describe("catálogos i18n", () => {
         "VD-URG passaria a 08:00–11:00 na Equipa Minho. O dia é recalculado com a janela prometida, a margem de deslocação, as indisponibilidades e as competências. Nada fica gravado até confirmar.",
       ),
     ).toContain("would move to");
+  });
+
+  it("Intl.PluralRules: n=1 usa singular em pt-PT e en", () => {
+    expect(sufixoPlural("pt-PT", 1)).toBe("um");
+    expect(sufixoPlural("en", 1)).toBe("um");
+    expect(sufixoPlural("pt-PT", 2)).toBe("outros");
+    expect(tp(ptPT, "assistente.contagem.pendentes", 1)).toBe("1 pendente");
+    expect(tp(ptPT, "assistente.contagem.pendentes", 2)).toBe("2 pendentes");
+    expect(tp(en, "assistente.contagem.alertas", 1)).toBe("1 alert");
+    expect(tp(en, "assistente.contagem.alertas", 2)).toBe("2 alerts");
+    expect(tp(ptPT, "assistente.verAlertas", 1, { data: "27/10/2026" })).toBe("1 alerta no dia 27/10/2026.");
+    expect(tp(en, "assistente.verAlertas", 1, { data: "27 Oct 2026" })).toBe("1 alert on 27 Oct 2026.");
+    const resumo = montarResumoDia(ptPT, {
+      data: "2026-10-27",
+      agendadas: 1,
+      espera: 1,
+      pendentes: 1,
+      curso: 1,
+      margem: 15,
+      alertas: 1,
+    });
+    expect(resumo).toContain("1 pendente");
+    expect(resumo).not.toContain("1 pendentes");
+    expect(resumo).toContain("1 alerta");
+    expect(resumo).not.toContain("1 alertas");
+    expect(resumo).toContain("27/10/2026");
+    expect(resumo).not.toContain("2026-10-27");
+    expect(
+      textoDe(ptPT, {
+        tipo: "esclarecer",
+        chave: "assistente.ordemEstado",
+        vars: { ref: "AZ-FILA-01", estado: "em_espera", equipa: "Equipa Minho" },
+        pergunta: "onde está AZ-FILA-01",
+      }),
+    ).toContain("está em fila");
   });
 });
