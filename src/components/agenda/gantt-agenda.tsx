@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { createContext, useContext, useRef, useState } from "react";
+import { ChevronRight, TriangleAlert } from "lucide-react";
+import { createContext, Fragment, useContext, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   eixoDasLinhas,
   faixasDosBlocos,
@@ -13,12 +15,26 @@ import {
 } from "@/lib/agenda-vista";
 import type { Agenda, BlocoVista, LinhaVista } from "@/lib/rules/agenda";
 import { COR_OPERADOR } from "@/lib/rules/rotulos";
-import { formatHHMM } from "@/lib/rules/tempo";
+import { formatHHMM, hojeLisboa } from "@/lib/rules/tempo";
+import type { OperadorId } from "@/lib/rules/tipos";
 import { enviar } from "@/lib/cliente";
 import { LegendaOperadores } from "@/components/legenda-operadores";
+import { BarraOperador, EtiquetaOperador } from "@/components/etiquetas";
 import { useT } from "@/components/idioma/provedor";
 import { formatarDataLocale, formatarDataLongaLocale } from "@/lib/i18n/formatacao";
 import { traduzirConflito, traduzirNarrativa } from "@/lib/i18n/motor";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+
+function lugarNoSnapshot(agenda: Agenda, ordemId: string): { equipaId: string; data: string; inicio: string } | null {
+  for (const dia of agenda.dias) {
+    for (const equipa of dia.equipas) {
+      const bloco = equipa.blocos.find((linha) => linha.id === ordemId);
+      if (bloco) return { equipaId: equipa.equipaId, data: dia.data, inicio: bloco.inicio };
+    }
+  }
+  return null;
+}
 
 type Perfil = "central" | "despachante" | "tecnico";
 type ModoArrasto = "tempo" | "celula";
@@ -47,14 +63,26 @@ type Fantasma = {
 };
 
 const primario =
-  "inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50";
+  "inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-[13px]/5 font-medium text-primary-foreground disabled:opacity-50";
 const secundario =
-  "inline-flex h-10 items-center justify-center rounded-lg border border-border bg-card px-4 text-sm font-medium disabled:opacity-50";
+  "inline-flex h-10 items-center justify-center rounded-lg border border-border bg-card px-4 text-[13px]/5 font-medium disabled:opacity-50";
 
 const LigacaoAgenda = createContext({ vista: "dia" as "dia" | "semana", ancora: "" });
 
 function minutosDe(valor: string): number {
   const [hora, minuto] = valor.split(":").map(Number);
+  return hora * 60 + minuto;
+}
+
+function minutosAgoraLisboa(agora = new Date()): number {
+  const partes = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Lisbon",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(agora);
+  const hora = Number(partes.find((p) => p.type === "hour")?.value ?? 0);
+  const minuto = Number(partes.find((p) => p.type === "minute")?.value ?? 0);
   return hora * 60 + minuto;
 }
 
@@ -99,11 +127,13 @@ export function GanttAgenda({
   perfil,
   vista,
   ancora,
+  operadorLegenda = null,
 }: {
   agendaInicial: Agenda;
   perfil: Perfil;
   vista: "dia" | "semana";
   ancora: string;
+  operadorLegenda?: OperadorId | null;
 }) {
   const [agenda, setAgenda] = useState(agendaInicial);
   const [proposta, setProposta] = useState<Proposta | null>(null);
@@ -151,21 +181,47 @@ export function GanttAgenda({
 
   async function confirmar() {
     if (!proposta || trinco.current) return;
+    const gravada = proposta;
+    const anterior = lugarNoSnapshot(gravada.snapshot, gravada.ordemId);
     trinco.current = true;
     setACalcular(true);
     setErro(null);
     try {
-      await enviar(`/api/ordens/${proposta.ordemId}/reagendar`, {
-        equipaId: proposta.equipaId,
-        data: proposta.data,
-        inicioPlaneado: proposta.inicioPlaneado,
+      await enviar(`/api/ordens/${gravada.ordemId}/reagendar`, {
+        equipaId: gravada.equipaId,
+        data: gravada.data,
+        inicioPlaneado: gravada.inicioPlaneado,
       });
       const fresca = await enviar<Agenda>(`/api/agenda?de=${agenda.de}&ate=${agenda.ate}`, undefined, "GET");
       setAgenda(fresca);
       setProposta(null);
       setAviso(t("agenda.gravado"));
+      toast(t("toast.lugarGravado", { data: formatarDataLocale(gravada.data, idioma), hora: gravada.inicioPlaneado }), {
+        duration: 6000,
+        action: anterior
+          ? {
+              label: t("comum.anular"),
+              onClick: () => {
+                void (async () => {
+                  try {
+                    await enviar(`/api/ordens/${gravada.ordemId}/reagendar`, {
+                      equipaId: anterior.equipaId,
+                      data: anterior.data,
+                      inicioPlaneado: anterior.inicio,
+                    });
+                    const reposta = await enviar<Agenda>(`/api/agenda?de=${fresca.de}&ate=${fresca.ate}`, undefined, "GET");
+                    setAgenda(reposta);
+                    toast(t("toast.anulado"));
+                  } catch {
+                    setErro(t("agenda.falhouGravar"));
+                  }
+                })();
+              },
+            }
+          : undefined,
+      });
     } catch (falha) {
-      setAgenda(proposta.snapshot);
+      setAgenda(gravada.snapshot);
       setProposta(null);
       setErro(falha instanceof Error ? `${falha.message} ${t("agenda.voltou")}` : t("agenda.falhouGravar"));
     } finally {
@@ -271,6 +327,8 @@ export function GanttAgenda({
 
   const escolhida = escolhidaId ? localizar(agenda, escolhidaId) : null;
   const podeMover = perfil !== "tecnico";
+  const hoje = hojeLisboa();
+  const agoraMin = minutosAgoraLisboa();
 
   return (
     <LigacaoAgenda.Provider value={{ vista, ancora }}>
@@ -287,37 +345,48 @@ export function GanttAgenda({
           if (alvo instanceof HTMLElement && alvo.dataset.ordem) setEscolhidaId(alvo.dataset.ordem);
         }}
       >
-        <details className="rounded-xl border border-border bg-card px-4 py-3 md:hidden">
-          <summary className="cursor-pointer text-sm font-medium">{t("agenda.comoLer")}</summary>
+        <details className="superficie px-4 py-3 md:hidden">
+          <summary className="cursor-pointer text-[13px]/5 font-medium">{t("agenda.comoLer")}</summary>
           <div className="pt-3">
-            <LegendaGantt perfil={perfil} margem={agenda.margemDeslocacaoMin} podeMover={podeMover} embutida />
+            <LegendaGantt
+              perfil={perfil}
+              margem={agenda.margemDeslocacaoMin}
+              podeMover={podeMover}
+              embutida
+              operadorLegenda={operadorLegenda}
+            />
           </div>
         </details>
         <div className="hidden md:block">
-          <LegendaGantt perfil={perfil} margem={agenda.margemDeslocacaoMin} podeMover={podeMover} />
+          <LegendaGantt
+            perfil={perfil}
+            margem={agenda.margemDeslocacaoMin}
+            podeMover={podeMover}
+            operadorLegenda={operadorLegenda}
+          />
         </div>
         <p className="sr-only" aria-live="polite">
           {aCalcular ? t("agenda.aValidar") : ""} {erro ?? ""} {aviso ?? ""} {proposta?.mensagem ?? ""}
         </p>
-        {aCalcular ? <p className="text-sm text-muted-foreground">{t("agenda.aValidar")}</p> : null}
+        {aCalcular ? <p className="text-[13px]/5 text-muted-foreground">{t("agenda.aValidar")}</p> : null}
         {erro ? (
-          <p role="alert" className="rounded-lg border border-destructive/40 bg-card px-3 py-2 text-sm text-destructive">
+          <p role="alert" className="rounded-lg border border-destructive/40 bg-card px-3 py-2 text-[13px]/5 text-destructive">
             {erro}
           </p>
         ) : null}
         {aviso && !proposta ? (
-          <p role="status" className="rounded-lg border border-border bg-card px-3 py-2 text-sm">
+          <p role="status" className="rounded-lg border border-border bg-card px-3 py-2 text-[13px]/5">
             {aviso}
           </p>
         ) : null}
         {proposta ? (
-          <div className="sticky top-2 z-30 space-y-3 rounded-xl border border-primary/40 bg-card p-4 shadow-sm">
-            <p className="text-sm font-medium">{t("agenda.previsualizacao")}</p>
-            <p className="text-sm">
+          <div className="sticky top-2 z-30 space-y-3 superficie border-primary/40 p-4">
+            <p className="text-[13px]/5 font-medium">{t("agenda.previsualizacao")}</p>
+            <p className="text-[13px]/5">
               {localizar(agenda, proposta.ordemId)?.bloco.referencia ?? t("agenda.visita")} → {nomeDaEquipa(agenda, proposta.equipaId)},{" "}
               {formatarDataLocale(proposta.data, idioma)} · {proposta.inicioPlaneado}.
             </p>
-            <p className="text-sm">{traduzirNarrativa(m, proposta.mensagem)}</p>
+            <p className="text-[13px]/5">{traduzirNarrativa(m, proposta.mensagem)}</p>
             <div className="flex flex-wrap gap-2">
               <button type="button" className={primario} disabled={aCalcular} onClick={() => void confirmar()}>
                 {t("agenda.guardarLugar")}
@@ -336,6 +405,10 @@ export function GanttAgenda({
               fantasma={fantasma}
               arrastandoId={arrastandoId}
               escolhidaId={escolhidaId}
+              podeMover={podeMover}
+              margem={agenda.margemDeslocacaoMin}
+              hoje={hoje}
+              agoraMin={agoraMin}
               onPointerDown={iniciarArrasto}
             />
           ) : (
@@ -344,6 +417,7 @@ export function GanttAgenda({
               fantasma={fantasma}
               arrastandoId={arrastandoId}
               escolhidaId={escolhidaId}
+              podeMover={podeMover}
               onPointerDown={iniciarArrasto}
             />
           )}
@@ -382,33 +456,40 @@ function LegendaGantt({
   margem,
   podeMover,
   embutida = false,
+  operadorLegenda = null,
 }: {
   perfil: Perfil;
   margem: number;
   podeMover: boolean;
   embutida?: boolean;
+  operadorLegenda?: OperadorId | null;
 }) {
   const { t } = useT();
+  const tecnico = perfil === "tecnico";
   return (
-    <div className={embutida ? "space-y-3" : "space-y-3 rounded-xl border border-border bg-card p-4"}>
-      <LegendaOperadores compacta />
-      <ul className="grid gap-2 text-sm sm:grid-cols-2">
+    <div className={embutida ? "space-y-3" : "space-y-3 superficie p-4"}>
+      <LegendaOperadores compacta apenas={operadorLegenda} />
+      <ul className="grid gap-2 text-[13px]/5 sm:grid-cols-2">
+        {!tecnico ? (
+          <li className="flex items-center gap-2">
+            <span className="h-4 w-8 rounded-sm border border-border bg-[repeating-linear-gradient(135deg,var(--muted)_0_5px,var(--border)_5px_10px)]" aria-hidden />
+            {t("agenda.ocupadaLegenda")}
+          </li>
+        ) : null}
         <li className="flex items-center gap-2">
-          <span className="h-4 w-8 rounded-sm border border-border bg-[repeating-linear-gradient(135deg,#e7e2d8_0_5px,#d4cec2_5px_10px)]" aria-hidden />
-          {t("agenda.ocupadaLegenda")}
-        </li>
-        <li className="flex items-center gap-2">
-          <span className="h-4 w-8 rounded-sm border border-dashed border-foreground/40 bg-muted" aria-hidden />
+          <span className="h-4 w-8 rounded-sm border border-dashed border-border bg-muted" aria-hidden />
           {t("agenda.indispLegenda")}
         </li>
-        <li className="flex items-center gap-2">
-          <span className="h-4 w-8 rounded-sm outline outline-2 outline-destructive" aria-hidden />
-          {t("agenda.conflitoLegenda")}
-        </li>
+        {!tecnico ? (
+          <li className="flex items-center gap-2">
+            <span className="h-4 w-8 rounded-sm outline outline-2 outline-dashed outline-destructive" aria-hidden />
+            {t("agenda.conflitoLegenda")}
+          </li>
+        ) : null}
         <li>{t("agenda.margemLegenda", { n: margem })}</li>
       </ul>
-      <p className="text-sm text-muted-foreground">
-        {perfil === "tecnico" ? t("agenda.ajudaTecnico") : podeMover ? t("agenda.ajudaMover") : null}
+      <p className="text-[13px]/5 text-muted-foreground">
+        {tecnico ? t("agenda.ajudaTecnico") : podeMover ? t("agenda.ajudaMover") : null}
         {perfil === "despachante" ? t("agenda.ajudaDespacho") : ""}
       </p>
     </div>
@@ -420,12 +501,20 @@ function QuadroDia({
   fantasma,
   arrastandoId,
   escolhidaId,
+  podeMover,
+  margem,
+  hoje,
+  agoraMin,
   onPointerDown,
 }: {
   dia: Agenda["dias"][number] | undefined;
   fantasma: Fantasma | null;
   arrastandoId: string | null;
   escolhidaId: string | null;
+  podeMover: boolean;
+  margem: number;
+  hoje: string;
+  agoraMin: number;
   onPointerDown: (
     evento: React.PointerEvent<HTMLElement>,
     bloco: BlocoVista,
@@ -435,13 +524,14 @@ function QuadroDia({
   ) => void;
 }) {
   const { t, m, idioma } = useT();
-  if (!dia) return <p className="text-sm text-muted-foreground">{t("agenda.semDia")}</p>;
+  if (!dia) return <p className="text-[13px]/5 text-muted-foreground">{t("agenda.semDia")}</p>;
   const eixo = eixoDasLinhas(dia.equipas);
   const conflitos = dia.equipas.flatMap((equipa) => equipa.conflitos.map((conflito) => ({ ...conflito, equipa: equipa.nome })));
+  const mostrarAgora = dia.data === hoje;
   return (
     <section className="space-y-2" aria-label={formatarDataLongaLocale(dia.data, idioma)}>
       {conflitos.length > 0 ? (
-        <ul className="space-y-1 rounded-lg border border-destructive/40 bg-card px-3 py-2 text-sm text-destructive">
+        <ul className="space-y-1 rounded-lg border border-destructive/40 bg-card px-3 py-2 text-[13px]/5 text-destructive">
           {conflitos.map((conflito) => (
             <li key={`${conflito.equipa}-${conflito.ordemId}-${conflito.tipo}`}>
               {traduzirConflito(m, conflito.tipo, conflito.mensagem)}
@@ -449,18 +539,18 @@ function QuadroDia({
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-muted-foreground">{t("agenda.semConflitosDia")}</p>
+        <p className="text-[13px]/5 text-muted-foreground">{t(podeMover ? "agenda.semConflitosDia" : "agenda.semConflitosDiaSo")}</p>
       )}
-      <div className="overflow-x-auto rounded-xl border border-border bg-card">
+      <div className="overflow-x-auto superficie">
         <div className="min-w-[58rem]">
           <div className="grid grid-cols-[11rem_1fr] border-b border-border bg-muted/60">
             <div className="px-3 py-2 text-xs font-medium">{t("comum.equipa")}</div>
-            <Escala eixo={eixo} />
+            <Escala eixo={eixo} agoraMin={mostrarAgora ? agoraMin : null} />
           </div>
           {dia.equipas.map((equipa) => (
             <div key={equipa.equipaId} className="grid grid-cols-[11rem_1fr] border-b border-border last:border-b-0">
               <div className="sticky left-0 z-10 flex flex-col justify-center border-r border-border bg-card px-3 py-2">
-                <p className="text-sm font-medium leading-tight">{equipa.nome.replace(/^Equipa /, "")}</p>
+                <p className="text-[13px]/5 font-medium leading-tight">{equipa.nome.replace(/^Equipa /, "")}</p>
                 <p className="text-xs text-muted-foreground">
                   {equipa.turno ? `${equipa.turno.inicio}–${equipa.turno.fim}` : t("comum.naoTrabalha")}
                 </p>
@@ -472,6 +562,9 @@ function QuadroDia({
                 fantasma={fantasma}
                 arrastandoId={arrastandoId}
                 escolhidaId={escolhidaId}
+                podeMover={podeMover}
+                margem={margem}
+                agoraMin={mostrarAgora ? agoraMin : null}
                 onPointerDown={onPointerDown}
               />
             </div>
@@ -487,12 +580,14 @@ function QuadroSemana({
   fantasma,
   arrastandoId,
   escolhidaId,
+  podeMover,
   onPointerDown,
 }: {
   dias: Agenda["dias"];
   fantasma: Fantasma | null;
   arrastandoId: string | null;
   escolhidaId: string | null;
+  podeMover: boolean;
   onPointerDown: (
     evento: React.PointerEvent<HTMLElement>,
     bloco: BlocoVista,
@@ -511,7 +606,7 @@ function QuadroSemana({
   return (
     <div className="space-y-2">
       {conflitos.length > 0 ? (
-        <ul className="space-y-1 rounded-lg border border-destructive/40 bg-card px-3 py-2 text-sm text-destructive">
+        <ul className="space-y-1 rounded-lg border border-destructive/40 bg-card px-3 py-2 text-[13px]/5 text-destructive">
           {conflitos.map((conflito) => (
             <li key={`${conflito.data}-${conflito.equipa}-${conflito.ordemId}-${conflito.tipo}`}>
               {formatarDataLocale(conflito.data, idioma)} · {conflito.equipa}: {traduzirConflito(m, conflito.tipo, conflito.mensagem)}
@@ -519,9 +614,9 @@ function QuadroSemana({
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-muted-foreground">{t("agenda.semConflitosSemana")}</p>
+        <p className="text-[13px]/5 text-muted-foreground">{t(podeMover ? "agenda.semConflitosSemana" : "agenda.semConflitosSemanaSo")}</p>
       )}
-      <div className="overflow-x-auto rounded-xl border border-border bg-card">
+      <div className="overflow-x-auto superficie">
         <div className="min-w-[86rem]">
           <div className="grid border-b border-border bg-muted/60" style={colunas}>
             <div className="sticky left-0 z-20 bg-muted/60 px-3 py-2 text-xs font-medium">{t("comum.equipa")}</div>
@@ -533,7 +628,7 @@ function QuadroSemana({
           </div>
           {[...nomes.entries()].map(([equipaId, nome]) => (
             <div key={equipaId} className="grid border-b border-border last:border-b-0" style={colunas}>
-              <div className="sticky left-0 z-20 flex items-center border-r border-border bg-card px-3 py-2 text-sm font-medium">
+              <div className="sticky left-0 z-20 flex items-center border-r border-border bg-card px-3 py-2 text-[13px]/5 font-medium">
                 {nome.replace(/^Equipa /, "")}
               </div>
               {dias.map((dia) => {
@@ -547,6 +642,7 @@ function QuadroSemana({
                     fantasma={fantasma}
                     arrastandoId={arrastandoId}
                     escolhidaId={escolhidaId}
+                    podeMover={podeMover}
                     onPointerDown={onPointerDown}
                   />
                 );
@@ -559,7 +655,7 @@ function QuadroSemana({
   );
 }
 
-function Escala({ eixo }: { eixo: Eixo }) {
+function Escala({ eixo, agoraMin }: { eixo: Eixo; agoraMin?: number | null }) {
   return (
     <div className="relative h-8">
       {horasDoEixo(eixo).map((minuto) => (
@@ -571,6 +667,13 @@ function Escala({ eixo }: { eixo: Eixo }) {
           {formatHHMM(minuto)}
         </span>
       ))}
+      {agoraMin != null && agoraMin >= eixo.inicioMin && agoraMin <= eixo.fimMin ? (
+        <span
+          className="absolute top-1/2 z-10 size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary"
+          style={{ left: `${percentagem(agoraMin, eixo)}%` }}
+          aria-hidden
+        />
+      ) : null}
     </div>
   );
 }
@@ -582,6 +685,9 @@ function FaixaTempo({
   fantasma,
   arrastandoId,
   escolhidaId,
+  podeMover,
+  margem,
+  agoraMin,
   onPointerDown,
 }: {
   linha: LinhaVista;
@@ -590,6 +696,9 @@ function FaixaTempo({
   fantasma: Fantasma | null;
   arrastandoId: string | null;
   escolhidaId: string | null;
+  podeMover: boolean;
+  margem: number;
+  agoraMin: number | null;
   onPointerDown: (
     evento: React.PointerEvent<HTMLElement>,
     bloco: BlocoVista,
@@ -601,10 +710,11 @@ function FaixaTempo({
   const { t } = useT();
   const colocados = faixasDosBlocos(linha.blocos);
   const faixas = colocados[0]?.faixas ?? 1;
-  const altura = Math.max(88, faixas * 40);
+  const altura = Math.max(44, faixas * 28);
   const turnoInicio = linha.turno ? minutosDe(linha.turno.inicio) : eixo.inicioMin;
   const turnoFim = linha.turno ? minutosDe(linha.turno.fim) : eixo.inicioMin;
   const alvo = fantasma && fantasma.equipaId === linha.equipaId && fantasma.data === data;
+  const ordenados = [...linha.blocos].sort((a, b) => a.inicioMin - b.inicioMin);
   return (
     <div
       data-faixa="1"
@@ -634,27 +744,63 @@ function FaixaTempo({
         <span
           key={`${bloco.inicio}-${bloco.motivo}`}
           title={bloco.motivo}
-          className="pointer-events-none absolute top-1 bottom-1 rounded-sm border border-dashed border-foreground/30 bg-[repeating-linear-gradient(135deg,transparent_0_4px,rgb(0_0_0/0.08)_4px_8px)]"
+          className="pointer-events-none absolute top-1 bottom-1 overflow-hidden rounded-sm border border-dashed border-border bg-muted px-1"
           style={{
             left: `${percentagem(bloco.inicioMin, eixo)}%`,
             width: `${Math.max(percentagem(bloco.fimMin, eixo) - percentagem(bloco.inicioMin, eixo), 1)}%`,
           }}
-        />
+        >
+          <span className="block truncate text-[11px] leading-tight text-muted-foreground">{bloco.motivo}</span>
+        </span>
       ))}
+      {margem > 0
+        ? ordenados.map((bloco, indice) => {
+            if (indice === 0) return null;
+            const inicioViagem = Math.max(bloco.inicioMin - margem, eixo.inicioMin);
+            if (inicioViagem >= bloco.inicioMin) return null;
+            return (
+              <span
+                key={`viagem-${bloco.id}`}
+                className="pointer-events-none absolute top-1/2 z-[5] -translate-y-1/2 border-t border-dashed border-muted-foreground"
+                style={{
+                  left: `${percentagem(inicioViagem, eixo)}%`,
+                  width: `${Math.max(percentagem(bloco.inicioMin, eixo) - percentagem(inicioViagem, eixo), 0.5)}%`,
+                }}
+                aria-hidden
+              />
+            );
+          })
+        : null}
       {colocados.map(({ bloco, faixa, faixas: total }) => (
-        <Bloco
-          key={bloco.id}
-          bloco={bloco}
-          eixo={eixo}
-          faixa={faixa}
-          faixas={total}
-          compacta={false}
-          conflito={linha.conflitos.some((conflito) => conflito.ordemId === bloco.id)}
-          mensagem={linha.conflitos.find((conflito) => conflito.ordemId === bloco.id)?.mensagem}
-          escolhida={escolhidaId === bloco.id}
-          arrastando={arrastandoId === bloco.id}
-          onPointerDown={(evento) => onPointerDown(evento, bloco, data, linha.equipaId, "tempo")}
-        />
+        <Fragment key={bloco.id}>
+          {bloco.janelaInicio && bloco.janelaFim ? (
+            <span
+              className="pointer-events-none absolute z-[9] h-0.5 bg-foreground/25"
+              style={{
+                left: `${percentagem(minutosDe(bloco.janelaInicio), eixo)}%`,
+                width: `${Math.max(
+                  percentagem(minutosDe(bloco.janelaFim), eixo) - percentagem(minutosDe(bloco.janelaInicio), eixo),
+                  0.5,
+                )}%`,
+                top: `calc(${(faixa / total) * 100}% + 2px)`,
+              }}
+              aria-hidden
+            />
+          ) : null}
+          <Bloco
+            bloco={bloco}
+            eixo={eixo}
+            faixa={faixa}
+            faixas={total}
+            compacta={false}
+            conflito={linha.conflitos.some((conflito) => conflito.ordemId === bloco.id)}
+            mensagem={linha.conflitos.find((conflito) => conflito.ordemId === bloco.id)?.mensagem}
+            escolhida={escolhidaId === bloco.id}
+            arrastando={arrastandoId === bloco.id}
+            podeMover={podeMover}
+            onPointerDown={(evento) => onPointerDown(evento, bloco, data, linha.equipaId, "tempo")}
+          />
+        </Fragment>
       ))}
       {alvo && fantasma.modo === "tempo" ? (
         <span
@@ -662,9 +808,16 @@ function FaixaTempo({
           style={{
             left: `${percentagem(fantasma.inicioMin, eixo)}%`,
             width: `${Math.max(percentagem(fantasma.inicioMin + fantasma.duracaoMin, eixo) - percentagem(fantasma.inicioMin, eixo), 2)}%`,
-            top: 6,
-            bottom: 6,
+            top: 4,
+            bottom: 4,
           }}
+        />
+      ) : null}
+      {agoraMin != null && agoraMin >= eixo.inicioMin && agoraMin <= eixo.fimMin ? (
+        <span
+          className="pointer-events-none absolute inset-y-0 z-30 w-px bg-primary"
+          style={{ left: `${percentagem(agoraMin, eixo)}%` }}
+          aria-hidden
         />
       ) : null}
     </div>
@@ -677,6 +830,7 @@ function CelulaSemana({
   fantasma,
   arrastandoId,
   escolhidaId,
+  podeMover,
   onPointerDown,
 }: {
   linha: LinhaVista;
@@ -684,6 +838,7 @@ function CelulaSemana({
   fantasma: Fantasma | null;
   arrastandoId: string | null;
   escolhidaId: string | null;
+  podeMover: boolean;
   onPointerDown: (
     evento: React.PointerEvent<HTMLElement>,
     bloco: BlocoVista,
@@ -719,6 +874,7 @@ function CelulaSemana({
             mensagem={linha.conflitos.find((conflito) => conflito.ordemId === bloco.id)?.mensagem}
             escolhida={escolhidaId === bloco.id}
             arrastando={arrastandoId === bloco.id}
+            podeMover={podeMover}
             onPointerDown={(evento) => onPointerDown(evento, bloco, data, linha.equipaId, "celula")}
           />
         ))
@@ -742,6 +898,7 @@ function Bloco({
   mensagem,
   escolhida,
   arrastando,
+  podeMover,
   onPointerDown,
 }: {
   bloco: BlocoVista;
@@ -753,25 +910,42 @@ function Bloco({
   mensagem?: string;
   escolhida: boolean;
   arrastando: boolean;
+  podeMover: boolean;
   onPointerDown: (evento: React.PointerEvent<HTMLElement>) => void;
 }) {
   const { t } = useT();
   const ocupada = bloco.vista === "ocupada";
-  const rotulo = ocupada
+  const base = ocupada
     ? t("agenda.ocupadaAria", { inicio: bloco.inicio, fim: bloco.fim, n: bloco.duracaoMin })
     : t("agenda.visitaAria", { referencia: bloco.referencia ?? "", cliente: bloco.clienteNome ?? "", inicio: bloco.inicio, fim: bloco.fim });
-  const classe = `absolute z-10 overflow-hidden rounded-md px-1.5 py-1 text-left shadow-sm ${
-    bloco.arrastavel ? "cursor-grab touch-none active:cursor-grabbing" : "cursor-pointer"
-  } ${conflito ? "outline outline-2 outline-offset-1 outline-destructive" : ""} ${
-    escolhida ? "ring-2 ring-white ring-offset-1 ring-offset-transparent" : ""
+  const rotulo = [
+    base,
+    !ocupada && bloco.clienteNome ? bloco.clienteNome : null,
+    !ocupada && bloco.morada ? bloco.morada : null,
+    bloco.janelaInicio ? t("agenda.janelaInicio", { inicio: bloco.janelaInicio, fim: bloco.janelaFim ?? "" }) : null,
+    mensagem,
+  ]
+    .filter(Boolean)
+    .join(". ");
+  const arrasta = podeMover && bloco.arrastavel;
+  const classe = `absolute z-10 overflow-hidden rounded-md border border-border px-1.5 text-left ${
+    arrasta ? "cursor-grab touch-none active:cursor-grabbing" : "cursor-default"
+  } ${conflito ? "bg-[color:var(--destructive-soft)] outline outline-2 outline-dashed outline-offset-1 outline-destructive" : "bg-card"} ${
+    escolhida ? "ring-2 ring-ring ring-offset-1" : ""
   } ${arrastando ? "pointer-events-none opacity-30" : ""}`;
-  const estilo = {
+  const estilo: React.CSSProperties = {
     left: `${percentagem(bloco.inicioMin, eixo)}%`,
     width: `${Math.max(percentagem(bloco.fimMin, eixo) - percentagem(bloco.inicioMin, eixo), compacta ? 8 : 5)}%`,
-    top: `calc(${(faixa / faixas) * 100}% + 4px)`,
-    height: `calc(${100 / faixas}% - 8px)`,
-    background: ocupada ? "repeating-linear-gradient(135deg,#e7e2d8 0 6px,#d4cec2 6px 12px)" : COR_OPERADOR[bloco.operadorId ?? "azul"],
-    color: ocupada ? "#2c261f" : "#fff",
+    top: `calc(${(faixa / faixas) * 100}% + 2px)`,
+    height: `calc(${100 / faixas}% - 4px)`,
+    background: conflito
+      ? undefined
+      : ocupada
+        ? "repeating-linear-gradient(135deg,var(--muted) 0 6px,var(--border) 6px 12px)"
+        : "var(--card)",
+    color: ocupada ? "var(--muted-foreground)" : "var(--foreground)",
+    borderLeftWidth: ocupada ? 1 : 3,
+    borderLeftColor: ocupada ? "var(--border)" : COR_OPERADOR[bloco.operadorId ?? "azul"],
   };
   return (
     <div
@@ -780,17 +954,18 @@ function Bloco({
       data-ordem={bloco.id}
       aria-grabbed={arrastando}
       aria-label={rotulo}
-      title={mensagem ? `${rotulo}. ${mensagem}` : rotulo}
-      onPointerDown={onPointerDown}
+      title={rotulo}
+      onPointerDown={arrasta ? onPointerDown : undefined}
       className={classe}
       style={estilo}
     >
-      <span className="block truncate text-[11px] font-semibold leading-tight">{ocupada ? t("comum.ocupada") : bloco.referencia}</span>
-      <span className="block truncate text-[11px] leading-tight opacity-95">
-        {bloco.inicio}–{bloco.fim}
-        {ocupada ? ` · ${bloco.duracaoMin} ${t("comum.minutos")}` : bloco.clienteNome ? ` · ${bloco.clienteNome}` : ""}
+      <span className="flex h-full items-center gap-1 truncate font-mono text-[11px]/4 font-medium leading-none">
+        {conflito ? <TriangleAlert className="size-3.5 shrink-0 text-destructive" strokeWidth={1.75} /> : null}
+        <span className="truncate">
+          {ocupada ? t("comum.ocupada") : bloco.referencia} · {bloco.inicio}
+          {conflito ? ` · ${t("comum.conflito")}` : ""}
+        </span>
       </span>
-      {conflito ? <span className="block truncate text-[10px] font-semibold leading-tight">{t("comum.conflito")}</span> : null}
     </div>
   );
 }
@@ -801,6 +976,7 @@ function CartaoSemana({
   mensagem,
   escolhida,
   arrastando,
+  podeMover,
   onPointerDown,
 }: {
   bloco: BlocoVista;
@@ -808,6 +984,7 @@ function CartaoSemana({
   mensagem?: string;
   escolhida: boolean;
   arrastando: boolean;
+  podeMover: boolean;
   onPointerDown: (evento: React.PointerEvent<HTMLElement>) => void;
 }) {
   const { t } = useT();
@@ -815,6 +992,7 @@ function CartaoSemana({
   const rotulo = ocupada
     ? t("agenda.ocupadaAriaCurta", { inicio: bloco.inicio, fim: bloco.fim })
     : t("agenda.visitaAriaCurta", { referencia: bloco.referencia ?? "", inicio: bloco.inicio, fim: bloco.fim });
+  const arrasta = podeMover && bloco.arrastavel;
   return (
     <div
       role="button"
@@ -823,22 +1001,34 @@ function CartaoSemana({
       aria-grabbed={arrastando}
       aria-label={rotulo}
       title={mensagem ? `${rotulo}. ${mensagem}` : rotulo}
-      onPointerDown={onPointerDown}
-      className={`rounded-md px-2 py-1.5 text-left shadow-sm ${
-        bloco.arrastavel ? "cursor-grab touch-none active:cursor-grabbing" : "cursor-pointer"
-      } ${conflito ? "outline outline-2 outline-destructive" : ""} ${escolhida ? "ring-2 ring-offset-1 ring-white" : ""} ${
+      onPointerDown={arrasta ? onPointerDown : undefined}
+      className={`rounded-md border border-border px-2 py-1.5 text-left ${
+        arrasta ? "cursor-grab touch-none active:cursor-grabbing" : "cursor-default"
+      } ${conflito ? "bg-[color:var(--destructive-soft)] outline outline-2 outline-dashed outline-destructive" : "bg-card"} ${escolhida ? "ring-2 ring-ring ring-offset-1" : ""} ${
         arrastando ? "pointer-events-none opacity-30" : ""
       }`}
       style={{
-        background: ocupada ? "repeating-linear-gradient(135deg,#e7e2d8 0 6px,#d4cec2 6px 12px)" : COR_OPERADOR[bloco.operadorId ?? "azul"],
-        color: ocupada ? "#2c261f" : "#fff",
+        background: conflito
+          ? undefined
+          : ocupada
+            ? "repeating-linear-gradient(135deg,var(--muted) 0 6px,var(--border) 6px 12px)"
+            : "var(--card)",
+        color: ocupada ? "var(--muted-foreground)" : "var(--foreground)",
+        borderLeftWidth: ocupada ? 1 : 3,
+        borderLeftColor: ocupada ? "var(--border)" : COR_OPERADOR[bloco.operadorId ?? "azul"],
       }}
     >
-      <span className="block truncate text-[11px] font-semibold leading-tight">{ocupada ? t("comum.ocupada") : bloco.referencia}</span>
-      <span className="block truncate text-[11px] leading-tight opacity-95">
+      <span className="flex items-center gap-1 truncate font-mono text-[11px]/4 font-medium leading-tight">
+        {conflito ? <TriangleAlert className="size-3.5 shrink-0 text-destructive" strokeWidth={1.75} /> : null}
+        {ocupada ? t("comum.ocupada") : bloco.referencia}
+      </span>
+      <span className="block truncate font-mono text-[11px]/4 leading-tight text-muted-foreground">
         {bloco.inicio}–{bloco.fim}
         {ocupada || !bloco.clienteNome ? "" : ` · ${bloco.clienteNome}`}
       </span>
+      {conflito ? (
+        <span className="block truncate text-[11px]/4 font-medium leading-tight text-destructive">{t("comum.conflito")}</span>
+      ) : null}
     </div>
   );
 }
@@ -859,11 +1049,11 @@ function Ficha({
   const conflitos = equipa.conflitos.filter((conflito) => conflito.ordemId === bloco.id);
   const { t, idioma, m } = useT();
   return (
-    <section className="hidden space-y-3 rounded-xl border border-border bg-card p-4 md:block">
+    <section className="hidden space-y-3 superficie p-4 md:block">
       {bloco.vista === "ocupada" ? (
         <div>
-          <h2 className="font-heading text-xl">{t("comum.ocupada")}</h2>
-          <p className="mt-1 text-sm">
+          <h2 className="text-base font-semibold tracking-tight">{t("comum.ocupada")}</h2>
+          <p className="mt-1 text-[13px]/5">
             {t("agenda.ocupadaDetalhe", {
               equipa: equipa.nome,
               data: formatarDataLocale(data, idioma),
@@ -876,26 +1066,26 @@ function Ficha({
       ) : (
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="font-heading text-xl">
+            <h2 className="text-base font-semibold tracking-tight">
               {bloco.referencia}
               {bloco.operadorId ? <span className="ml-2 text-base font-sans font-medium">{t(`operador.${bloco.operadorId}`)}</span> : null}
             </h2>
-            <p className="mt-1 text-sm">
+            <p className="mt-1 text-[13px]/5">
               {bloco.clienteNome} · {bloco.morada}
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-[13px]/5 text-muted-foreground">
               {equipa.nome} · {formatarDataLocale(data, idioma)} · {bloco.inicio}–{bloco.fim}
               {bloco.categoria ? ` · ${t(`categoria.${bloco.categoria}`)}` : ""}
               {bloco.janelaInicio ? ` · ${t("agenda.janelaInicio", { inicio: bloco.janelaInicio, fim: bloco.janelaFim ?? "" })}` : ""}
             </p>
           </div>
-          <Link href={`/ordens/${bloco.id}`} className="text-sm underline">
+          <Link href={`/ordens/${bloco.id}`} className="text-[13px]/5 underline">
             {t("comum.abrirOrdem")}
           </Link>
         </div>
       )}
       {conflitos.map((conflito) => (
-        <p key={conflito.tipo} className="text-sm text-destructive">
+        <p key={conflito.tipo} className="text-[13px]/5 text-destructive">
           {traduzirConflito(m, conflito.tipo, conflito.mensagem)}
         </p>
       ))}
@@ -934,8 +1124,8 @@ function FormularioMover({
       <input type="hidden" name="data" value={ancora} />
       <input type="hidden" name="ordem" value={ordemId} />
       <input type="hidden" name="prever" value="1" />
-      <p className="text-sm font-medium md:col-span-4">{t("agenda.enviarEquipa")}</p>
-      <label className="space-y-1 text-sm">
+      <p className="text-[13px]/5 font-medium md:col-span-4">{t("agenda.enviarEquipa")}</p>
+      <label className="space-y-1 text-[13px]/5">
         <span className="font-medium">{t("comum.equipa")}</span>
         <select name="equipaId" defaultValue={equipaInicial} className="h-10 w-full rounded-lg border border-input bg-background px-2">
           {agenda.dias
@@ -948,7 +1138,7 @@ function FormularioMover({
             ))}
         </select>
       </label>
-      <label className="space-y-1 text-sm">
+      <label className="space-y-1 text-[13px]/5">
         <span className="font-medium">{t("comum.dia")}</span>
         <select name="dia" defaultValue={dataInicial} className="h-10 w-full rounded-lg border border-input bg-background px-2">
           {agenda.dias.map((dia) => (
@@ -958,7 +1148,7 @@ function FormularioMover({
           ))}
         </select>
       </label>
-      <label className="space-y-1 text-sm">
+      <label className="space-y-1 text-[13px]/5">
         <span className="font-medium">{t("comum.inicio")}</span>
         <input name="inicio" type="time" step={300} required defaultValue={inicioInicial} className="h-10 w-full rounded-lg border border-input bg-background px-2" />
       </label>
@@ -971,11 +1161,12 @@ function FormularioMover({
 
 function ListaMovel({ agenda, podeMover }: { agenda: Agenda; podeMover: boolean }) {
   const { t, idioma, m } = useT();
+  const [mover, setMover] = useState<{ ordemId: string; data: string; equipaId: string; inicio: string } | null>(null);
   const nomes = new Map<string, string>();
   for (const dia of agenda.dias) for (const equipa of dia.equipas) nomes.set(equipa.equipaId, equipa.nome);
   return (
     <div className="space-y-4 md:hidden">
-      <p className="text-sm text-muted-foreground">{t("agenda.listaTelemovel")}</p>
+      {podeMover ? <p className="text-[13px]/5 text-muted-foreground">{t("agenda.listaTelemovel")}</p> : null}
       {[...nomes.entries()].map(([equipaId, nome]) => {
         const entradas = agenda.dias.flatMap((dia) => {
           const linha = dia.equipas.find((equipa) => equipa.equipaId === equipaId);
@@ -983,59 +1174,90 @@ function ListaMovel({ agenda, podeMover }: { agenda: Agenda; podeMover: boolean 
           return linha.blocos.map((bloco) => ({ bloco, data: dia.data, linha }));
         });
         entradas.sort((a, b) => a.data.localeCompare(b.data) || a.bloco.inicioMin - b.bloco.inicioMin);
+        const porData = new Map<string, typeof entradas>();
+        for (const entrada of entradas) {
+          const lista = porData.get(entrada.data) ?? [];
+          lista.push(entrada);
+          porData.set(entrada.data, lista);
+        }
         return (
-          <section key={equipaId} className="space-y-2">
-            <h2 className="font-heading text-xl">{nome}</h2>
-            {entradas.length === 0 ? <p className="text-sm text-muted-foreground">{t("agenda.semVisitasPeriodo")}</p> : null}
-            <ul className="space-y-2">
-              {entradas.map(({ bloco, data, linha }) => {
-                const conflito = linha.conflitos.find((item) => item.ordemId === bloco.id);
-                const ocupada = bloco.vista === "ocupada";
-                return (
-                  <li key={`${data}-${bloco.id}`} className="rounded-xl border border-border bg-card p-3">
-                    <p className="text-xs text-muted-foreground">{formatarDataLongaLocale(data, idioma)}</p>
-                    <p className="mt-1 font-medium tabular-nums">
-                      {bloco.inicio}–{bloco.fim}
-                      {ocupada ? ` · ${t("comum.ocupada")}` : ` · ${bloco.referencia}`}
-                    </p>
-                    {ocupada ? (
-                      <p className="text-sm text-muted-foreground">{t("agenda.semFicha", { n: bloco.duracaoMin })}</p>
-                    ) : (
-                      <p className="text-sm">
-                        {bloco.operadorId ? `${t(`operador.${bloco.operadorId}`)} · ` : ""}
-                        {bloco.clienteNome}
-                        {bloco.morada ? ` · ${bloco.morada}` : ""}
-                      </p>
-                    )}
-                    {conflito ? (
-                      <p className="mt-1 text-sm text-destructive">{traduzirConflito(m, conflito.tipo, conflito.mensagem)}</p>
-                    ) : null}
-                    {!ocupada ? (
-                      <Link href={`/ordens/${bloco.id}`} className="mt-1 inline-block text-sm underline">
-                        {t("comum.abrirOrdem")}
-                      </Link>
-                    ) : null}
-                    {podeMover && bloco.arrastavel ? (
-                      <details className="mt-2">
-                        <summary className="cursor-pointer text-sm">{t("agenda.enviarEquipa")}</summary>
-                        <div className="mt-2">
-                          <FormularioMover
-                            agenda={agenda}
-                            ordemId={bloco.id}
-                            dataInicial={data}
-                            equipaInicial={equipaId}
-                            inicioInicial={bloco.inicio}
-                          />
-                        </div>
-                      </details>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ul>
+          <section key={equipaId} className="space-y-3">
+            <h2 className="text-base font-semibold tracking-tight">{nome}</h2>
+            {entradas.length === 0 ? <p className="text-[13px]/5 text-muted-foreground">{t("agenda.semVisitasPeriodo")}</p> : null}
+            {[...porData.entries()].map(([data, doDia]) => (
+              <div key={data} className="space-y-2">
+                <h3 className="text-xs font-medium text-muted-foreground">{formatarDataLongaLocale(data, idioma)}</h3>
+                <ul className="space-y-2">
+                  {doDia.map(({ bloco, linha }) => {
+                    const conflito = linha.conflitos.find((item) => item.ordemId === bloco.id);
+                    const ocupada = bloco.vista === "ocupada";
+                    return (
+                      <li key={`${data}-${bloco.id}`} className="relative superficie overflow-hidden p-3 pl-4">
+                        {!ocupada && bloco.operadorId ? <BarraOperador id={bloco.operadorId} /> : null}
+                        <p className="font-medium tabular-nums">
+                          {bloco.inicio}–{bloco.fim}
+                          {ocupada ? ` · ${t("comum.ocupada")}` : ` · ${bloco.referencia}`}
+                        </p>
+                        {ocupada ? (
+                          <p className="text-[13px]/5 text-muted-foreground">{t("agenda.semFicha", { n: bloco.duracaoMin })}</p>
+                        ) : (
+                          <div className="mt-1 space-y-1">
+                            {bloco.operadorId ? <EtiquetaOperador id={bloco.operadorId} soPonto /> : null}
+                            <p className="text-[13px]/5">
+                              {bloco.clienteNome}
+                              {bloco.morada ? ` · ${bloco.morada}` : ""}
+                            </p>
+                          </div>
+                        )}
+                        {conflito ? (
+                          <p className="mt-1 text-[13px]/5 text-destructive">{traduzirConflito(m, conflito.tipo, conflito.mensagem)}</p>
+                        ) : null}
+                        {!ocupada ? (
+                          <Link href={`/ordens/${bloco.id}`} className="mt-1 inline-block text-[13px]/5 underline">
+                            {t("comum.abrirOrdem")}
+                          </Link>
+                        ) : null}
+                        {podeMover && bloco.arrastavel ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="mt-2 gap-1 px-0"
+                            onClick={() =>
+                              setMover({ ordemId: bloco.id, data, equipaId, inicio: bloco.inicio })
+                            }
+                          >
+                            {t("agenda.enviarEquipa")}
+                            <ChevronRight className="size-3.5" />
+                          </Button>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
           </section>
         );
       })}
+      <Sheet open={Boolean(mover)} onOpenChange={(aberto) => !aberto && setMover(null)}>
+        <SheetContent side="bottom" className="gap-0">
+          <SheetHeader>
+            <SheetTitle>{t("agenda.enviarEquipa")}</SheetTitle>
+          </SheetHeader>
+          {mover ? (
+            <div className="px-4 pb-4">
+              <FormularioMover
+                agenda={agenda}
+                ordemId={mover.ordemId}
+                dataInicial={mover.data}
+                equipaInicial={mover.equipaId}
+                inicioInicial={mover.inicio}
+              />
+            </div>
+          ) : null}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

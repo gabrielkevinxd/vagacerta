@@ -2,14 +2,26 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useT } from "@/components/idioma/provedor";
 import type { Chave } from "@/lib/i18n";
+import { formatarDataLocale } from "@/lib/i18n/formatacao";
+import { traduzirMensagem } from "@/lib/i18n/motor";
 import { enviar } from "@/lib/cliente";
+import { SeletorData } from "@/components/seletor-data";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const campo = "h-9 w-full rounded-lg border border-input bg-card px-2.5 text-sm";
+const campo = "h-9 w-full rounded-md border border-input bg-card px-2.5 text-[13px]/5";
 const DIAS: Chave[] = [
   "diaSemana.d1",
   "diaSemana.d1",
@@ -23,23 +35,30 @@ const DIAS: Chave[] = [
 
 export function AcoesEquipa({
   equipaId,
+  equipaNome,
   ativa,
   zonas,
+  zonaAtualId,
   horarios,
   membros,
   indisponibilidades,
 }: {
   equipaId: string;
+  equipaNome: string;
   ativa: boolean;
   zonas: { id: string; codigo: string; nome: string }[];
+  zonaAtualId?: string | null;
   horarios: { diaSemana: number; inicio: string; fim: string }[];
   membros: { id: string; nome: string; ativo: boolean }[];
   indisponibilidades: { id: string; data: string; inicio: string; fim: string; motivo: string }[];
 }) {
-  const { t } = useT();
+  const { t, idioma, m } = useT();
   const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
   const [aTrabalhar, setATrabalhar] = useState(false);
+  const [confirmarDesativar, setConfirmarDesativar] = useState(false);
+  const [membroADesativar, setMembroADesativar] = useState<{ id: string; nome: string } | null>(null);
+  const nome = equipaNome;
 
   async function executar(trabalho: () => Promise<void>) {
     setErro(null);
@@ -48,28 +67,57 @@ export function AcoesEquipa({
       await trabalho();
       router.refresh();
     } catch (falha) {
-      setErro(falha instanceof Error ? falha.message : t("comum.pedidoFalhou"));
+      const texto = falha instanceof Error ? falha.message : "";
+      setErro(traduzirMensagem(m, texto) || t("comum.pedidoFalhou"));
     } finally {
       setATrabalhar(false);
     }
   }
 
+  async function desativarEquipa() {
+    setConfirmarDesativar(false);
+    await executar(async () => {
+      await enviar(`/api/equipas/${equipaId}`, { ativa: false }, "PATCH");
+      toast(t("toast.equipaDesativada", { nome }), {
+        duration: 6000,
+        action: {
+          label: t("comum.anular"),
+          onClick: () => {
+            void enviar(`/api/equipas/${equipaId}`, { ativa: true }, "PATCH")
+              .then(() => {
+                toast(t("toast.equipaAtivada", { nome }));
+                router.refresh();
+              })
+              .catch(() => undefined);
+          },
+        },
+      });
+    });
+  }
+
   return (
     <div className="space-y-8">
       {erro ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-[13px]/5 text-destructive">
           {erro}
         </p>
       ) : null}
-      <div>
-        <Button
-          variant="outline"
-          disabled={aTrabalhar}
-          onClick={() => executar(() => enviar(`/api/equipas/${equipaId}`, { ativa: !ativa }, "PATCH").then(() => undefined))}
-        >
-          {ativa ? t("equipas.desativarEquipa") : t("equipas.ativarEquipa")}
-        </Button>
-      </div>
+      {!ativa ? (
+        <div>
+          <Button
+            variant="outline"
+            disabled={aTrabalhar}
+            onClick={() =>
+              executar(async () => {
+                await enviar(`/api/equipas/${equipaId}`, { ativa: true }, "PATCH");
+                toast(t("toast.equipaAtivada", { nome }));
+              })
+            }
+          >
+            {t("equipas.ativarEquipa")}
+          </Button>
+        </div>
+      ) : null}
 
       <form
         className="space-y-3"
@@ -84,13 +132,13 @@ export function AcoesEquipa({
           void executar(() => enviar(`/api/equipas/${equipaId}`, { horarios: linhas }, "PATCH").then(() => undefined));
         }}
       >
-        <h2 className="font-heading text-xl">{t("equipas.horario")}</h2>
+        <h2 className="text-base font-semibold tracking-tight">{t("equipas.horario")}</h2>
         <ul className="space-y-2">
           {horarios.map((linha) => {
             const dia = t(DIAS[linha.diaSemana] ?? "diaSemana.d1");
             return (
               <li key={linha.diaSemana} className="grid grid-cols-[7rem_1fr_1fr] items-center gap-2">
-                <span className="text-sm capitalize">{dia}</span>
+                <span className="text-[13px]/5 capitalize">{dia}</span>
                 <Input name={`inicio-${linha.diaSemana}`} defaultValue={linha.inicio} aria-label={t("equipas.inicioDe", { dia })} />
                 <Input name={`fim-${linha.diaSemana}`} defaultValue={linha.fim} aria-label={t("equipas.fimDe", { dia })} />
               </li>
@@ -118,10 +166,15 @@ export function AcoesEquipa({
           );
         }}
       >
-        <h2 className="font-heading text-xl md:col-span-2">{t("equipas.zonaVigor")}</h2>
+        <h2 className="text-base font-semibold tracking-tight md:col-span-2">{t("equipas.zonaVigor")}</h2>
         <div className="space-y-1.5">
           <Label htmlFor="zona">{t("equipas.zona")}</Label>
-          <select id="zona" name="zonaId" className={campo} defaultValue={zonas[0]?.id}>
+          <select
+            id="zona"
+            name="zonaId"
+            className={campo}
+            defaultValue={zonaAtualId && zonas.some((z) => z.id === zonaAtualId) ? zonaAtualId : (zonas[0]?.id ?? "")}
+          >
             {zonas.map((zona) => (
               <option key={zona.id} value={zona.id}>
                 {zona.codigo} · {zona.nome}
@@ -131,13 +184,13 @@ export function AcoesEquipa({
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="inicio-zona">{t("comum.desde")}</Label>
-          <Input id="inicio-zona" name="inicio" type="date" required />
+          <SeletorData id="inicio-zona" name="inicio" required />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="fim-zona">{t("comum.ate")}</Label>
-          <Input id="fim-zona" name="fim" type="date" />
+          <SeletorData id="fim-zona" name="fim" />
         </div>
-        <label className="flex items-center gap-2 text-sm md:col-span-2">
+        <label className="flex items-center gap-2 text-[13px]/5 md:col-span-2">
           <input type="checkbox" name="confirmacao" />
           {t("equipas.confirmarPassado")}
         </label>
@@ -149,8 +202,8 @@ export function AcoesEquipa({
       </form>
 
       <div className="space-y-3">
-        <h2 className="font-heading text-xl">{t("equipas.membros")}</h2>
-        <ul className="space-y-2 text-sm">
+        <h2 className="text-base font-semibold tracking-tight">{t("equipas.membros")}</h2>
+        <ul className="space-y-2 text-[13px]/5">
           {membros.map((membro) => (
             <li key={membro.id} className="flex items-center justify-between gap-3">
               <span>
@@ -162,7 +215,7 @@ export function AcoesEquipa({
                   variant="outline"
                   size="sm"
                   disabled={aTrabalhar}
-                  onClick={() => executar(() => enviar(`/api/equipas/${equipaId}/membros/${membro.id}`, undefined, "DELETE").then(() => undefined))}
+                  onClick={() => setMembroADesativar({ id: membro.id, nome: membro.nome })}
                 >
                   {t("equipas.desativar")}
                 </Button>
@@ -193,13 +246,13 @@ export function AcoesEquipa({
       </div>
 
       <div className="space-y-3">
-        <h2 className="font-heading text-xl">{t("equipas.indisponibilidades")}</h2>
-        <ul className="space-y-2 text-sm">
+        <h2 className="text-base font-semibold tracking-tight">{t("equipas.indisponibilidades")}</h2>
+        <ul className="space-y-2 text-[13px]/5">
           {indisponibilidades.length === 0 ? <li className="text-muted-foreground">{t("equipas.nenhumaIndisp")}</li> : null}
           {indisponibilidades.map((bloco) => (
             <li key={bloco.id} className="flex flex-wrap items-center justify-between gap-2">
               <span>
-                {bloco.data.split("-").reverse().join("/")} {bloco.inicio}–{bloco.fim} · {bloco.motivo}
+                {formatarDataLocale(bloco.data, idioma)} {bloco.inicio}–{bloco.fim} · {bloco.motivo}
               </span>
               <Button
                 variant="outline"
@@ -235,7 +288,7 @@ export function AcoesEquipa({
         >
           <div className="space-y-1.5">
             <Label htmlFor="data-un">{t("comum.data")}</Label>
-            <Input id="data-un" name="data" type="date" required />
+            <SeletorData id="data-un" name="data" required />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="motivo-un">{t("comum.motivo")}</Label>
@@ -256,6 +309,65 @@ export function AcoesEquipa({
           </div>
         </form>
       </div>
+
+      {ativa ? (
+        <section className="superficie space-y-3 border-destructive/30 p-4">
+          <div className="space-y-1">
+            <h2 className="text-[13px]/5 font-semibold tracking-tight">{t("equipas.zonaPerigo")}</h2>
+            <p className="text-xs text-muted-foreground">{t("equipas.zonaPerigoAjuda")}</p>
+          </div>
+          <Button variant="destructive" disabled={aTrabalhar} onClick={() => setConfirmarDesativar(true)}>
+            {t("equipas.desativarEquipa")}
+          </Button>
+        </section>
+      ) : null}
+
+      <Dialog open={confirmarDesativar} onOpenChange={setConfirmarDesativar}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{t("confirmar.desativarEquipaTitulo", { nome })}</DialogTitle>
+            <DialogDescription>{t("confirmar.desativarEquipaDetalhe")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setConfirmarDesativar(false)}>
+              {t("comum.cancelar")}
+            </Button>
+            <Button type="button" variant="destructive" disabled={aTrabalhar} onClick={() => void desativarEquipa()}>
+              {t("confirmar.desativar")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(membroADesativar)} onOpenChange={(v) => !v && setMembroADesativar(null)}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{t("confirmar.desativarTecnicoTitulo", { nome: membroADesativar?.nome ?? "" })}</DialogTitle>
+            <DialogDescription>{t("confirmar.desativarTecnicoDetalhe")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setMembroADesativar(null)}>
+              {t("comum.cancelar")}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={aTrabalhar || !membroADesativar}
+              onClick={() => {
+                if (!membroADesativar) return;
+                const alvo = membroADesativar;
+                setMembroADesativar(null);
+                void executar(async () => {
+                  await enviar(`/api/equipas/${equipaId}/membros/${alvo.id}`, undefined, "DELETE");
+                  toast(t("toast.tecnicoDesativado", { nome: alvo.nome }));
+                });
+              }}
+            >
+              {t("confirmar.desativar")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

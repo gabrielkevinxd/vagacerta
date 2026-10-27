@@ -7,8 +7,9 @@ import { AcoesEquipa } from "@/components/acoes-equipa";
 import { Carregamento } from "@/components/carregamento";
 import { EstadoVazio } from "@/components/estado-vazio";
 import { EtiquetaEstado, EtiquetaOperador } from "@/components/etiquetas";
+import { SeletorData } from "@/components/seletor-data";
 import type { Chave } from "@/lib/i18n";
-import { formatarDataLongaLocale } from "@/lib/i18n/formatacao";
+import { formatarDataLocale, formatarDataLongaLocale } from "@/lib/i18n/formatacao";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 import { listarZonas, obterEquipa } from "@/server/servicos";
@@ -44,11 +45,11 @@ async function Conteudo({
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <Link href="/equipas" className="text-sm text-muted-foreground underline">
+        <Link href="/equipas" className="text-[13px]/5 text-muted-foreground underline">
           {t("nav.equipas")}
         </Link>
-        <h1 className="font-heading text-3xl">{equipa.nome}</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-2xl font-semibold tracking-tight md:text-[1.75rem]">{equipa.nome}</h1>
+        <p className="text-[13px]/5 text-muted-foreground">
           {t("equipas.baseEm", {
             codigo: equipa.codigo,
             base: equipa.base,
@@ -56,12 +57,12 @@ async function Conteudo({
             estado: equipa.ativa ? t("comum.ativa") : t("comum.inativa"),
           })}
         </p>
-        <p className="max-w-2xl text-sm text-muted-foreground">{t("equipas.competenciasIntro")}</p>
-        <Link href={`/agenda?vista=dia&data=${data}`} className="inline-block text-sm underline">
+        <p className="max-w-2xl text-[13px]/5 text-muted-foreground">{t("equipas.competenciasIntro")}</p>
+        <Link href={`/agenda?vista=dia&data=${data}`} className="inline-block text-[13px]/5 underline">
           {t("equipas.abrirDiaAgenda")}
         </Link>
       </div>
-      <dl className="grid gap-3 rounded-xl border border-border bg-card p-4 text-sm md:grid-cols-2">
+      <dl className="grid gap-3 superficie p-4 text-[13px]/5 md:grid-cols-2">
         <div>
           <dt className="text-muted-foreground">{t("equipas.zonaVigor")}</dt>
           <dd>{equipa.zona ? `${equipa.zona.codigo} · ${equipa.zona.nome}` : t("equipas.semZona")}</dd>
@@ -96,18 +97,18 @@ async function Conteudo({
       </dl>
       <section className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 className="font-heading text-xl">{t("equipas.diaDe", { data: formatarDataLongaLocale(data, idioma) })}</h2>
+          <h2 className="text-base font-semibold tracking-tight">{t("equipas.diaDe", { data: formatarDataLongaLocale(data, idioma) })}</h2>
           <form action={`/equipas/${equipa.id}`} className="flex items-center gap-2">
-            <label htmlFor="data" className="text-sm">
+            <label htmlFor="data" className="text-[13px]/5">
               {t("comum.data")}
             </label>
-            <input id="data" name="data" type="date" defaultValue={data} className="h-9 rounded-lg border border-input bg-card px-2 text-sm" />
-            <button type="submit" className="h-9 rounded-lg border border-border px-3 text-sm">
+            <SeletorData id="data" name="data" defaultValue={data} className="w-auto" />
+            <button type="submit" className="h-9 rounded-lg border border-border px-3 text-[13px]/5">
               {t("comum.ver")}
             </button>
           </form>
         </div>
-        <p className="text-sm">
+        <p className="text-[13px]/5">
           {t("equipas.turnoOcupacao", { turno: equipa.ocupacaoHoje.turnoMin, ocupado: equipa.ocupacaoHoje.ocupadoMin })}
           {eCentral(ator)
             ? ` ${t("equipas.reparticaoPainel")}`
@@ -116,17 +117,17 @@ async function Conteudo({
         {equipa.ocupacaoHoje.proprias.length === 0 ? (
           <EstadoVazio titulo={t("equipas.semVisitasSuas")} detalhe={t("equipas.semVisitasSuasDetalhe")} />
         ) : (
-          <ul className="divide-y divide-border rounded-xl border border-border bg-card">
+          <ul className="divide-y divide-border superficie">
             {equipa.ocupacaoHoje.proprias.map((ordem) => (
               <li key={ordem.id}>
                 <Link href={`/ordens/${ordem.id}`} className="flex flex-wrap items-center gap-2 px-4 py-3 hover:bg-muted">
-                  <span className="text-sm tabular-nums">
+                  <span className="text-[13px]/5 tabular-nums">
                     {ordem.inicioPlaneado ?? ordem.janelaInicio}–{ordem.fimPlaneado ?? ordem.janelaFim}
                   </span>
                   <span className="font-medium">{ordem.referencia}</span>
                   <EtiquetaOperador id={ordem.operadorId} nome={ordem.operadorNome} />
                   <EtiquetaEstado estado={ordem.estado} />
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-[13px]/5 text-muted-foreground">
                     {ordem.clienteNome} · {ordem.morada}
                   </span>
                 </Link>
@@ -135,41 +136,45 @@ async function Conteudo({
           </ul>
         )}
       </section>
-      <section className="space-y-2">
-        <h2 className="font-heading text-xl">{t("equipas.membros")}</h2>
-        <ul className="text-sm">
-          {equipa.membros.map((membro) => (
-            <li key={membro.id}>
-              {membro.nome}
-              {membro.ativo ? "" : ` ${t("comum.inativo")}`}
-            </li>
-          ))}
-        </ul>
-      </section>
       {central ? (
         <AcoesEquipa
           equipaId={equipa.id}
+          equipaNome={equipa.nome}
           ativa={equipa.ativa}
           zonas={zonas}
+          zonaAtualId={equipa.zona?.id ?? null}
           horarios={equipa.horarios}
           membros={equipa.membros}
           indisponibilidades={equipa.indisponibilidades}
         />
       ) : (
-        <section className="space-y-2">
-          <h2 className="font-heading text-xl">{t("equipas.indisponibilidades")}</h2>
-          {equipa.indisponibilidades.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("equipas.nenhumaIndisp")}</p>
-          ) : (
-            <ul className="text-sm">
-              {equipa.indisponibilidades.map((bloco) => (
-                <li key={bloco.id}>
-                  {bloco.data.split("-").reverse().join("/")} {bloco.inicio}–{bloco.fim} · {bloco.motivo}
+        <>
+          <section className="space-y-2">
+            <h2 className="text-base font-semibold tracking-tight">{t("equipas.membros")}</h2>
+            <ul className="text-[13px]/5">
+              {equipa.membros.map((membro) => (
+                <li key={membro.id}>
+                  {membro.nome}
+                  {membro.ativo ? "" : ` ${t("comum.inativo")}`}
                 </li>
               ))}
             </ul>
-          )}
-        </section>
+          </section>
+          <section className="space-y-2">
+            <h2 className="text-base font-semibold tracking-tight">{t("equipas.indisponibilidades")}</h2>
+            {equipa.indisponibilidades.length === 0 ? (
+              <p className="text-[13px]/5 text-muted-foreground">{t("equipas.nenhumaIndisp")}</p>
+            ) : (
+              <ul className="text-[13px]/5">
+                {equipa.indisponibilidades.map((bloco) => (
+                  <li key={bloco.id}>
+                    {formatarDataLocale(bloco.data, idioma)} {bloco.inicio}–{bloco.fim} · {bloco.motivo}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </>
       )}
     </div>
   );

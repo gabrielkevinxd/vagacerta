@@ -1,5 +1,6 @@
 import { eOperadorOfsc, type ReservaEstruturada } from "@/lib/ofsc/tipos";
 import { eTipoIntervencao } from "@/lib/ofsc/quotas";
+import { exigirIntegracao } from "@/server/autorizacao";
 import { api, lerJson } from "@/server/http";
 import { ErroHttp } from "@/server/erros";
 import { criarAtividadeNoBucket } from "@/server/ofsc/criar";
@@ -24,8 +25,14 @@ const esquema = z.object({
   longitude: z.string().optional().default(""),
 });
 
-export const POST = api(async (_ator, pedido) => {
+export const POST = api(async (ator, pedido) => {
+  exigirIntegracao(ator);
   const corpo = await lerJson(esquema, pedido);
+  if (ator.papel === "despachante") {
+    if (!ator.operadorId || corpo.operadorId !== ator.operadorId) {
+      throw new ErroHttp(403, "SEM_PERMISSAO", "Só vê a capacidade do seu operador.");
+    }
+  }
   if (!eOperadorOfsc(corpo.operadorId) || !eTipoIntervencao(corpo.tipoIntervencao)) {
     throw new ErroHttp(400, "DADOS_INVALIDOS", "Reserva incompleta.");
   }

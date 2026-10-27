@@ -13,15 +13,18 @@ export function SeletorIdioma({ compacto = false }: { compacto?: boolean }) {
       value={valor}
       aria-pressed={idioma === valor}
       aria-label={nome}
-      className={`min-h-8 min-w-9 rounded-md px-2 text-xs font-semibold ${
-        idioma === valor ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+      className={`min-h-7 min-w-8 rounded px-2 text-xs font-semibold transition-colors ${
+        idioma === valor ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
       }`}
     >
       {rotulo}
     </button>
   );
   return (
-    <form action={definirIdiomaAcao} className={`inline-flex items-center gap-1 rounded-lg border border-border p-0.5 ${compacto ? "" : ""}`}>
+    <form
+      action={definirIdiomaAcao}
+      className={`inline-flex items-center gap-0.5 rounded-md border border-border bg-background p-0.5 ${compacto ? "" : ""}`}
+    >
       <span className="sr-only">{t("idioma.etiqueta")}</span>
       {botao("pt-PT", t("idioma.pt"), t("idioma.portugues"))}
       {botao("en", t("idioma.en"), t("idioma.ingles"))}

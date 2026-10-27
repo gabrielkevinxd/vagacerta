@@ -50,9 +50,32 @@ export function podeReencaiarGlobal(ator: Ator): boolean {
   return eCentral(ator);
 }
 
-export function podeCancelar(ator: Ator, ordem: { operadorId: string; equipaId: string | null }): boolean {
+export function estadoCancelavel(estado: EstadoOrdem): boolean {
+  if (estado === "cancelada" || estado === "concluida") return false;
+  return estado === "pendente" || estado === "em_espera" || estado === "agendada" || estado === "em_curso";
+}
+
+/** Concluídas e canceladas ficam só de leitura para todos os perfis. */
+export function estadoEditavel(estado: EstadoOrdem): boolean {
+  return estado !== "concluida" && estado !== "cancelada";
+}
+
+export function podeEditarFicha(
+  ator: Ator,
+  ordem: { operadorId: string; equipaId: string | null; estado: EstadoOrdem },
+): boolean {
+  if (ator.papel === "tecnico") return false;
+  if (!podeLerOrdem(ator, ordem)) return false;
+  return estadoEditavel(ordem.estado);
+}
+
+export function podeCancelar(
+  ator: Ator,
+  ordem: { operadorId: string; equipaId: string | null; estado?: EstadoOrdem },
+): boolean {
   if (!podeLerOrdem(ator, ordem)) return false;
   if (ator.papel === "tecnico") return false;
+  if (ordem.estado && !estadoCancelavel(ordem.estado)) return false;
   return true;
 }
 

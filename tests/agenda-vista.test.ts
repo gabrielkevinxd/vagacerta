@@ -39,11 +39,12 @@ describe("escala da agenda", () => {
         ],
       }),
     ]);
-    expect(eixo).toEqual({ inicioMin: 8 * 60, fimMin: 18 * 60 });
+    // O eixo abre por omissão às 08:00–22:00 e alarga-se se o turno/blocos o pedirem.
+    expect(eixo).toEqual({ inicioMin: 8 * 60, fimMin: 22 * 60 });
     expect(percentagem(8 * 60, eixo)).toBe(0);
-    expect(percentagem(13 * 60, eixo)).toBe(50);
+    expect(percentagem(15 * 60, eixo)).toBe(50);
     expect(minutoNoEixo(0, eixo)).toBe(8 * 60);
-    expect(minutoNoEixo(1, eixo)).toBe(18 * 60 - 5);
+    expect(minutoNoEixo(1, eixo)).toBe(22 * 60 - 5);
   });
 
   it("move o bloco de forma otimista e funde só os dias devolvidos pelo servidor", () => {

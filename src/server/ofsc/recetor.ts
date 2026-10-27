@@ -106,6 +106,7 @@ function aplicar(evento: EventoOfsc) {
       pedido: evento,
       resposta: { duplicado: true },
       codigo: 200,
+      operadorId: evento.operator,
     });
     return { duplicado: true, decisao: "duplicado" as const, resultado: "duplicado", ordemId: null };
   }
@@ -116,7 +117,7 @@ function aplicar(evento: EventoOfsc) {
   registarLog(
     "origem",
     `OFSC do ${NOME_OPERADOR[origem]} enviou ${evento.eventType} (${act.activityId}, appt ${act.apptNumber || "—"}) no bucket ${act.bucket || BUCKET_DST}.`,
-    { metodo: "POST", caminho: "/api/integracao/ofsc/eventos", pedido: evento, codigo: 202 },
+    { metodo: "POST", caminho: "/api/integracao/ofsc/eventos", pedido: evento, codigo: 202, operadorId: origem },
   );
 
   const cancelado = /cancel/i.test(act.status);
@@ -127,7 +128,7 @@ function aplicar(evento: EventoOfsc) {
     apagarAusencias(origem, act.activityId, vista.equipaNome ?? "Técnico");
     reencaixarFila(vista.data);
     marcarProcessado(act.activityId, assinatura, evento.eventType, "cancelada");
-    registarLog("vagacerta", `${vista.referencia} cancelada. Quota libertada.`);
+    registarLog("vagacerta", `${vista.referencia} cancelada. Quota libertada.`, { operadorId: vista.operadorId });
     return { duplicado: false, decisao: "cancelada" as const, resultado: "cancelada", ordemId: vista.id, estado: "cancelada" };
   }
 
@@ -222,7 +223,9 @@ function aplicar(evento: EventoOfsc) {
     criarAusenciasOutros(origem, act.activityId, vista.equipaId, vista.data, vista.inicioPlaneado, vista.fimPlaneado, contador);
   }
   marcarProcessado(act.activityId, assinatura, evento.eventType, "Reserva Confirmada");
-  registarLog("vagacerta", `Reserva Confirmada: ${vista.referencia} na ${celula.equipaNome}. ${contador} (${avaliacao.vagasDe} → ${avaliacao.vagasPara}).`);
+  registarLog("vagacerta", `Reserva Confirmada: ${vista.referencia} na ${celula.equipaNome}. ${contador}.`, {
+    operadorId: vista.operadorId,
+  });
   return {
     duplicado: false,
     decisao: "Reserva Confirmada" as const,
@@ -247,7 +250,7 @@ function recusar(origem: OperadorOfsc, activityId: string, motivo: string, alter
     { resourceId: null, decisao: "Reserva Recusada", motivo },
     `Reserva Recusada: ${motivo}.${sugestao}`,
   );
-  registarLog("vagacerta", `Reserva Recusada: ${motivo}.${sugestao}`);
+  registarLog("vagacerta", `Reserva Recusada: ${motivo}.${sugestao}`, { operadorId: origem });
   return { motivo };
 }
 
@@ -363,5 +366,7 @@ export function publicarFaltaEquipa(equipaId: string, data: string, motivo: stri
       `Falta da equipa: POST ausência em todos os OFSC (${recurso.resourceId}).`,
     );
   }
-  registarLog("vagacerta", `Falta da equipa ${equipaId} em ${data}: ausências em todos os operadores.`);
+  registarLog("vagacerta", `Falta da equipa ${equipaId} em ${data}: ausências em todos os operadores.`, {
+    operadorId: "*",
+  });
 }

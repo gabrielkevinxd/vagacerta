@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { eOperadorOfsc, type AtividadeOfsc, type EventoOfsc } from "@/lib/ofsc/tipos";
 import { tipoDeCategoria } from "@/lib/ofsc/quotas";
 import { processarEventoOfsc } from "@/server/ofsc/recetor";
+import { respostaSeSegredoOfscInvalido } from "@/server/ofsc/segredo";
 
 export async function POST(pedido: Request) {
+  const negado = respostaSeSegredoOfscInvalido(pedido);
+  if (negado) return negado;
   const bruto = (await pedido.json().catch(() => null)) as Record<string, unknown> | null;
   if (!bruto || typeof bruto !== "object") {
     return NextResponse.json({ codigo: "DADOS_INVALIDOS", mensagem: "JSON em falta." }, { status: 400 });

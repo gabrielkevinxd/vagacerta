@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Fraunces, Source_Sans_3 } from "next/font/google";
+import { Geist_Mono, Inter } from "next/font/google";
 import { ProvedorIdioma } from "@/components/idioma/provedor";
 import { IDIOMA_OMISSAO, mensagensDe, ptPT } from "@/lib/i18n";
 import { lerIdiomaPedido } from "@/server/idioma";
 import "./globals.css";
 
-const source = Source_Sans_3({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-source",
+  variable: "--font-inter",
+  axes: ["opsz"],
 });
 
-const fraunces = Fraunces({
+const geistMono = Geist_Mono({
   subsets: ["latin"],
-  variable: "--font-display",
+  variable: "--font-geist-mono",
 });
 
 export const metadata: Metadata = {
@@ -32,13 +33,15 @@ async function IdiomaRaiz({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang={IDIOMA_OMISSAO} className={`${source.variable} ${fraunces.variable} h-full antialiased`} suppressHydrationWarning>
-      <body className="min-h-full bg-background text-foreground">
+    <html lang={IDIOMA_OMISSAO} className={`${inter.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
+      <body className="min-h-full bg-background font-sans text-foreground">
         <Suspense
           fallback={
-            <p className="px-4 py-10 text-sm text-muted-foreground" role="status">
-              {ptPT.carregar.seccao}
-            </p>
+            <div className="space-y-3 px-6 py-5" role="status">
+              <div className="h-5 w-40 animate-pulse rounded-md bg-muted" />
+              <div className="h-4 w-72 animate-pulse rounded-md bg-muted" />
+              <div className="h-32 animate-pulse rounded-lg bg-muted" />
+            </div>
           }
         >
           <IdiomaRaiz>{children}</IdiomaRaiz>

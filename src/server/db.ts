@@ -263,7 +263,8 @@ function criarEsquema(db: DatabaseSync): void {
       caminho TEXT,
       pedido TEXT,
       resposta TEXT,
-      codigo INTEGER
+      codigo INTEGER,
+      operador_id TEXT
     );
     CREATE INDEX IF NOT EXISTS idx_integracao_logs_quando ON integracao_logs (quando);
   `);
@@ -283,7 +284,53 @@ function migrar(db: DatabaseSync): void {
   garantirColuna(db, "ofsc_atividades", "lote_id", "ALTER TABLE ofsc_atividades ADD COLUMN lote_id TEXT");
   garantirColuna(db, "ofsc_ausencias", "lote_id", "ALTER TABLE ofsc_ausencias ADD COLUMN lote_id TEXT");
   garantirColuna(db, "indisponibilidades", "lote_id", "ALTER TABLE indisponibilidades ADD COLUMN lote_id TEXT");
+  garantirColuna(db, "integracao_logs", "operador_id", "ALTER TABLE integracao_logs ADD COLUMN operador_id TEXT");
+  migrarLogsOperador(db);
   semearOfsc(db);
+}
+
+/** Backfill `operador_id` quando dedutível; apaga o resto. Globais passam a `*`. */
+function migrarLogsOperador(db: DatabaseSync): void {
+  const nulos = db
+    .prepare(
+      "SELECT id, historia, metodo, caminho, pedido, resposta FROM integracao_logs WHERE operador_id IS NULL",
+    )
+    .all() as {
+    id: string;
+    historia: string;
+    metodo: string | null;
+    caminho: string | null;
+    pedido: string | null;
+    resposta: string | null;
+  }[];
+  if (nulos.length === 0) return;
+  const atualizar = db.prepare("UPDATE integracao_logs SET operador_id = ? WHERE id = ?");
+  const apagar = db.prepare("DELETE FROM integracao_logs WHERE id = ?");
+  for (const linha of nulos) {
+    const deduzido = deduzirOperadorLog(linha);
+    if (deduzido) atualizar.run(deduzido, linha.id);
+    else apagar.run(linha.id);
+  }
+}
+
+function deduzirOperadorLog(linha: {
+  historia: string;
+  metodo: string | null;
+  caminho: string | null;
+  pedido: string | null;
+  resposta: string | null;
+}): "azul" | "vermelho" | "verde" | "*" | null {
+  const texto = [linha.historia, linha.caminho, linha.pedido, linha.resposta, linha.metodo]
+    .filter(Boolean)
+    .join("\n");
+  if (/falta da equipa|todos os operadores/i.test(texto) && !linha.pedido) return "*";
+  const hits = new Set<"azul" | "vermelho" | "verde">();
+  if (/\bazul\b|\/ofsc\/azul\b|\bAZ[_-]/i.test(texto)) hits.add("azul");
+  if (/\bvermelho\b|\/ofsc\/vermelho\b|\bVR[_-]/i.test(texto)) hits.add("vermelho");
+  if (/\bverde\b|\/ofsc\/verde\b|\bVD[_-]/i.test(texto)) hits.add("verde");
+  if (hits.size === 1) return [...hits][0]!;
+  if (hits.size > 1) return "*";
+  return null;
 }
 
 function semearOfsc(db: DatabaseSync): void {
