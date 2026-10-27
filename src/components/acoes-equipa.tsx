@@ -39,6 +39,18 @@ const DIAS: Chave[] = [
 const OPERADORES = ["azul", "vermelho", "verde"] as const;
 
 type OrdemFutura = { id: string; referencia: string; operadorId: OperadorId; data: string };
+type SecaoErro = "horario" | "zona" | "operadores" | "membros" | "indisponibilidades" | "geral";
+
+function AlertaErro({ titulo, corpo }: { titulo?: string; corpo: ReactNode }) {
+  return (
+    <Alerta tom="erro" role="alert">
+      <div className="space-y-1">
+        {titulo ? <p className="font-medium text-foreground">{titulo}</p> : null}
+        <div>{corpo}</div>
+      </div>
+    </Alerta>
+  );
+}
 
 export function AcoesEquipa({
   equipaId,
@@ -65,7 +77,7 @@ export function AcoesEquipa({
 }) {
   const { t, tp, idioma, m } = useT();
   const router = useRouter();
-  const [erro, setErro] = useState<ReactNode>(null);
+  const [erros, setErros] = useState<Partial<Record<SecaoErro, ReactNode>>>({});
   const [aTrabalhar, setATrabalhar] = useState(false);
   const [confirmarDesativar, setConfirmarDesativar] = useState(false);
   const [membroADesativar, setMembroADesativar] = useState<{ id: string; nome: string } | null>(null);
@@ -126,8 +138,13 @@ export function AcoesEquipa({
     );
   }
 
-  async function executar(trabalho: () => Promise<void>, aoErro?: (falha: unknown) => void) {
-    setErro(null);
+  async function executar(secao: SecaoErro, trabalho: () => Promise<void>, aoErro?: (falha: unknown) => void) {
+    setErros((atual) => {
+      const seguinte = { ...atual };
+      delete seguinte[secao];
+      if (secao !== "operadores") delete seguinte.operadores;
+      return seguinte;
+    });
     setATrabalhar(true);
     try {
       await trabalho();
@@ -136,10 +153,16 @@ export function AcoesEquipa({
       aoErro?.(falha);
       if (falha instanceof ErroApi && falha.codigo === "OPERADOR_COM_ORDENS") {
         setServidos(operadoresServidos);
-        setErro(mensagemOperadorComOrdens(falha.detalhes as { remocoes?: OperadorId[]; ordens?: OrdemFutura[] }));
+        setErros((atual) => ({
+          ...atual,
+          operadores: mensagemOperadorComOrdens(falha.detalhes as { remocoes?: OperadorId[]; ordens?: OrdemFutura[] }),
+        }));
       } else {
         const texto = falha instanceof Error ? falha.message : "";
-        setErro(traduzirMensagem(m, texto) || t("comum.pedidoFalhou"));
+        setErros((atual) => ({
+          ...atual,
+          [secao]: traduzirMensagem(m, texto) || t("comum.pedidoFalhou"),
+        }));
       }
     } finally {
       setATrabalhar(false);
@@ -148,7 +171,7 @@ export function AcoesEquipa({
 
   async function desativarEquipa() {
     setConfirmarDesativar(false);
-    await executar(async () => {
+    await executar("geral", async () => {
       await enviar(`/api/equipas/${equipaId}`, { ativa: false }, "PATCH");
       toast(t("toast.equipaDesativada", { nome }), {
         duration: 6000,
@@ -178,7 +201,7 @@ export function AcoesEquipa({
 
   async function guardarOperadores() {
     setAConfirmarRemocao(null);
-    await executar(async () => {
+    await executar("operadores", async () => {
       await enviar(`/api/equipas/${equipaId}`, { operadoresServidos: servidos }, "PATCH");
       toast(t("toast.operadoresGuardados"));
     });
@@ -187,12 +210,13 @@ export function AcoesEquipa({
   return (
     <div className="space-y-8">
       {!ativa ? (
-        <div>
+        <div className="space-y-3">
+          {erros.geral ? <AlertaErro corpo={erros.geral} /> : null}
           <Button
             variant="outline"
             disabled={aTrabalhar}
             onClick={() =>
-              executar(async () => {
+              void executar("geral", async () => {
                 await enviar(`/api/equipas/${equipaId}`, { ativa: true }, "PATCH");
                 toast(t("toast.equipaAtivada", { nome }));
               })
@@ -213,7 +237,9 @@ export function AcoesEquipa({
             inicio: String(dados.get(`inicio-${linha.diaSemana}`)),
             fim: String(dados.get(`fim-${linha.diaSemana}`)),
           }));
-          void executar(() => enviar(`/api/equipas/${equipaId}`, { horarios: linhas }, "PATCH").then(() => undefined));
+          void executar("horario", () =>
+            enviar(`/api/equipas/${equipaId}`, { horarios: linhas }, "PATCH").then(() => undefined),
+          );
         }}
       >
         <h2 className="text-base font-semibold tracking-tight">{t("equipas.horario")}</h2>
@@ -229,6 +255,9 @@ export function AcoesEquipa({
             );
           })}
         </ul>
+        {erros.horario ? (
+          <AlertaErro titulo={t("equipas.naoGuardarTitulo")} corpo={erros.horario} />
+        ) : null}
         <Button type="submit" variant="outline" disabled={aTrabalhar}>
           {t("equipas.guardarHorario")}
         </Button>
@@ -241,7 +270,7 @@ export function AcoesEquipa({
             evento.preventDefault();
             const dados = new FormData(evento.currentTarget);
             const fim = String(dados.get("fim") ?? "");
-            void executar(() =>
+            void executar("zona", () =>
               enviar(`/api/equipas/${equipaId}/zona`, {
                 zonaId: String(dados.get("zonaId")),
                 inicio: String(dados.get("inicio")),
@@ -274,6 +303,7 @@ export function AcoesEquipa({
             <input type="checkbox" name="confirmacao" />
             {t("equipas.confirmarPassado")}
           </label>
+          {erros.zona ? <AlertaErro titulo={t("equipas.naoGuardarTitulo")} corpo={erros.zona} /> : null}
           <div>
             <Button type="submit" variant="outline" disabled={aTrabalhar} className="h-8">
               {t("equipas.guardarZona")}
@@ -284,13 +314,8 @@ export function AcoesEquipa({
         <div className="space-y-3">
           <h2 className="text-base font-semibold tracking-tight">{t("equipas.operadoresServidos")}</h2>
           <p className="text-[13px]/5 text-muted-foreground">{t("equipas.operadoresServidosAjuda")}</p>
-          {erro ? (
-            <Alerta tom="erro" role="alert">
-              <div className="space-y-1">
-                <p className="font-medium text-foreground">{t("equipas.naoGuardarTitulo")}</p>
-                <div>{erro}</div>
-              </div>
-            </Alerta>
+          {erros.operadores ? (
+            <AlertaErro titulo={t("equipas.naoGuardarTitulo")} corpo={erros.operadores} />
           ) : null}
           <div className="flex flex-wrap gap-1.5" role="group" aria-label={t("equipas.operadoresServidos")}>
             {OPERADORES.map((id) => {
@@ -359,7 +384,7 @@ export function AcoesEquipa({
             evento.preventDefault();
             const dados = new FormData(evento.currentTarget);
             const formulario = evento.currentTarget;
-            void executar(async () => {
+            void executar("membros", async () => {
               await enviar(`/api/equipas/${equipaId}/membros`, { nome: String(dados.get("nome") ?? "") });
               formulario.reset();
             });
@@ -369,6 +394,7 @@ export function AcoesEquipa({
             <Label htmlFor="novo-tecnico">{t("equipas.novoTecnico")}</Label>
             <Input id="novo-tecnico" name="nome" required minLength={3} />
           </div>
+          {erros.membros ? <AlertaErro corpo={erros.membros} /> : null}
           <Button type="submit" variant="outline" disabled={aTrabalhar}>
             {t("equipas.acrescer")}
           </Button>
@@ -389,8 +415,10 @@ export function AcoesEquipa({
                 size="sm"
                 disabled={aTrabalhar}
                 onClick={() =>
-                  executar(() =>
-                    enviar(`/api/equipas/${equipaId}/indisponibilidades/${bloco.id}`, undefined, "DELETE").then(() => undefined),
+                  void executar("indisponibilidades", () =>
+                    enviar(`/api/equipas/${equipaId}/indisponibilidades/${bloco.id}`, undefined, "DELETE").then(
+                      () => undefined,
+                    ),
                   )
                 }
               >
@@ -405,7 +433,7 @@ export function AcoesEquipa({
             evento.preventDefault();
             const dados = new FormData(evento.currentTarget);
             const formulario = evento.currentTarget;
-            void executar(async () => {
+            void executar("indisponibilidades", async () => {
               await enviar(`/api/equipas/${equipaId}/indisponibilidades`, {
                 data: String(dados.get("data")),
                 inicio: String(dados.get("inicio")),
@@ -432,6 +460,11 @@ export function AcoesEquipa({
             <Label htmlFor="fim-un">{t("comum.fim")}</Label>
             <Input id="fim-un" name="fim" placeholder="14:00" required />
           </div>
+          {erros.indisponibilidades ? (
+            <div className="md:col-span-2">
+              <AlertaErro titulo={t("equipas.naoGuardarTitulo")} corpo={erros.indisponibilidades} />
+            </div>
+          ) : null}
           <div>
             <Button type="submit" variant="outline" disabled={aTrabalhar}>
               {t("equipas.novaIndisp")}
@@ -446,6 +479,7 @@ export function AcoesEquipa({
             <h2 className="text-[13px]/5 font-semibold tracking-tight">{t("equipas.zonaPerigo")}</h2>
             <p className="text-xs text-muted-foreground">{t("equipas.zonaPerigoAjuda")}</p>
           </div>
+          {erros.geral ? <AlertaErro corpo={erros.geral} /> : null}
           <Button variant="destructive" disabled={aTrabalhar} onClick={() => setConfirmarDesativar(true)}>
             {t("equipas.desativarEquipa")}
           </Button>
@@ -513,7 +547,7 @@ export function AcoesEquipa({
                 if (!membroADesativar) return;
                 const alvo = membroADesativar;
                 setMembroADesativar(null);
-                void executar(async () => {
+                void executar("membros", async () => {
                   await enviar(`/api/equipas/${equipaId}/membros/${alvo.id}`, undefined, "DELETE");
                   toast(t("toast.tecnicoDesativado", { nome: alvo.nome }));
                 });

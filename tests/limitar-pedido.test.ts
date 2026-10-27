@@ -251,4 +251,38 @@ describe("limitarPedido — limite do pedido de reencaixe na API", () => {
       },
     ]);
   });
+
+  it("confirmarPlano com selo válido grava a diferença (x1-a′)", () => {
+    vi.mocked(reencaixar).mockClear();
+    const previa = previsualizar(despachanteVerde, { encaixarId: "ord-vd-urg", permitirTroca: true });
+    expect(previa.viavel).toBe(true);
+    expect(previa.selo.length).toBeGreaterThanOrEqual(16);
+    expect(pedidoEntregueAoMotor()).toEqual({
+      encaixarId: "ord-vd-urg",
+      apenasDoOperador: "verde",
+      permitirTroca: false,
+    });
+
+    const antes = baseDados()
+      .prepare("SELECT estado, equipa_id AS equipaId FROM ordens WHERE id = ?")
+      .get("ord-vd-urg") as { estado: string; equipaId: string | null };
+    expect(antes.estado).toBe("em_espera");
+    expect(antes.equipaId).toBeNull();
+
+    vi.mocked(reencaixar).mockClear();
+    const vista = confirmarPlano(despachanteVerde, { encaixarId: "ord-vd-urg", permitirTroca: true }, previa.selo);
+    expect(vista.viavel).toBe(true);
+    expect(pedidoEntregueAoMotor()).toEqual({
+      encaixarId: "ord-vd-urg",
+      apenasDoOperador: "verde",
+      permitirTroca: false,
+    });
+
+    // Sem gravarDiferença o mutante deixa a ordem em espera — falha aqui.
+    const depois = baseDados()
+      .prepare("SELECT estado, equipa_id AS equipaId FROM ordens WHERE id = ?")
+      .get("ord-vd-urg") as { estado: string; equipaId: string | null };
+    expect(depois.estado).toBe("agendada");
+    expect(depois.equipaId).toBe("eq-m024");
+  });
 });

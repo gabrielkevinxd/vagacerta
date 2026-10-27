@@ -15,7 +15,7 @@ src/proxy.ts          redirecciona páginas sem cookie para /entrar; 404 (ordem 
 
 O motor devolve um `Mundo` novo. Quem grava é `sincronizarMundo`. Confirmar um plano de reencaixe volta a correr o motor e compara o selo HMAC (`segredo_plano`). O cliente não manda a lista de movimentos.
 
-A sessão é o cookie httpOnly `vc_sessao`. Inactividade: 8 horas (desliza na leitura). Cookie: 30 dias. Só `POST /api/sessao/entrar` e `POST /api/sessao/sair` o escrevem; um `GET` a `/api/sessao/sair` responde 405 `METODO_NAO_PERMITIDO`.
+A sessão é o cookie httpOnly `vc_sessao`. Inactividade: 8 horas (desliza na leitura). Cookie: 30 dias. Só `POST /api/sessao/entrar` e `POST /api/sessao/sair` o escrevem; um `GET` a `/api/sessao/sair` responde 405 `METODO_NAO_PERMITIDO`. As sessões expiradas (e o histórico do assistente ligado por CASCADE) só são apagadas sob pedido — no login (`entrar`) ou em `obterAtor` — nunca na abertura da BD (evita Blocking Route com `new Date()` no prerender). Sem tráfego, os registos expirados ficam na base.
 
 O `proxy` abre a base (runtime Node) para saber, antes de a página começar a ser enviada, se a ordem ou a equipa pedida pode ser lida pelo ator (`src/server/sessao-viva.ts`). Com `cacheComponents` o Next envia primeiro o esqueleto da página e já não consegue mudar o estado HTTP, por isso o 404 («Ordem não encontrada», «Equipa não encontrada») e o 403 de `/integracao` são decididos aí e a resposta é HTML autónomo (`src/server/pagina-negada.ts`, sem eco do identificador pedido).
 

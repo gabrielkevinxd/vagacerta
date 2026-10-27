@@ -249,10 +249,8 @@ describe("P1-9 despachante vê equipas sem OFSC/ordens alheias", () => {
 
     const minho = obterEquipa(despachanteAzul, "eq-minho");
     expect(minho.ocupacaoHoje.proprias.every((o) => o.operadorId === "azul")).toBe(true);
-    // Minutos de outros operadores: número finito ≥ 0 (D1: sem ficha, só o total).
-    expect(Number.isFinite(minho.ocupacaoHoje.minutosOutros)).toBe(true);
-    expect(minho.ocupacaoHoje.minutosOutros).toBeGreaterThanOrEqual(0);
-    expect(minho.ocupacaoHoje.minutosOutros % 1).toBe(0);
+    // Minutos de outros na semente do dia de demo (VR+VD em Minho).
+    expect(minho.ocupacaoHoje.minutosOutros).toBe(155);
   });
 
   it("vê técnicos, motivos de indisponibilidade e competências dos outros operadores (Diogo)", async () => {

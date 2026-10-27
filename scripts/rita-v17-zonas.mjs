@@ -1,7 +1,7 @@
 /**
- * Capturas Rita v15 — não altera a SQLite partilhada.
+ * Capturas Rita v17 — não altera a SQLite partilhada.
  * Arranca next start com VC_DATA_DIR temporário; no fim mata o processo e apaga a pasta.
- * Mutações (horário Ave / AZ-V15) só no temp, e só depois das capturas de despacho + agenda limpa.
+ * Mutações (horário Ave / AZ-V17) só no temp, e só depois das capturas de despacho + agenda limpa.
  */
 import { chromium } from "playwright-core";
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
@@ -9,10 +9,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn } from "node:child_process";
 
-const OUT = "/cursor/stores/self/media/rita/v15";
-const PORT = process.env.RITA_PORT ?? "4510";
+const OUT = "/cursor/stores/self/media/rita/v17";
+const PORT = process.env.RITA_PORT ?? "4530";
 const ROOT = new URL("..", import.meta.url).pathname;
-const dataDir = mkdtempSync(join(tmpdir(), "rita-v15-"));
+const dataDir = mkdtempSync(join(tmpdir(), "rita-v17-"));
 mkdirSync(join(OUT, "central-1440"), { recursive: true });
 mkdirSync(join(OUT, "despacho-1440"), { recursive: true });
 
@@ -108,6 +108,29 @@ try {
     await page.waitForTimeout(500);
     await shot(page, join(OUT, "central-1440", "04-409-remover-operador-ordens-futuras.png"));
 
+    // 04b — erro de horário junto de Guardar horário (P1 R1: não sob Operadores servidos)
+    await page.goto(`${BASE}/equipas/eq-minho`, { waitUntil: "networkidle" });
+    await page.getByRole("heading", { name: /Horário|Hours/i }).waitFor({ state: "visible", timeout: 15000 });
+    const fimSegunda = page.getByLabel(/Fim de segunda|End on Monday|End on monday/i).first();
+    await fimSegunda.waitFor({ state: "visible", timeout: 10000 });
+    await fimSegunda.fill("xx:yy");
+    const respHorario = page.waitForResponse(
+      (r) => r.url().includes("/api/equipas/eq-minho") && r.request().method() === "PATCH",
+      { timeout: 15000 },
+    );
+    await page.getByRole("button", { name: /Guardar horário|Save hours/i }).click();
+    const rh = await respHorario;
+    if (rh.status() !== 400) {
+      throw new Error(`esperava 400 no horário, got ${rh.status()} ${(await rh.text()).slice(0, 300)}`);
+    }
+    const alertaHorario = page.locator("[role=alert].superficie, .superficie[role=alert]").filter({
+      hasText: /HH:MM|formato|format/i,
+    });
+    await alertaHorario.first().waitFor({ state: "visible", timeout: 10000 });
+    await page.getByRole("button", { name: /Guardar horário|Save hours/i }).scrollIntoViewIfNeeded();
+    await page.waitForTimeout(400);
+    await shot(page, join(OUT, "central-1440", "04b-erro-guardar-horario.png"));
+
     await page.goto(`${BASE}/agenda?vista=dia&distrito=Braga&municipio=Guimarães`, { waitUntil: "networkidle" });
     await page.waitForTimeout(800);
     await shot(page, join(OUT, "central-1440", "05-agenda-filtro-distrito-municipio.png"));
@@ -164,7 +187,7 @@ try {
     const criada = await page.request.post(`${BASE}/api/ordens`, {
       data: {
         operadorId: "azul",
-        referencia: `AZ-V15-${Date.now().toString(36).slice(-5)}`,
+        referencia: `AZ-V17-${Date.now().toString(36).slice(-5)}`,
         area: "Guimarães",
         zonaId: "0308",
         categoria: "instalacao",
@@ -173,9 +196,9 @@ try {
         janelaInicio: "08:00",
         janelaFim: "10:00",
         prioridade: "alta",
-        clienteNome: "Primeiro V15",
+        clienteNome: "Primeiro V17",
         clienteContacto: "900111222",
-        morada: "Rua V15 1, Guimarães",
+        morada: "Rua V17 1, Guimarães",
         nota: "",
         equipaId: "eq-ave",
         modo: "agendar",
@@ -195,10 +218,10 @@ try {
       operador: "vermelho",
     });
     await page.goto(`${BASE}/ordens/nova?${qs}`, { waitUntil: "networkidle" });
-    await page.locator("#clienteNome").fill("Segundo V15");
+    await page.locator("#clienteNome").fill("Segundo V17");
     await page.locator("#clienteContacto").fill("900333444");
-    await page.locator("#morada").fill("Rua V15 2, Guimarães");
-    await page.locator("#referencia").fill(`VR-V15-${Date.now().toString(36).slice(-5)}`);
+    await page.locator("#morada").fill("Rua V17 2, Guimarães");
+    await page.locator("#referencia").fill(`VR-V17-${Date.now().toString(36).slice(-5)}`);
     const resposta409 = page.waitForResponse(
       (r) => r.url().includes("/api/ordens") && r.request().method() === "POST",
       { timeout: 15000 },
@@ -220,7 +243,7 @@ try {
   }
 
   await browser.close();
-  console.log("done v15");
+  console.log("done v17");
 } catch (erro) {
   console.error(erro);
   console.error("--- server logs ---\n", logs.slice(-4000));
