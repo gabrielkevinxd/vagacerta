@@ -117,6 +117,21 @@ describe("reencaixe da fila sobre a demonstração", () => {
     expect(plano.movimentos.every((m) => !m.referencia.startsWith("VR"))).toBe(true);
   });
 
+  it("não deixa o despachante verde trocar uma ordem vermelha para libertar a fila", () => {
+    const base = mundoSemVerdeNasVizinhas();
+    const urgente = base.ordens.find((ordem) => ordem.referencia === "VD-URG")!;
+    const plano = reencaixar(base, {
+      encaixarId: urgente.id,
+      permitirTroca: true,
+      apenasDoOperador: "verde",
+    });
+    expect(plano.viavel).toBe(false);
+    expect(plano.movimentos).toEqual([]);
+    expect(plano.mensagem).toBe(
+      "Encaixar VD-URG não cabe: nenhuma sequência respeita as janelas prometidas.",
+    );
+  });
+
   it("redistribui o dia quando a Equipa Minho falta e não publica um plano partido", () => {
     const base = mundo();
     const plano = reencaixar(base, { equipaEmFalta: "eq-minho", data: "2026-10-27" });

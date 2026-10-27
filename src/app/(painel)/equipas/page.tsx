@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ChevronLeft, ChevronRight, TriangleAlert } from "lucide-react";
 import { um } from "@/lib/consulta-pagina";
-import { eCentral, hojeLisboa, OPERADORES, type OperadorId } from "@/lib/rules";
+import { hojeLisboa, OPERADORES, type OperadorId } from "@/lib/rules";
 import { distritosComCobertura, municipiosDoDistrito, nomesAreasCobertura } from "@/lib/zonas/catalogo";
 import { Carregamento } from "@/components/carregamento";
 import { EstadoVazio } from "@/components/estado-vazio";
@@ -41,7 +41,6 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
   const distritos = distritosComCobertura();
   const municipios = distrito ? municipiosDoDistrito(distrito).map((m) => m.nome) : nomesAreasCobertura();
   const dataRef = um(consulta.data) && um(consulta.data)!.match(/^\d{4}-\d{2}-\d{2}$/) ? um(consulta.data)! : undefined;
-  const central = eCentral(ator);
 
   const equipas = listarEquipas(ator, dataRef).filter((equipa) => {
     if (operador && !equipa.operadoresServidos.includes(operador)) return false;
@@ -132,7 +131,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
                 <th className="px-3 font-medium">{t("equipas.colunaZona")}</th>
                 <th className="px-3 font-medium">{t("equipas.colunaOperadores")}</th>
                 <th className="px-3 font-medium">{t("equipas.colunaEstado")}</th>
-                {central ? <th className="px-3 text-right font-medium tabular-nums">{t("equipas.colunaTecnicos")}</th> : null}
+                <th className="px-3 text-right font-medium tabular-nums">{t("equipas.colunaTecnicos")}</th>
               </tr>
             </thead>
             <tbody>
@@ -174,7 +173,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
                       {equipa.ativa ? t("comum.ativa") : t("comum.inativa")}
                     </span>
                   </td>
-                  {central ? <td className="px-3 text-right tabular-nums">{equipa.tecnicos}</td> : null}
+                  <td className="px-3 text-right tabular-nums">{equipa.tecnicos}</td>
                 </tr>
               ))}
             </tbody>

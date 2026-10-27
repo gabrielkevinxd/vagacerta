@@ -89,7 +89,12 @@ export function AcoesEquipa({
   function mensagemOperadorComOrdens(detalhes: { remocoes?: OperadorId[]; ordens?: OrdemFutura[] } | undefined) {
     const ordens = detalhes?.ordens ?? [];
     const remocoes = detalhes?.remocoes ?? [];
-    const operador = remocoes[0] ? t(`operador.${remocoes[0]}`) : "—";
+    const operador =
+      remocoes.length > 0
+        ? new Intl.ListFormat(idioma === "en" ? "en" : "pt-PT", { type: "conjunction" }).format(
+            remocoes.map((id) => t(`operador.${id}`)),
+          )
+        : "—";
     const n = Math.max(ordens.length, 1);
     const marca = "\u0001";
     const prefixo = tp("equipas.operadorComOrdens", n, { operador, lista: marca, n });
