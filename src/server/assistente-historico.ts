@@ -1,6 +1,5 @@
 import "server-only";
 
-import { randomBytes } from "node:crypto";
 import { baseDados } from "./db";
 
 const LIMITE = 6;
@@ -13,7 +12,7 @@ export function lerHistoricoAssistente(utilizadorId: string): LinhaHistoricoAssi
     .prepare(
       `SELECT papel, texto FROM assistente_historico
        WHERE utilizador_id = ?
-       ORDER BY em ASC, id ASC`,
+       ORDER BY seq ASC`,
     )
     .all(utilizadorId) as { papel: string; texto: string }[];
   return linhas
@@ -31,16 +30,28 @@ export function acrescentarHistoricoAssistente(
   if (!limpo) return;
   const db = baseDados();
   const em = new Date().toISOString();
-  db.prepare(
-    `INSERT INTO assistente_historico (id, utilizador_id, papel, texto, em) VALUES (?, ?, ?, ?, ?)`,
-  ).run(`ah-${randomBytes(8).toString("hex")}`, utilizadorId, papel, limpo, em);
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    db.prepare(
+      `INSERT INTO assistente_historico (utilizador_id, papel, texto, em) VALUES (?, ?, ?, ?)`,
+    ).run(utilizadorId, papel, limpo, em);
 
-  const ids = db
-    .prepare(
-      `SELECT id FROM assistente_historico WHERE utilizador_id = ? ORDER BY em DESC, id DESC`,
-    )
-    .all(utilizadorId) as { id: string }[];
-  if (ids.length <= LIMITE) return;
-  const apagar = db.prepare(`DELETE FROM assistente_historico WHERE id = ?`);
-  for (const linha of ids.slice(LIMITE)) apagar.run(linha.id);
+    const ids = db
+      .prepare(
+        `SELECT seq FROM assistente_historico WHERE utilizador_id = ? ORDER BY seq DESC`,
+      )
+      .all(utilizadorId) as { seq: number }[];
+    if (ids.length > LIMITE) {
+      const apagar = db.prepare(`DELETE FROM assistente_historico WHERE seq = ?`);
+      for (const linha of ids.slice(LIMITE)) apagar.run(linha.seq);
+    }
+    db.exec("COMMIT");
+  } catch (erro) {
+    db.exec("ROLLBACK");
+    throw erro;
+  }
+}
+
+export function limparHistoricoAssistente(utilizadorId: string): void {
+  baseDados().prepare(`DELETE FROM assistente_historico WHERE utilizador_id = ?`).run(utilizadorId);
 }

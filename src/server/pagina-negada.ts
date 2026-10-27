@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { DESIGN_TOKENS } from "@/lib/design-tokens";
 import { mensagensDe, t, type Idioma } from "@/lib/i18n";
 
 /**
@@ -17,40 +18,19 @@ export type TipoNegado = "ordem" | "equipa" | "integracao";
 const ESCAPES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 const escapar = (texto: string) => texto.replace(/[&<>"']/g, (caractere) => ESCAPES[caractere] ?? caractere);
 
-const TOKENS_OMISSAO: Record<string, string> = {
-  background: "#ffffff",
-  foreground: "#18181b",
-  "muted-foreground": "#52525b",
-  border: "#e4e4e7",
-  primary: "#6e56cf",
-  ring: "#6e56cf",
-};
-
-/** Lê as variáveis `:root` de `globals.css` para o HTML do proxy não divergir do design system. */
-export function tokensDeGlobals(cssBruto?: string): Record<string, string> {
-  const css =
-    cssBruto ??
-    (() => {
-      try {
-        return readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
-      } catch {
-        return "";
-      }
-    })();
-  const bloco = /:root\s*\{([^}]+)\}/.exec(css)?.[1] ?? "";
-  const tokens = { ...TOKENS_OMISSAO };
-  for (const chave of Object.keys(TOKENS_OMISSAO)) {
-    const m = new RegExp(`--${chave}\\s*:\\s*([^;]+);`).exec(bloco);
-    if (m) tokens[chave] = m[1].trim();
-  }
-  return tokens;
+/** Tokens do design system (módulo partilhado — sem ler `src/` em runtime). */
+export function tokensDeGlobals(): Record<string, string> {
+  return { ...DESIGN_TOKENS };
 }
+
+let cacheFonteInter: string | null = null;
 
 /**
  * Inclui o `@font-face` da Inter gerado pelo `next/font`, com URLs absolutas em `/_next/...`.
- * Se o build ainda não existir, fica `Inter, system-ui` (item 1: sem serifa).
+ * Procura pelo conteúdo (`font-family: Inter`), não pelo nome do ficheiro (hashes do build).
  */
 export function cssFonteInter(raiz = process.cwd()): string {
+  if (cacheFonteInter !== null) return cacheFonteInter;
   const pastas = [
     { chunks: join(raiz, ".next/static/chunks"), media: "/_next/static/media" },
     { chunks: join(raiz, ".next/dev/static/chunks"), media: "/_next/dev/static/media" },
@@ -59,28 +39,40 @@ export function cssFonteInter(raiz = process.cwd()): string {
     if (!existsSync(pasta.chunks)) continue;
     let ficheiros: string[] = [];
     try {
-      ficheiros = readdirSync(pasta.chunks);
+      ficheiros = readdirSync(pasta.chunks).filter((nome) => nome.endsWith(".css"));
     } catch {
       continue;
     }
-    const inter = ficheiros.find((nome) => /inter/i.test(nome) && nome.endsWith(".css"));
-    if (!inter) continue;
-    try {
-      const bruto = readFileSync(join(pasta.chunks, inter), "utf8");
-      const faces = [...bruto.matchAll(/@font-face\s*\{[^}]+\}/g)].map((m) => m[0]);
-      if (!faces.length) continue;
-      return faces
-        .map((face) =>
-          face
-            .replace(/url\("(?:\.\.\/)+media\/([^"]+)"\)/g, `url("${pasta.media}/$1")`)
-            .replace(/url\('(?:\.\.\/)+media\/([^']+)'\)/g, `url('${pasta.media}/$1')`),
-        )
-        .join("\n");
-    } catch {
-      continue;
+    for (const nome of ficheiros) {
+      try {
+        const bruto = readFileSync(join(pasta.chunks, nome), "utf8");
+        if (!/font-family:\s*Inter\b/.test(bruto)) continue;
+        const faces = [...bruto.matchAll(/@font-face\{[^}]+\}/g), ...bruto.matchAll(/@font-face\s*\{[^}]+\}/g)].map(
+          (m) => m[0],
+        );
+        const soInter = faces.filter((face) => /font-family:\s*Inter\b/.test(face) && !/Inter Fallback/.test(face));
+        if (!soInter.length) continue;
+        cacheFonteInter = soInter
+          .map((face) =>
+            face
+              .replace(/url\((?:\.\.\/)+media\/([^)]+)\)/g, `url("${pasta.media}/$1")`)
+              .replace(/url\("(?:\.\.\/)+media\/([^"]+)"\)/g, `url("${pasta.media}/$1")`)
+              .replace(/url\('(?:\.\.\/)+media\/([^']+)'\)/g, `url('${pasta.media}/$1')`),
+          )
+          .join("\n");
+        return cacheFonteInter;
+      } catch {
+        continue;
+      }
     }
   }
-  return "/* Inter: system-ui até haver build Next com next/font */";
+  cacheFonteInter = "";
+  return cacheFonteInter;
+}
+
+/** Só para testes: limpa a cache da fonte. */
+export function _resetCacheFonteInter(): void {
+  cacheFonteInter = null;
 }
 
 function textosDe(tipo: TipoNegado, idioma: Idioma) {

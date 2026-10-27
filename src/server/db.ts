@@ -167,13 +167,13 @@ function criarEsquema(db: DatabaseSync): void {
       detalhe TEXT NOT NULL
     );
     CREATE TABLE IF NOT EXISTS assistente_historico (
-      id TEXT PRIMARY KEY,
+      seq INTEGER PRIMARY KEY AUTOINCREMENT,
       utilizador_id TEXT NOT NULL REFERENCES utilizadores(id),
       papel TEXT NOT NULL,
       texto TEXT NOT NULL,
       em TEXT NOT NULL
     );
-    CREATE INDEX IF NOT EXISTS idx_assistente_historico_utilizador ON assistente_historico (utilizador_id, em);
+    CREATE INDEX IF NOT EXISTS idx_assistente_historico_utilizador ON assistente_historico (utilizador_id, seq);
     CREATE TABLE IF NOT EXISTS definicoes (
       chave TEXT PRIMARY KEY,
       valor TEXT NOT NULL
@@ -297,20 +297,32 @@ function migrar(db: DatabaseSync): void {
   garantirColuna(db, "ofsc_ausencias", "lote_id", "ALTER TABLE ofsc_ausencias ADD COLUMN lote_id TEXT");
   garantirColuna(db, "indisponibilidades", "lote_id", "ALTER TABLE indisponibilidades ADD COLUMN lote_id TEXT");
   garantirColuna(db, "integracao_logs", "operador_id", "ALTER TABLE integracao_logs ADD COLUMN operador_id TEXT");
+  // Órfão do dual-auth removido: o segredo OFSC é só OFSC_WEBHOOK_SECRET.
+  db.prepare("DELETE FROM definicoes WHERE chave = 'segredo_integracao'").run();
+  // BD antigas com `id TEXT` no histórico do assistente → recriar com seq AUTOINCREMENT.
+  migrarAssistenteHistorico(db);
+  migrarLogsOperador(db);
+  semearOfsc(db);
+}
+
+function migrarAssistenteHistorico(db: DatabaseSync): void {
+  // O CREATE fica só em `criarEsquema` — aqui só migramos BD antigas com `id TEXT`.
+  const colunas = db.prepare("PRAGMA table_info(assistente_historico)").all() as { name: string }[];
+  if (colunas.length === 0 || colunas.some((c) => c.name === "seq")) return;
   db.exec(`
-    CREATE TABLE IF NOT EXISTS assistente_historico (
-      id TEXT PRIMARY KEY,
+    CREATE TABLE assistente_historico_novo (
+      seq INTEGER PRIMARY KEY AUTOINCREMENT,
       utilizador_id TEXT NOT NULL REFERENCES utilizadores(id),
       papel TEXT NOT NULL,
       texto TEXT NOT NULL,
       em TEXT NOT NULL
     );
-    CREATE INDEX IF NOT EXISTS idx_assistente_historico_utilizador ON assistente_historico (utilizador_id, em);
+    INSERT INTO assistente_historico_novo (utilizador_id, papel, texto, em)
+      SELECT utilizador_id, papel, texto, em FROM assistente_historico ORDER BY em ASC, id ASC;
+    DROP TABLE assistente_historico;
+    ALTER TABLE assistente_historico_novo RENAME TO assistente_historico;
+    CREATE INDEX IF NOT EXISTS idx_assistente_historico_utilizador ON assistente_historico (utilizador_id, seq);
   `);
-  // Órfão do dual-auth removido: o segredo OFSC é só OFSC_WEBHOOK_SECRET.
-  db.prepare("DELETE FROM definicoes WHERE chave = 'segredo_integracao'").run();
-  migrarLogsOperador(db);
-  semearOfsc(db);
 }
 
 /** Backfill `operador_id` quando dedutível; apaga o resto. Globais passam a `*`. Exportada para testes. */

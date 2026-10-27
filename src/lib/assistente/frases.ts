@@ -1,5 +1,5 @@
 import type { AlertaAssistente, TipoAlerta } from "@/lib/contratos/assistente";
-import { eBasePlural, idiomaDe, t, tp, type Chave, type ChaveLeitura, type Mensagens } from "@/lib/i18n";
+import { eBasePlural, idiomaDe, t, tp, type ChaveLeitura, type Mensagens } from "@/lib/i18n";
 import { formatarDataLocale } from "@/lib/i18n/formatacao";
 import type { FactoAlerta } from "./analise";
 import type { Leitura } from "./regras";
@@ -153,7 +153,7 @@ export function textoDe(m: Mensagens, leitura: Exclude<Leitura, { tipo: "ambiguo
   if (eBasePlural(chave)) {
     base = tp(m, chave, Number(vars.n ?? 0), vars);
   } else {
-    base = t(m, chave as Chave, vars);
+    base = t(m, chave, vars);
   }
 
   if (chave === "assistente.verAlertas") {

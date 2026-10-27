@@ -1,22 +1,14 @@
-import type { Chave } from "./index";
+import { folhasDe } from "./folhas";
+import { ptPT } from "./pt-PT";
 
-/** Bases com variantes `_um` / `_outros` (não existem como chave sozinhas). */
-export const BASES_PLURAIS = [
-  "assistente.verAlertas",
-  "assistente.generico",
-  "assistente.contagem.agendadas",
-  "assistente.contagem.espera",
-  "assistente.contagem.pendentes",
-  "assistente.contagem.curso",
-  "assistente.contagem.alertas",
-] as const;
-
-export type BasePlural = (typeof BASES_PLURAIS)[number];
-export type ChavePlural = `${BasePlural}_um` | `${BasePlural}_outros`;
-
-export function eBasePlural(chave: string): chave is BasePlural {
-  return (BASES_PLURAIS as readonly string[]).includes(chave);
+/** Bases com `_um`/`_outros` derivadas do catálogo pt-PT (não lista manual). */
+export function listarBasesPlurais(catalogo: unknown = ptPT): string[] {
+  const folhas = folhasDe(catalogo);
+  const bases = new Set<string>();
+  for (const folha of folhas) {
+    if (folha.endsWith("_um")) bases.add(folha.slice(0, -3));
+  }
+  return [...bases].sort();
 }
 
-/** Uma chave de leitura do assistente: catálogo normal ou base plural. */
-export type ChaveLeitura = Chave | BasePlural;
+export const BASES_PLURAIS: readonly string[] = listarBasesPlurais();

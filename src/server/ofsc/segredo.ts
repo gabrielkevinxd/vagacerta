@@ -39,7 +39,10 @@ export function respostaSeSegredoOfscInvalido(pedido: Request): NextResponse | n
     return null;
   }
   return NextResponse.json(
-    { codigo: "NAO_AUTENTICADO", mensagem: "Segredo OFSC em falta ou inválido." },
+    {
+      codigo: "NAO_AUTENTICADO",
+      mensagem: "Autenticação em falta: envie o segredo OFSC (cabeçalho x-vagacerta-ofsc-secret ou Bearer).",
+    },
     { status: 401 },
   );
 }

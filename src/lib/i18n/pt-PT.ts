@@ -459,6 +459,8 @@ export const ptPT = {
     alertasIntro: "Calculados com as regras do dia, sem modelo. O despachante só vê o seu operador.",
     alertasVazios: "Não há conflitos neste dia para o seu perfil.",
     chatTitulo: "Conversa",
+    limparHistorico: "Limpar conversa",
+    historicoLimpo: "Conversa limpa.",
     pergunta: "A sua pergunta",
     placeholder: "Ex.: que quotas estão esgotadas? Encaixa a ordem em espera.",
     enviar: "Enviar",

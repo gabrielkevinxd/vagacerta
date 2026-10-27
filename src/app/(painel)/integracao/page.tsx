@@ -23,7 +23,7 @@ async function Conteudo() {
   const modelo = modeloXai() || XAI_MODELO_OMISSAO;
   return (
     <div className="space-y-4">
-      <CabecalhoPagina titulo={t("integracao.titulo")} />
+      <CabecalhoPagina titulo={t("integracao.titulo")} descricao={t("integracao.soCentral")} />
       <ConsolaIntegracao
         operadorFixo={ator.papel === "despachante" ? ator.operadorId : null}
         esconderOutros={ator.papel === "despachante"}
