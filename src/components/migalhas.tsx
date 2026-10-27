@@ -21,7 +21,10 @@ export function Migalhas() {
   const estrutura = migalhasDeCaminho(pathname);
   const migalhas = estrutura.map((miga) => ({
     href: miga.href,
-    rotulo: rotulos[miga.href] ?? (miga.rotuloFixo ? miga.rotuloFixo : t(miga.rotuloChave!)),
+    // Entidade: fallback neutro até a página definir o rótulo (evita «Equipas › Equipas»).
+    rotulo:
+      rotulos[miga.href] ??
+      (miga.entidade ? "…" : miga.rotuloFixo ? miga.rotuloFixo : t(miga.rotuloChave!)),
   }));
 
   return (

@@ -26,7 +26,7 @@ export function chaveDeHref(href: string): Chave {
   return "nav.painel";
 }
 
-/** Structural breadcrumb from pathname. Entity segments are marked for page-provided labels. */
+/** Migalhas estruturais a partir do caminho. Segmentos de entidade ficam para a página definir o rótulo. */
 export function migalhasDeCaminho(caminho: string): Miga[] {
   const path = (caminho.split("?")[0] || "/").replace(/\/+$/, "") || "/";
   const partes: Miga[] = [{ href: "/", rotuloChave: "nav.painel" }];

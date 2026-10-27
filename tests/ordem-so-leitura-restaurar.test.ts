@@ -46,6 +46,16 @@ describe("V15 ordem só de leitura", () => {
     baseDados();
   });
 
+  it("mudarEstado sem acesso devolve 404 (não 409) antes do conflito", () => {
+    try {
+      mudarEstado(despachanteAzul, "ord-vd-26004", "em_curso");
+      expect.fail("devia falhar");
+    } catch (erro) {
+      expect(erro).toBeInstanceOf(ErroHttp);
+      expect((erro as ErroHttp).status).toBe(404);
+    }
+  });
+
   it("estadoEditavel e podeEditarFicha recusam concluída", () => {
     expect(estadoEditavel("concluida")).toBe(false);
     expect(estadoEditavel("agendada")).toBe(true);
@@ -96,7 +106,7 @@ describe("/restaurar", () => {
     expect(reposta.resultado.fimPlaneado).toBe(fim);
   });
 
-  it("técnico não repõe; despachante só o próprio operador; slot ocupado dá 409", () => {
+  it("técnico não repõe; despachante sem acesso dá 404; slot ocupado dá 409", () => {
     expect(() => restaurarServico(tecnico, "ord-vr-canc-01")).toThrowError(/técnico/i);
 
     try {
@@ -104,7 +114,7 @@ describe("/restaurar", () => {
       expect.fail("despachante azul não restaura ordem vermelha");
     } catch (erro) {
       expect(erro).toBeInstanceOf(ErroHttp);
-      expect((erro as ErroHttp).status).toBe(403);
+      expect((erro as ErroHttp).status).toBe(404);
     }
 
     // Despachante azul restaura ordem azul cancelada.

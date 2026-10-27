@@ -3,13 +3,16 @@ import "server-only";
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 
-/** Valor de demonstração (só fora de produção). Em produção defina `OFSC_WEBHOOK_SECRET`. */
+/** Valor de demonstração — nunca usado em produção (mesmo se alguém o pôr em `OFSC_WEBHOOK_SECRET`). */
 export const OFSC_SEGREDO_DEMO = "vagacerta-demo-ofsc";
 
 export function segredoOfsc(): string | null {
   const env = process.env.OFSC_WEBHOOK_SECRET?.trim();
+  if (process.env.NODE_ENV === "production") {
+    if (!env || env === OFSC_SEGREDO_DEMO) return null;
+    return env;
+  }
   if (env && env.length > 0) return env;
-  if (process.env.NODE_ENV === "production") return null;
   return OFSC_SEGREDO_DEMO;
 }
 

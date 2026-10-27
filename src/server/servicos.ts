@@ -378,8 +378,7 @@ export function restaurarCancelamento(ator: Ator, id: string): OrdemVista {
   exigir(ator.papel !== "tecnico", 403, "SEM_PERMISSAO", "O técnico não cancela nem repõe ordens.");
   const antes = lerMundo();
   const ordem = antes.ordens.find((linha) => linha.id === id);
-  exigir(Boolean(ordem), 404, "NAO_ENCONTRADO", "Não encontrámos esta ordem.");
-  exigir(podeLerOrdem(ator, ordem!), 403, "SEM_PERMISSAO", "Sem acesso a esta ordem.");
+  exigir(Boolean(ordem) && podeLerOrdem(ator, ordem!), 404, "NAO_ENCONTRADO", "Não encontrámos esta ordem.");
   const resultado = restaurarCancelamentoNoMundo(antes, id);
   if (!resultado.ok) {
     const status = resultado.codigo === "CONFLITO" ? 409 : 400;
@@ -392,10 +391,9 @@ export function restaurarCancelamento(ator: Ator, id: string): OrdemVista {
 export function mudarEstado(ator: Ator, id: string, estado: EstadoOrdem, motivo?: string, quemPediu?: QuemPediu): OrdemVista {
   const antes = lerMundo();
   const ordem = antes.ordens.find((linha) => linha.id === id);
-  exigir(Boolean(ordem), 404, "NAO_ENCONTRADO", "Não encontrámos esta ordem.");
+  exigir(Boolean(ordem) && podeLerOrdem(ator, ordem!), 404, "NAO_ENCONTRADO", "Não encontrámos esta ordem.");
   if (estado === "cancelada") {
     exigir(ator.papel !== "tecnico", 403, "SEM_PERMISSAO", "O técnico não cancela ordens.");
-    exigir(podeLerOrdem(ator, ordem!), 404, "NAO_ENCONTRADO", "Não encontrámos esta ordem.");
     exigir(Boolean(motivo?.trim()), 400, "DADOS_INVALIDOS", "Cancelar exige um motivo.");
     exigir(Boolean(quemPediu), 400, "DADOS_INVALIDOS", "Indique quem pediu o cancelamento.");
     const resultado = cancelarOrdem(antes, id, motivo!.trim(), quemPediu!);

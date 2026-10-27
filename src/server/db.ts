@@ -286,7 +286,15 @@ function migrar(db: DatabaseSync): void {
   garantirColuna(db, "indisponibilidades", "lote_id", "ALTER TABLE indisponibilidades ADD COLUMN lote_id TEXT");
   garantirColuna(db, "integracao_logs", "operador_id", "ALTER TABLE integracao_logs ADD COLUMN operador_id TEXT");
   migrarLogsOperador(db);
+  limparLogsGlobaisComJson(db);
   semearOfsc(db);
+}
+
+/** Apaga linhas `*` com JSON (legado da migração v8 na main). Idempotente. */
+export function limparLogsGlobaisComJson(db: DatabaseSync): void {
+  db.prepare(
+    "DELETE FROM integracao_logs WHERE operador_id = '*' AND (pedido IS NOT NULL OR resposta IS NOT NULL)",
+  ).run();
 }
 
 /** Backfill `operador_id` quando dedutível; apaga o resto. Globais passam a `*`. Exportada para testes. */

@@ -673,7 +673,7 @@ export const ptPT = {
     soCapacidadePropria: "Só vê a capacidade do seu operador.",
     tecnicoSemIntegracao: "O técnico não acede à integração OFSC.",
     soCentralReconciliar: "Só a central reconcilia a integração OFSC.",
-    soCentralAccao: "Só a central pode executar esta ação.",
+    soCentralAcao: "Só a central pode executar esta ação.",
     ofscSegredo: "Segredo OFSC em falta ou inválido.",
     ofscSegredoEmFalta: "Segredo OFSC não configurado.",
     vagasCampos: "Indique operador, data, área e categoria para consultar vagas.",

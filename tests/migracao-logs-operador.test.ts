@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { baseDados, migrarLogsOperador } from "@/server/db";
+import { baseDados, limparLogsGlobaisComJson, migrarLogsOperador } from "@/server/db";
 import { OPERADOR_LOG_GLOBAL, filtrarLogsDespachante, listarLogs } from "@/server/ofsc/loja";
 
 describe("migrarLogsOperador", () => {
@@ -61,5 +61,9 @@ describe("migrarLogsOperador", () => {
     expect(filtrados.some((l) => l.id === "log-mig-global")).toBe(true);
     expect(filtrados.some((l) => l.id === "log-star-json")).toBe(false);
     expect(JSON.stringify(filtrados)).not.toContain('"secret"');
+
+    limparLogsGlobaisComJson(db);
+    expect(db.prepare("SELECT id FROM integracao_logs WHERE id = ?").get("log-star-json")).toBeUndefined();
+    expect(db.prepare("SELECT id FROM integracao_logs WHERE id = ?").get("log-mig-global")).toBeTruthy();
   });
 });

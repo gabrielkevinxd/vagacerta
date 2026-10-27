@@ -17,9 +17,10 @@ describe("migalhasDeCaminho", () => {
     expect(nova.at(-1)).toMatchObject({ href: "/ordens/nova", rotuloChave: "painel.novaOrdem" });
   });
 
-  it("Equipas detalhe marca entidade", () => {
+  it("Equipas detalhe marca entidade (rótulo vem da página; fallback … no cliente)", () => {
     const m = migalhasDeCaminho("/equipas/eq-minho");
     expect(m.at(-1)).toMatchObject({ href: "/equipas/eq-minho", entidade: true });
+    expect(m.at(-1)?.entidade).toBe(true);
   });
 
   it("ignora query", () => {

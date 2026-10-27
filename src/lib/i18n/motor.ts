@@ -57,7 +57,7 @@ const POR_TEXTO: Record<string, Chave> = {
   "Só vê a capacidade do seu operador.": "erros.soCapacidadePropria",
   "O técnico não acede à integração OFSC.": "erros.tecnicoSemIntegracao",
   "Só a central reconcilia a integração OFSC.": "erros.soCentralReconciliar",
-  "Só a central pode executar esta ação.": "erros.soCentralAccao",
+  "Só a central pode executar esta ação.": "erros.soCentralAcao",
   "Segredo OFSC em falta ou inválido.": "erros.ofscSegredo",
   "Segredo OFSC não configurado.": "erros.ofscSegredoEmFalta",
   "Indique operador, data, área e categoria para consultar vagas.": "erros.vagasCampos",

@@ -33,7 +33,7 @@ export function useRotulosMigalha() {
   return ctx;
 }
 
-/** Page sets the entity crumb label for the current path (order ref, team name). */
+/** A página define o rótulo da migalha de entidade (referência da ordem, nome da equipa). */
 export function DefinirMigalha({ href, rotulo }: { href: string; rotulo: string }) {
   const { definir, limpar } = useRotulosMigalha();
   useEffect(() => {
