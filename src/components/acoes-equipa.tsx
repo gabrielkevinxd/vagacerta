@@ -1,13 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useT } from "@/components/idioma/provedor";
 import type { Chave } from "@/lib/i18n";
 import { formatarDataLocale } from "@/lib/i18n/formatacao";
 import { traduzirMensagem } from "@/lib/i18n/motor";
-import { enviar } from "@/lib/cliente";
+import { ErroApi, enviar } from "@/lib/cliente";
+import { Alerta } from "@/components/layout/alerta";
 import { SeletorData } from "@/components/seletor-data";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { OperadorId } from "@/lib/rules";
 
 const campo = "h-8 w-full rounded-md border border-input bg-card px-2.5 text-[13px]/5";
 const DIAS: Chave[] = [
@@ -35,12 +38,15 @@ const DIAS: Chave[] = [
 
 const OPERADORES = ["azul", "vermelho", "verde"] as const;
 
+type OrdemFutura = { id: string; referencia: string; operadorId: OperadorId; data: string };
+
 export function AcoesEquipa({
   equipaId,
   equipaNome,
   ativa,
   zonas,
   zonaAtualId,
+  zonaPredefinidaId,
   horarios,
   membros,
   indisponibilidades,
@@ -51,29 +57,82 @@ export function AcoesEquipa({
   ativa: boolean;
   zonas: { id: string; codigo: string; nome: string }[];
   zonaAtualId?: string | null;
+  zonaPredefinidaId?: string | null;
   horarios: { diaSemana: number; inicio: string; fim: string }[];
   membros: { id: string; nome: string; ativo: boolean }[];
   indisponibilidades: { id: string; data: string; inicio: string; fim: string; motivo: string }[];
   operadoresServidos: ("azul" | "vermelho" | "verde")[];
 }) {
-  const { t, idioma, m } = useT();
+  const { t, tp, idioma, m } = useT();
   const router = useRouter();
-  const [erro, setErro] = useState<string | null>(null);
+  const [erro, setErro] = useState<ReactNode>(null);
   const [aTrabalhar, setATrabalhar] = useState(false);
   const [confirmarDesativar, setConfirmarDesativar] = useState(false);
   const [membroADesativar, setMembroADesativar] = useState<{ id: string; nome: string } | null>(null);
+  const chaveServidos = operadoresServidos.join(",");
+  const [servidosChave, setServidosChave] = useState(chaveServidos);
   const [servidos, setServidos] = useState<("azul" | "vermelho" | "verde")[]>(operadoresServidos);
+  const [aConfirmarRemocao, setAConfirmarRemocao] = useState<OperadorId[] | null>(null);
   const nome = equipaNome;
+  const zonaSelectPadrao =
+    zonaAtualId && zonas.some((z) => z.id === zonaAtualId)
+      ? zonaAtualId
+      : zonaPredefinidaId && zonas.some((z) => z.id === zonaPredefinidaId)
+        ? zonaPredefinidaId
+        : (zonas[0]?.id ?? "");
 
-  async function executar(trabalho: () => Promise<void>) {
+  if (chaveServidos !== servidosChave) {
+    setServidosChave(chaveServidos);
+    setServidos(operadoresServidos);
+  }
+
+  function mensagemOperadorComOrdens(detalhes: { remocoes?: OperadorId[]; ordens?: OrdemFutura[] } | undefined) {
+    const ordens = detalhes?.ordens ?? [];
+    const remocoes = detalhes?.remocoes ?? [];
+    const operador =
+      remocoes.length > 0
+        ? new Intl.ListFormat(idioma === "en" ? "en" : "pt-PT", { type: "conjunction" }).format(
+            remocoes.map((id) => t(`operador.${id}`)),
+          )
+        : "—";
+    const n = Math.max(ordens.length, 1);
+    const marca = "\u0001";
+    const prefixo = tp("equipas.operadorComOrdens", n, { operador, lista: marca, n });
+    const [antes, depois] = prefixo.split(marca);
+    return (
+      <>
+        {antes}
+        {ordens.map((ordem, indice) => (
+          <span key={ordem.id}>
+            {indice > 0 ? ", " : null}
+            <Link href={`/ordens/${ordem.id}`} className="underline underline-offset-2">
+              {t("equipas.ordemFuturaItem", {
+                referencia: ordem.referencia,
+                data: formatarDataLocale(ordem.data, idioma),
+              })}
+            </Link>
+          </span>
+        ))}
+        {depois}
+      </>
+    );
+  }
+
+  async function executar(trabalho: () => Promise<void>, aoErro?: (falha: unknown) => void) {
     setErro(null);
     setATrabalhar(true);
     try {
       await trabalho();
       router.refresh();
     } catch (falha) {
-      const texto = falha instanceof Error ? falha.message : "";
-      setErro(traduzirMensagem(m, texto) || t("comum.pedidoFalhou"));
+      aoErro?.(falha);
+      if (falha instanceof ErroApi && falha.codigo === "OPERADOR_COM_ORDENS") {
+        setServidos(operadoresServidos);
+        setErro(mensagemOperadorComOrdens(falha.detalhes as { remocoes?: OperadorId[]; ordens?: OrdemFutura[] }));
+      } else {
+        const texto = falha instanceof Error ? falha.message : "";
+        setErro(traduzirMensagem(m, texto) || t("comum.pedidoFalhou"));
+      }
     } finally {
       setATrabalhar(false);
     }
@@ -100,12 +159,32 @@ export function AcoesEquipa({
     });
   }
 
+  function pedirGuardarOperadores() {
+    const removidos = operadoresServidos.filter((op) => !servidos.includes(op));
+    if (removidos.length > 0) {
+      setAConfirmarRemocao(removidos);
+      return;
+    }
+    void guardarOperadores();
+  }
+
+  async function guardarOperadores() {
+    setAConfirmarRemocao(null);
+    await executar(async () => {
+      await enviar(`/api/equipas/${equipaId}`, { operadoresServidos: servidos }, "PATCH");
+      toast(t("toast.operadoresGuardados"));
+    });
+  }
+
   return (
     <div className="space-y-8">
       {erro ? (
-        <p role="alert" className="text-[13px]/5 text-destructive">
-          {erro}
-        </p>
+        <Alerta tom="erro" role="alert">
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">{t("equipas.naoGuardarTitulo")}</p>
+            <div>{erro}</div>
+          </div>
+        </Alerta>
       ) : null}
       {!ativa ? (
         <div>
@@ -175,12 +254,7 @@ export function AcoesEquipa({
           <h2 className="text-base font-semibold tracking-tight">{t("equipas.zonaVigor")}</h2>
           <div className="space-y-1.5">
             <Label htmlFor="zona">{t("equipas.zona")}</Label>
-            <select
-              id="zona"
-              name="zonaId"
-              className={campo}
-              defaultValue={zonaAtualId && zonas.some((z) => z.id === zonaAtualId) ? zonaAtualId : (zonas[0]?.id ?? "")}
-            >
+            <select id="zona" name="zonaId" className={campo} defaultValue={zonaSelectPadrao}>
               {zonas.map((zona) => (
                 <option key={zona.id} value={zona.id}>
                   {zona.codigo} · {zona.nome}
@@ -219,7 +293,7 @@ export function AcoesEquipa({
                   type="button"
                   aria-pressed={ativo}
                   disabled={aTrabalhar}
-                  className={`inline-flex h-8 items-center rounded-md border px-2.5 text-[13px]/5 ${
+                  className={`inline-flex h-8 items-center rounded-md border px-2.5 text-[13px]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
                     ativo ? "border-primary bg-muted font-medium" : "border-border bg-card text-muted-foreground"
                   }`}
                   onClick={() =>
@@ -242,12 +316,7 @@ export function AcoesEquipa({
             variant="outline"
             className="h-8"
             disabled={aTrabalhar || servidos.length === 0}
-            onClick={() =>
-              void executar(async () => {
-                await enviar(`/api/equipas/${equipaId}`, { operadoresServidos: servidos }, "PATCH");
-                toast(t("toast.operadoresGuardados"));
-              })
-            }
+            onClick={() => pedirGuardarOperadores()}
           >
             {t("equipas.guardarOperadores")}
           </Button>
@@ -374,6 +443,36 @@ export function AcoesEquipa({
           </Button>
         </section>
       ) : null}
+
+      <Dialog open={Boolean(aConfirmarRemocao)} onOpenChange={(v) => !v && setAConfirmarRemocao(null)}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>
+              {t("equipas.deixarDeServirTitulo", {
+                operador: new Intl.ListFormat(idioma === "en" ? "en" : "pt-PT", { type: "conjunction" }).format(
+                  (aConfirmarRemocao ?? []).map((id) => t(`operador.${id}`)),
+                ),
+              })}
+            </DialogTitle>
+            <DialogDescription>
+              {t("equipas.deixarDeServirDetalhe", {
+                equipa: nome,
+                operador: new Intl.ListFormat(idioma === "en" ? "en" : "pt-PT", { type: "conjunction" }).format(
+                  (aConfirmarRemocao ?? []).map((id) => t(`operador.${id}`)),
+                ),
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setAConfirmarRemocao(null)}>
+              {t("comum.cancelar")}
+            </Button>
+            <Button type="button" variant="destructive" disabled={aTrabalhar} onClick={() => void guardarOperadores()}>
+              {t("equipas.deixarDeServir")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={confirmarDesativar} onOpenChange={setConfirmarDesativar}>
         <DialogContent showCloseButton={false}>

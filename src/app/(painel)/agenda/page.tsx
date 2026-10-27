@@ -7,11 +7,13 @@ import { distritosComCobertura, municipiosDoDistrito, nomesAreasCobertura } from
 import { GanttAgenda } from "@/components/agenda/gantt-agenda";
 import { Carregamento } from "@/components/carregamento";
 import { EstadoVazio } from "@/components/estado-vazio";
+import { FiltrosZona } from "@/components/filtros-zona";
 import { Alerta } from "@/components/layout/alerta";
 import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
 import { SegmentoLigacao, Segmentos } from "@/components/layout/segmentos";
 import { formatarDataLocale, formatarDataLongaLocale } from "@/lib/i18n/formatacao";
 import { traduzirMensagem, traduzirNarrativa } from "@/lib/i18n/motor";
+import { tp } from "@/lib/i18n";
 import { eCentral, eDataIso, hojeLisboa, semanaIso, somarDias } from "@/lib/rules";
 import { ErroHttp } from "@/server/erros";
 import { diaDemonstracaoAtual } from "@/server/db";
@@ -19,8 +21,6 @@ import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 import { listarEquipas, obterAgenda, preverReagendamento } from "@/server/servicos";
 import { confirmarArrasto } from "./accoes";
-
-const campo = "h-8 rounded-md border border-input bg-card px-2.5 text-[13px]/5";
 
 function encontrar(agenda: Agenda, id: string): { bloco: BlocoVista; equipa: LinhaVista; data: string } | null {
   for (const dia of agenda.dias) {
@@ -152,41 +152,20 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
           </div>
         }
       />
-      <form className="flex flex-wrap items-end gap-3" action="/agenda" method="get">
-        <input type="hidden" name="vista" value={vista} />
-        <input type="hidden" name="data" value={data} />
-        <div className="space-y-1.5">
-          <label htmlFor="distrito" className="text-[13px]/5 text-muted-foreground">
-            {t("agenda.filtrarDistrito")}
-          </label>
-          <select id="distrito" name="distrito" defaultValue={distrito} className={campo}>
-            <option value="">{t("agenda.filtrarTodos")}</option>
-            {distritos.map((nome) => (
-              <option key={nome} value={nome}>
-                {nome}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1.5">
-          <label htmlFor="municipio" className="text-[13px]/5 text-muted-foreground">
-            {t("agenda.filtrarMunicipio")}
-          </label>
-          <select id="municipio" name="municipio" defaultValue={municipio} className={campo}>
-            <option value="">{t("agenda.filtrarTodos")}</option>
-            {municipios.map((nome) => (
-              <option key={nome} value={nome}>
-                {nome}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button type="submit" className="inline-flex h-8 items-center rounded-md border border-border bg-card px-3 text-[13px]/5 font-medium hover:bg-muted">
-          {t("agenda.filtrarAplicar")}
-        </button>
-      </form>
+      <FiltrosZona
+        caminho="/agenda"
+        extras={{ vista, data }}
+        distrito={distrito}
+        municipio={municipio}
+        distritos={distritos}
+        municipios={municipios}
+      />
       {filtroActivo && !vazio ? (
-        <p className="text-[13px]/5 text-muted-foreground">{t("agenda.filtroActivo", { n: linhasVisiveis })}</p>
+        <p className="text-[13px]/5 text-muted-foreground">
+          {tp(m, "agenda.filtroActivo", linhasVisiveis, {
+            zona: [distrito, municipio].filter(Boolean).join(" › ") || "—",
+          })}
+        </p>
       ) : null}
       {gravado ? <Alerta tom="sucesso">{t("agenda.gravado")}</Alerta> : null}
       {erroPrevisao ? (

@@ -85,8 +85,7 @@ describe("B8: a história-estrela é idêntica em qualquer dia, só com as datas
       expect(semTroca.viavel).toBe(true);
       const plano = reencaixar(mundo, { encaixarId: ordem("VD-URG").id, permitirTroca: true });
       expect(plano.viavel).toBe(true);
-      expect(plano.mensagem).toContain("VD-URG");
-      expect(plano.mensagem).toContain("08:00");
+      expect(plano.mensagem).toBe(planoDaHistoria("2026-10-27").mensagem);
       expect(plano.movimentos.some((m) => m.referencia === "VD-URG" && m.paraEquipaId === "eq-ave")).toBe(true);
 
       // O dia anterior e o seguinte são dias úteis; a formação da Equipa Cávado cai no dia rico.

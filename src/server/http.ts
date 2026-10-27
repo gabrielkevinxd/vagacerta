@@ -14,7 +14,11 @@ type Contexto = { params: Promise<Record<string, string>> };
 function responderErroCom(erro: unknown, mensagens: ReturnType<typeof mensagensDe>) {
   if (erro instanceof ErroHttp) {
     return NextResponse.json(
-      { codigo: erro.codigo, mensagem: traduzirMensagem(mensagens, erro.message, erro.codigo) },
+      {
+        codigo: erro.codigo,
+        mensagem: traduzirMensagem(mensagens, erro.message, erro.codigo),
+        ...(erro.detalhes !== undefined ? { detalhes: erro.detalhes } : {}),
+      },
       { status: erro.status },
     );
   }

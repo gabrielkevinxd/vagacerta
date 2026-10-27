@@ -147,6 +147,9 @@ const POR_TEXTO: Record<string, Chave> = {
   "A equipa tem de servir pelo menos um operador.": "motor.operadoresServidosMin",
   "A equipa não pode servir mais do que os três operadores.": "motor.operadoresServidosMax",
   "O intervalo já foi reservado por outro operador.": "motor.slotOcupado",
+  "O intervalo deixou de estar livre nesta equipa.": "motor.slotOcupadoIntervalo",
+  "Não pode deixar de servir operadores com ordens futuras nesta equipa.": "motor.operadorComOrdens",
+  "Não pode deixar de servir operador(es) com ordens futuras nesta equipa.": "motor.operadorComOrdens",
   "A equipa não trabalha nesse dia.": "motor.equipaNaoTrabalha",
   "Nenhuma sequência de inícios respeita as janelas prometidas.": "motor.semSequencia",
   "Não encontrámos a ordem.": "motor.ordemNaoEncontrada",
@@ -195,8 +198,11 @@ interface Padrao {
   valor?: Valores;
 }
 
-/** «a equipa» é o que o motor escreve quando a ordem não tem equipa. */
-const EQUIPA_GENERICA: Valores = { equipa: (valor, m) => (valor === ptPT.motor.aEquipa ? t(m, "motor.aEquipa") : valor) };
+/** «a equipa» / «equipa» é o que o motor escreve quando a ordem não tem equipa. */
+const EQUIPA_GENERICA: Valores = {
+  equipa: (valor, m) =>
+    valor === ptPT.motor.aEquipa || valor === "equipa" ? t(m, "motor.aEquipa") : valor,
+};
 
 /** Frases com parâmetros (erros e narrativa do reencaixe). */
 const PADROES: Padrao[] = [
@@ -204,9 +210,19 @@ const PADROES: Padrao[] = [
   { re: /^Este operador só marca até ([^.]+)\.$/, chave: "erros.HORIZONTE", nomes: ["limite"] },
   { re: /^A zona ([^.]+) não corresponde à área ([^.]+)\. Zonas possíveis: ([^.]+)\.$/, chave: "erros.zonaArea", nomes: ["zona", "area", "possiveis"] },
   {
-    re: /^Não pode deixar de servir operador\(es\) com ordens futuras nesta equipa: (.+)\.$/,
+    re: /^Não pode deixar de servir operadores?(?:\(es\))? com ordens futuras nesta equipa\.$/,
+    chave: "motor.operadorComOrdens",
+    nomes: [],
+  },
+  {
+    re: /^Não pode deixar de servir operadores?(?:\(es\))? com ordens futuras nesta equipa: (.+)\.$/,
     chave: "motor.operadorComOrdens",
     nomes: ["lista"],
+  },
+  {
+    re: /^O intervalo deixou de estar livre nesta equipa\.$/,
+    chave: "motor.slotOcupadoIntervalo",
+    nomes: [],
   },
   {
     re: /^O intervalo já foi reservado por outro operador\. Alternativa: (.+)\.$/,
@@ -217,8 +233,8 @@ const PADROES: Padrao[] = [
   { re: /^Encaixar ([^.]+) não cabe: nenhuma sequência respeita as janelas prometidas\.$/, chave: "motor.naoCabe", nomes: ["ref"] },
   { re: /^([^.]+) falta e o dia foi refeito com o resolvedor\.$/, chave: "motor.faltaRefeito", nomes: ["equipa"] },
   { re: /^([^.]+) deixa de ocupar a equipa\.$/, chave: "motor.deixaOcupar", nomes: ["ref"] },
-  { re: /^A ([^.]+) sai de ([^.]+)\.$/, chave: "narrativa.saiDe", nomes: ["ref", "equipa"], valor: EQUIPA_GENERICA },
-  { re: /^A ([^.]+) passa para ([^.]+)\.$/, chave: "narrativa.passaPara", nomes: ["ref", "equipa"], valor: EQUIPA_GENERICA },
+  { re: /^A ([^.]+) sai d[ea] ([^.]+)\.$/, chave: "narrativa.saiDe", nomes: ["ref", "equipa"], valor: EQUIPA_GENERICA },
+  { re: /^A ([^.]+) passa para(?: a)? ([^.]+)\.$/, chave: "narrativa.passaPara", nomes: ["ref", "equipa"], valor: EQUIPA_GENERICA },
   { re: /^A ([^.]+) volta à fila de espera\.$/, chave: "narrativa.voltaFila", nomes: ["ref"] },
   { re: /^A ([^.]+) entra às ([^.]+)\.$/, chave: "narrativa.entraAs", nomes: ["ref", "hora"] },
   { re: /^A ([^.]+) entra no dia\.$/, chave: "narrativa.entraDia", nomes: ["ref"] },

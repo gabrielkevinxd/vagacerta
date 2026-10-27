@@ -19,7 +19,7 @@ import {
 } from "@/lib/demonstracao";
 import { diaDemonstracao } from "@/lib/demonstracao-dia";
 import { eDataIso, type Categoria, type Equipa, type Mundo, type OperadorId, type Ordem, type Tecnologia } from "@/lib/rules";
-import { somarDias } from "@/lib/rules/tempo";
+import { hojeLisboa, somarDias } from "@/lib/rules/tempo";
 import { ccosDaFrotaExtra, gerarEquipasExtra } from "@/lib/zonas/frota-seed";
 
 const globalParaDb = globalThis as unknown as { __vcDb?: DatabaseSync };
@@ -306,6 +306,7 @@ function migrar(db: DatabaseSync): void {
   );
   limparSessoesExpiradas(db);
   migrarLogsOperador(db);
+  exigirZonasMunicipio(db);
   semearOfsc(db);
 }
 
@@ -342,6 +343,20 @@ export function migrarAssistenteHistorico(db: DatabaseSync): void {
 /** Apaga sessões expiradas (e o histórico ligado por ON DELETE CASCADE). */
 export function limparSessoesExpiradas(db: DatabaseSync = baseDados()): void {
   db.prepare("DELETE FROM sessoes WHERE expira_em < ?").run(new Date().toISOString());
+}
+
+/** Bases pré-município (zonas zn-*) não são migradas automaticamente — pedem demo:reset. */
+export function exigirZonasMunicipio(db: DatabaseSync): void {
+  const tabelas = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'zonas'").get() as
+    | { name: string }
+    | undefined;
+  if (!tabelas) return;
+  const antigas = db.prepare("SELECT COUNT(*) AS n FROM zonas WHERE id LIKE 'zn-%'").get() as { n: number };
+  if (Number(antigas.n) > 0) {
+    throw new Error(
+      "Esta base ainda usa zonas zn-* (antes de zona=município). Corra `npm run demo:reset` e volte a arrancar. Ver docs/pt-PT/zonas-municipios.md.",
+    );
+  }
 }
 
 /** Backfill `operador_id` quando dedutível; apaga o resto. Globais passam a `*`. Exportada para testes. */
@@ -527,7 +542,8 @@ function semear(db: DatabaseSync): void {
         vigencia.fim,
       );
     }
-    const inicioVig = somarDias(dia, -365);
+    const ancoraVig = hojeLisboa() <= dia ? hojeLisboa() : dia;
+    const inicioVig = somarDias(ancoraVig, -365);
     for (const extra of extras) {
       db.prepare("INSERT INTO equipa_zona (id, equipa_id, zona_id, inicio, fim) VALUES (?, ?, ?, ?, ?)").run(
         `vig-${extra.equipa.id}`,

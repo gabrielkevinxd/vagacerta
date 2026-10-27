@@ -36,4 +36,14 @@ Canonical list also in `cobertura-dstelecom.json` → `municipiosNaoConfirmadosN
 
 ## Seed
 
-7 demo teams (all serve 3 operators) + 193 deterministic extras on connected sets of the 158 active municipalities = **200 teams**.
+7 demo teams (all serve 3 operators) + 193 deterministic extras on connected sets of the 158 active municipalities = **200 teams** (~60% serve 3, ~20% serve 2, ~20% serve 1).
+
+## Legacy databases (`zn-*` zones)
+
+There is no automatic migration from a pre-municipality `vagacerta.sqlite`. If zones still use `zn-*` ids, startup refuses and asks you to run:
+
+```bash
+npm run demo:reset
+```
+
+That deletes the local SQLite file; the next boot reseeds DICOFRE zones and 200 teams.

@@ -322,6 +322,7 @@ describe("cobertura de tradução: os momentos da demonstração em inglês", ()
 
   it("«a equipa» sem nome nas frases do reencaixe", () => {
     expect(traduzirNarrativa(en, "A VD-URG sai de a equipa.")).toBe("VD-URG leaves the team.");
+    expect(traduzirNarrativa(en, "A VD-URG sai da equipa.")).toBe("VD-URG leaves the team.");
   });
 });
 
