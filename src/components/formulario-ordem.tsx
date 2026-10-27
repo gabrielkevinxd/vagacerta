@@ -68,6 +68,7 @@ export function FormularioOrdem({
   areaInicial,
   zonaIdInicial,
   janelaInicial,
+  operadorInicial,
 }: {
   operadorFixo: OperadorId | null;
   zonas: { id: string; codigo: string; nome: string }[];
@@ -77,10 +78,11 @@ export function FormularioOrdem({
   areaInicial?: string;
   zonaIdInicial?: string;
   janelaInicial?: { inicio: string; fim: string };
+  operadorInicial?: OperadorId;
 }) {
   const { t, m } = useT();
   const router = useRouter();
-  const [operadorId, setOperadorId] = useState<OperadorId>(operadorFixo ?? "azul");
+  const [operadorId, setOperadorId] = useState<OperadorId>(operadorFixo ?? operadorInicial ?? "azul");
   const [categoria, setCategoria] = useState<(typeof CATEGORIAS)[number]>("instalacao");
   const [tecnologia, setTecnologia] = useState<string>("FTTH");
   const inicial = useMemo(

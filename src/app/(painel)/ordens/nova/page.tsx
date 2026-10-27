@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { um } from "@/lib/consulta-pagina";
-import { JANELAS_INICIO } from "@/lib/rules";
+import { JANELAS_INICIO, OPERADORES, type OperadorId } from "@/lib/rules";
 import { Carregamento } from "@/components/carregamento";
 import { FormularioOrdem } from "@/components/formulario-ordem";
 import { SemAcesso } from "@/components/sem-acesso";
@@ -29,6 +29,13 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
   const zonaId = um(consulta.zonaId) ?? undefined;
   const inicio = um(consulta.inicio) ?? undefined;
   const fim = um(consulta.fim) ?? undefined;
+  const operadorQuery = um(consulta.operador);
+  const operadorInicial =
+    ator.papel === "despachante"
+      ? undefined
+      : (OPERADORES as readonly string[]).includes(operadorQuery ?? "")
+        ? (operadorQuery as OperadorId)
+        : undefined;
   return (
     <div className="space-y-5">
       <div>
@@ -44,6 +51,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
         areaInicial={area}
         zonaIdInicial={zonaId}
         janelaInicial={inicio && fim ? { inicio, fim } : undefined}
+        operadorInicial={operadorInicial}
       />
     </div>
   );

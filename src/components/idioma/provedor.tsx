@@ -1,7 +1,16 @@
 "use client";
 
 import { createContext, useContext, useEffect } from "react";
-import { IDIOMA_OMISSAO, mensagensDe, t, tp, type Chave, type Idioma, type Mensagens } from "@/lib/i18n";
+import {
+  IDIOMA_OMISSAO,
+  mensagensDe,
+  t,
+  tp,
+  type BasePlural,
+  type Chave,
+  type Idioma,
+  type Mensagens,
+} from "@/lib/i18n";
 
 const Contexto = createContext<{ idioma: Idioma; mensagens: Mensagens }>({
   idioma: IDIOMA_OMISSAO,
@@ -33,6 +42,6 @@ export function useT() {
     idioma,
     m: mensagens,
     t: (chave: Chave, vars?: Record<string, string | number>) => t(mensagens, chave, vars),
-    tp: (chaveBase: string, n: number, vars?: Record<string, string | number>) => tp(mensagens, chaveBase, n, vars),
+    tp: (chaveBase: BasePlural, n: number, vars?: Record<string, string | number>) => tp(mensagens, chaveBase, n, vars),
   };
 }

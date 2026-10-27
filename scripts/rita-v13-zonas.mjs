@@ -140,10 +140,11 @@ try {
   }
 
   {
-    // 06 — mutações só no temp dir. Reserva azul via central; formulário 409
-    // como despachante vermelho (operador fixo) para não limpar equipaId ao mudar o select.
+    // 06 — mutações só no temp dir. Central (sem horizonte) + ?operador=vermelho
+    // para não limpar equipaId ao mudar o select.
     const central = await contextoComSessao(browser, "admin@vagacerta.exemplo", "vagacerta-admin");
-    const horasPatch = await central.request.patch(`${BASE}/api/equipas/eq-ave`, {
+    const page = await central.newPage();
+    const horasPatch = await page.request.patch(`${BASE}/api/equipas/eq-ave`, {
       data: {
         horarios: [1, 2, 3, 4, 5].map((diaSemana) => ({ diaSemana, inicio: "08:00", fim: "12:00" })),
       },
@@ -152,7 +153,7 @@ try {
       throw new Error(`falhou patch horário Ave: ${horasPatch.status()}`);
     }
     const data = "2035-03-13";
-    const criada = await central.request.post(`${BASE}/api/ordens`, {
+    const criada = await page.request.post(`${BASE}/api/ordens`, {
       data: {
         operadorId: "azul",
         referencia: `AZ-V13-${Date.now().toString(36).slice(-5)}`,
@@ -175,10 +176,7 @@ try {
     if (![200, 201].includes(criada.status())) {
       throw new Error(`falhou reserva azul: ${criada.status()} ${JSON.stringify(await criada.json().catch(() => ({})))}`);
     }
-    await central.close();
 
-    const vermelho = await contextoComSessao(browser, "vermelho@vagacerta.exemplo", "vagacerta-vermelho");
-    const page = await vermelho.newPage();
     const qs = new URLSearchParams({
       equipaId: "eq-ave",
       area: "Guimarães",
@@ -186,6 +184,7 @@ try {
       data,
       inicio: "09:00",
       fim: "12:00",
+      operador: "vermelho",
     });
     await page.goto(`${BASE}/ordens/nova?${qs}`, { waitUntil: "networkidle" });
     await page.locator("#clienteNome").fill("Segundo V13");
@@ -209,7 +208,7 @@ try {
     await alertaSlot.first().scrollIntoViewIfNeeded();
     await page.waitForTimeout(400);
     await shot(page, join(OUT, "central-1440", "06-409-slot-ocupado-alternativa.png"));
-    await vermelho.close();
+    await central.close();
   }
 
   await browser.close();
