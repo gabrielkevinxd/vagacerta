@@ -23,23 +23,24 @@ export function tokensDeGlobals(): Record<string, string> {
   return { ...DESIGN_TOKENS };
 }
 
-let cacheFonteInter: string | null = null;
+const cacheFonteInter = new Map<string, string>();
 
 /**
  * Inclui o `@font-face` da Inter gerado pelo `next/font`, com URLs absolutas em `/_next/...`.
  * Procura pelo conteúdo (`font-family: Inter`), não pelo nome do ficheiro (hashes do build).
  */
 export function cssFonteInter(raiz = process.cwd()): string {
-  if (cacheFonteInter !== null) return cacheFonteInter;
+  const cached = cacheFonteInter.get(raiz);
+  if (cached !== undefined) return cached;
   const pastas = [
     { chunks: join(raiz, ".next/static/chunks"), media: "/_next/static/media" },
     { chunks: join(raiz, ".next/dev/static/chunks"), media: "/_next/dev/static/media" },
   ];
   for (const pasta of pastas) {
-    if (!existsSync(pasta.chunks)) continue;
+    if (!existsSync(/*turbopackIgnore: true*/ pasta.chunks)) continue;
     let ficheiros: string[] = [];
     try {
-      ficheiros = readdirSync(pasta.chunks).filter((nome) => nome.endsWith(".css"));
+      ficheiros = readdirSync(/*turbopackIgnore: true*/ pasta.chunks).filter((nome) => nome.endsWith(".css"));
     } catch {
       continue;
     }
@@ -47,12 +48,11 @@ export function cssFonteInter(raiz = process.cwd()): string {
       try {
         const bruto = readFileSync(join(pasta.chunks, nome), "utf8");
         if (!/font-family:\s*Inter\b/.test(bruto)) continue;
-        const faces = [...bruto.matchAll(/@font-face\{[^}]+\}/g), ...bruto.matchAll(/@font-face\s*\{[^}]+\}/g)].map(
-          (m) => m[0],
-        );
+        // Uma só regex — evita duplicar cada @font-face.
+        const faces = [...bruto.matchAll(/@font-face\s*\{[^}]+\}/g)].map((m) => m[0]);
         const soInter = faces.filter((face) => /font-family:\s*Inter\b/.test(face) && !/Inter Fallback/.test(face));
         if (!soInter.length) continue;
-        cacheFonteInter = soInter
+        const resultado = soInter
           .map((face) =>
             face
               .replace(/url\((?:\.\.\/)+media\/([^)]+)\)/g, `url("${pasta.media}/$1")`)
@@ -60,19 +60,20 @@ export function cssFonteInter(raiz = process.cwd()): string {
               .replace(/url\('(?:\.\.\/)+media\/([^']+)'\)/g, `url('${pasta.media}/$1')`),
           )
           .join("\n");
-        return cacheFonteInter;
+        cacheFonteInter.set(raiz, resultado);
+        return resultado;
       } catch {
         continue;
       }
     }
   }
-  cacheFonteInter = "";
-  return cacheFonteInter;
+  cacheFonteInter.set(raiz, "");
+  return "";
 }
 
 /** Só para testes: limpa a cache da fonte. */
 export function _resetCacheFonteInter(): void {
-  cacheFonteInter = null;
+  cacheFonteInter.clear();
 }
 
 function textosDe(tipo: TipoNegado, idioma: Idioma) {

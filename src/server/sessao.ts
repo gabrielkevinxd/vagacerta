@@ -7,7 +7,7 @@ import { randomBytes } from "node:crypto";
 import { COOKIE_IDIOMA, COOKIE_SESSAO, eIdioma } from "@/lib/i18n";
 import type { Ator, Papel } from "@/lib/rules";
 import { limparHistoricoAssistente } from "./assistente-historico";
-import { baseDados, verificarPalavra } from "./db";
+import { baseDados, limparSessoesExpiradas, verificarPalavra } from "./db";
 import { sessaoViva } from "./sessao-viva";
 
 const COOKIE = COOKIE_SESSAO;
@@ -39,12 +39,20 @@ function paraAtor(linha: LinhaAtor): Ator {
   };
 }
 
+/** Token da sessão do cookie, se ainda estiver viva. */
+export async function obterTokenSessao(): Promise<string | null> {
+  await connection();
+  const jar = await cookies();
+  const token = jar.get(COOKIE)?.value;
+  if (!token) return null;
+  return sessaoViva(token) ? token : null;
+}
+
 export async function obterAtor(): Promise<Ator | null> {
   await connection();
   const jar = await cookies();
   const token = jar.get(COOKIE)?.value;
   if (!token) return null;
-  if (!sessaoViva(token)) return null;
   const linha = baseDados()
     .prepare(
       `SELECT u.id, u.nome, u.papel, u.operador_id, u.tecnico_id, u.ativo, t.equipa_id, s.expira_em
@@ -54,8 +62,15 @@ export async function obterAtor(): Promise<Ator | null> {
        WHERE s.token = ?`,
     )
     .get(token) as LinhaAtor | undefined;
-  if (!linha || Number(linha.ativo) !== 1) return null;
+  if (!linha || Number(linha.ativo) !== 1) {
+    if (linha) {
+      limparHistoricoAssistente(token);
+      baseDados().prepare("DELETE FROM sessoes WHERE token = ?").run(token);
+    }
+    return null;
+  }
   if (new Date(String(linha.expira_em)).getTime() < Date.now()) {
+    limparHistoricoAssistente(token);
     baseDados().prepare("DELETE FROM sessoes WHERE token = ?").run(token);
     return null;
   }
@@ -72,7 +87,10 @@ export async function exigirAtorPagina(): Promise<Ator> {
 }
 
 export async function entrar(email: string, palavraPasse: string): Promise<Ator | null> {
-  const linha = baseDados()
+  const db = baseDados();
+  // Limpa sessões expiradas (e o histórico ligado) mesmo sem outras chamadas à API.
+  limparSessoesExpiradas(db);
+  const linha = db
     .prepare(
       `SELECT u.id, u.nome, u.papel, u.operador_id, u.tecnico_id, u.ativo, u.palavra_passe_hash, u.idioma, t.equipa_id
        FROM utilizadores u
@@ -83,9 +101,12 @@ export async function entrar(email: string, palavraPasse: string): Promise<Ator 
   if (!linha || Number(linha.ativo) !== 1 || !verificarPalavra(palavraPasse, linha.palavra_passe_hash)) return null;
   const token = randomBytes(32).toString("hex");
   const agora = new Date();
-  baseDados()
-    .prepare("INSERT INTO sessoes (token, utilizador_id, expira_em, criada_em) VALUES (?, ?, ?, ?)")
-    .run(token, linha.id, new Date(agora.getTime() + INATIVIDADE_MS).toISOString(), agora.toISOString());
+  db.prepare("INSERT INTO sessoes (token, utilizador_id, expira_em, criada_em) VALUES (?, ?, ?, ?)").run(
+    token,
+    linha.id,
+    new Date(agora.getTime() + INATIVIDADE_MS).toISOString(),
+    agora.toISOString(),
+  );
   const jar = await cookies();
   jar.set(COOKIE, token, {
     httpOnly: true,
@@ -107,10 +128,7 @@ export async function sair(): Promise<void> {
   const jar = await cookies();
   const token = jar.get(COOKIE)?.value;
   if (token) {
-    const linha = baseDados()
-      .prepare("SELECT utilizador_id AS utilizadorId FROM sessoes WHERE token = ?")
-      .get(token) as { utilizadorId: string } | undefined;
-    if (linha?.utilizadorId) limparHistoricoAssistente(linha.utilizadorId);
+    limparHistoricoAssistente(token);
     baseDados().prepare("DELETE FROM sessoes WHERE token = ?").run(token);
   }
   jar.delete(COOKIE);

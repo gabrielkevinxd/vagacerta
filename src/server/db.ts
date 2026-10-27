@@ -168,12 +168,12 @@ function criarEsquema(db: DatabaseSync): void {
     );
     CREATE TABLE IF NOT EXISTS assistente_historico (
       seq INTEGER PRIMARY KEY AUTOINCREMENT,
-      utilizador_id TEXT NOT NULL REFERENCES utilizadores(id),
+      sessao_token TEXT NOT NULL REFERENCES sessoes(token) ON DELETE CASCADE,
       papel TEXT NOT NULL,
       texto TEXT NOT NULL,
-      em TEXT NOT NULL
+      em TEXT NOT NULL,
+      origem TEXT
     );
-    CREATE INDEX IF NOT EXISTS idx_assistente_historico_utilizador ON assistente_historico (utilizador_id, seq);
     CREATE TABLE IF NOT EXISTS definicoes (
       chave TEXT PRIMARY KEY,
       valor TEXT NOT NULL
@@ -299,30 +299,49 @@ function migrar(db: DatabaseSync): void {
   garantirColuna(db, "integracao_logs", "operador_id", "ALTER TABLE integracao_logs ADD COLUMN operador_id TEXT");
   // Órfão do dual-auth removido: o segredo OFSC é só OFSC_WEBHOOK_SECRET.
   db.prepare("DELETE FROM definicoes WHERE chave = 'segredo_integracao'").run();
-  // BD antigas com `id TEXT` no histórico do assistente → recriar com seq AUTOINCREMENT.
+  // BD antigas (id TEXT / utilizador_id) → sessão. O índice sobre sessao_token só depois.
   migrarAssistenteHistorico(db);
+  db.exec(
+    "CREATE INDEX IF NOT EXISTS idx_assistente_historico_sessao ON assistente_historico (sessao_token, seq)",
+  );
+  limparSessoesExpiradas(db);
   migrarLogsOperador(db);
   semearOfsc(db);
 }
 
-function migrarAssistenteHistorico(db: DatabaseSync): void {
-  // O CREATE fica só em `criarEsquema` — aqui só migramos BD antigas com `id TEXT`.
+/** Exportada para testes de upgrade (#11 / #12 → sessão). */
+export function migrarAssistenteHistorico(db: DatabaseSync): void {
+  // O CREATE fica só em `criarEsquema`. Aqui: BD antigas (id TEXT ou utilizador_id) → sessão.
+  // Histórico antigo por utilizador é descartável (não mapeia para sessões).
   const colunas = db.prepare("PRAGMA table_info(assistente_historico)").all() as { name: string }[];
-  if (colunas.length === 0 || colunas.some((c) => c.name === "seq")) return;
-  db.exec(`
-    CREATE TABLE assistente_historico_novo (
-      seq INTEGER PRIMARY KEY AUTOINCREMENT,
-      utilizador_id TEXT NOT NULL REFERENCES utilizadores(id),
-      papel TEXT NOT NULL,
-      texto TEXT NOT NULL,
-      em TEXT NOT NULL
-    );
-    INSERT INTO assistente_historico_novo (utilizador_id, papel, texto, em)
-      SELECT utilizador_id, papel, texto, em FROM assistente_historico ORDER BY em ASC, id ASC;
-    DROP TABLE assistente_historico;
-    ALTER TABLE assistente_historico_novo RENAME TO assistente_historico;
-    CREATE INDEX IF NOT EXISTS idx_assistente_historico_utilizador ON assistente_historico (utilizador_id, seq);
-  `);
+  if (colunas.length === 0) return;
+  if (!colunas.some((c) => c.name === "sessao_token")) {
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      // Statements separados: se o CREATE falhar, o ROLLBACK repõe o DROP.
+      db.exec("DROP TABLE assistente_historico");
+      db.exec(`
+        CREATE TABLE assistente_historico (
+          seq INTEGER PRIMARY KEY AUTOINCREMENT,
+          sessao_token TEXT NOT NULL REFERENCES sessoes(token) ON DELETE CASCADE,
+          papel TEXT NOT NULL,
+          texto TEXT NOT NULL,
+          em TEXT NOT NULL,
+          origem TEXT
+        )
+      `);
+      db.exec("COMMIT");
+    } catch (erro) {
+      db.exec("ROLLBACK");
+      throw erro;
+    }
+  }
+  garantirColuna(db, "assistente_historico", "origem", "ALTER TABLE assistente_historico ADD COLUMN origem TEXT");
+}
+
+/** Apaga sessões expiradas (e o histórico ligado por ON DELETE CASCADE). */
+export function limparSessoesExpiradas(db: DatabaseSync = baseDados()): void {
+  db.prepare("DELETE FROM sessoes WHERE expira_em < ?").run(new Date().toISOString());
 }
 
 /** Backfill `operador_id` quando dedutível; apaga o resto. Globais passam a `*`. Exportada para testes. */

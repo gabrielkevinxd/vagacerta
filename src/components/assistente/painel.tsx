@@ -27,7 +27,13 @@ export function PainelAssistenteCliente({ inicial }: { inicial: PainelAssistente
   const { t } = useT();
   const [painel, setPainel] = useState(inicial);
   const [data, setData] = useState(inicial.data);
-  const [linhas, setLinhas] = useState<LinhaChat[]>([]);
+  const [linhas, setLinhas] = useState<LinhaChat[]>(() =>
+    inicial.historico.map((linha) => ({
+      papel: linha.papel,
+      texto: linha.texto,
+      ...(linha.origem ? { origem: linha.origem } : {}),
+    })),
+  );
   const [texto, setTexto] = useState("");
   const [plano, setPlano] = useState<PlanoVista | null>(null);
   const [pedidoPlano, setPedidoPlano] = useState<PedidoRealocacao | null>(null);
@@ -82,9 +88,12 @@ export function PainelAssistenteCliente({ inicial }: { inicial: PainelAssistente
     if (!plano || !pedidoPlano || aTrabalhar || !plano.viavel) return;
     setErro(null);
     setATrabalhar(true);
+    const textoConfirmar = t("comum.confirmar");
+    // Mostra a volta completa de imediato (pergunta + resposta), sem esperar reload.
+    setLinhas((atual) => [...atual, { papel: "utilizador", texto: textoConfirmar }]);
     try {
       const resposta = await enviar<RespostaAssistente>("/api/assistente", {
-        texto: t("comum.confirmar"),
+        texto: textoConfirmar,
         data,
         confirmar: { selo: plano.selo, pedido: pedidoPlano },
       });
