@@ -18,7 +18,7 @@ describe("xAI OFSC", () => {
     );
     expect(fetchMock).not.toHaveBeenCalled();
     expect(resultado.modo).toBe("sem_ia");
-    expect(resultado.extraidos.zona).toBe("zn-n01");
+    expect(resultado.extraidos.zona).toBe("0303");
     expect(resultado.emFalta).toContain("resourceId");
   });
 

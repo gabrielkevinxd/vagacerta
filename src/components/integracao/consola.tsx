@@ -70,7 +70,7 @@ type Formulario = {
 };
 
 const FORM_VAZIO: Formulario = {
-  zona: "zn-n01",
+  zona: "0303",
   data: "2026-11-03",
   janelaInicio: "",
   janelaFim: "",

@@ -42,6 +42,7 @@ function equipa(parcial: Partial<Equipa> & Pick<Equipa, "id" | "nome">): Equipa 
     base: "Teste",
     areas: ["Braga"],
     ativa: true,
+    operadoresServidos: ["azul", "vermelho", "verde"],
     competencias: [],
     horarios: [1, 2, 3, 4, 5].map((diaSemana) => ({ diaSemana, inicio: "08:00", fim: "18:00" })),
     indisponibilidades: [],
@@ -52,7 +53,7 @@ function equipa(parcial: Partial<Equipa> & Pick<Equipa, "id" | "nome">): Equipa 
 function ordem(parcial: Partial<Ordem> & Pick<Ordem, "id" | "referencia" | "operadorId">): Ordem {
   return {
     area: "Braga",
-    zonaId: "zn-n01",
+    zonaId: "0303",
     equipaId: "eq",
     categoria: "instalacao",
     tecnologia: null,

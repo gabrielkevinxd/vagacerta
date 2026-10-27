@@ -56,6 +56,8 @@ export interface Equipa {
   base: string;
   areas: string[];
   ativa: boolean;
+  /** Operadores que esta equipa serve (1–3). Default = os três. Nunca vazio. */
+  operadoresServidos: OperadorId[];
   competencias: Competencia[];
   horarios: Horario[];
   indisponibilidades: Indisponibilidade[];

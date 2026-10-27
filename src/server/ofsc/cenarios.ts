@@ -35,7 +35,7 @@ function reserva(
   dataPadrao = diasDosCenarios().livre,
 ): ReservaEstruturada {
   return {
-    zona: "zn-n01",
+    zona: "0303",
     data: dataPadrao,
     janelaInicio: "10:00",
     janelaFim: "12:00",
@@ -56,7 +56,7 @@ export async function correrCenario(id: string): Promise<unknown> {
   const dias = diasDosCenarios();
   switch (id) {
     case "vaga_livre": {
-      const grelha = listarGrelha("azul", dias.livre, "zn-n01", "instalacao");
+      const grelha = listarGrelha("azul", dias.livre, "0303", "instalacao");
       const celula = grelha[0];
       if (!celula) return { erro: "sem vaga" };
       return criarAtividadeNoBucket(
@@ -118,7 +118,7 @@ export async function correrCenario(id: string): Promise<unknown> {
           data: dias.demonstracao,
           resourceId: "AZ_RES_CAVADO",
           tecnicoId: "tec-marta",
-          zona: "zn-n02",
+          zona: "0302",
           janelaInicio: "13:00",
           janelaFim: "15:00",
           city: "Barcelos",

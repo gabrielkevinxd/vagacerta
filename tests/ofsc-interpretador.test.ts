@@ -9,7 +9,7 @@ describe("interpretador OFSC", () => {
       "2026-10-26",
     );
     expect(extraidos.city).toBe("Braga");
-    expect(extraidos.zona).toBe("zn-n01");
+    expect(extraidos.zona).toBe("0303");
     expect(extraidos.tipoIntervencao).toBe("instalacao");
     expect(extraidos.data).toBe("2026-10-27");
     expect(extraidos.janelaInicio).toBe("10:00");

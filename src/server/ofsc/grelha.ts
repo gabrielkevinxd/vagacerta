@@ -104,6 +104,10 @@ export function listarGrelha(operadorId: OperadorOfsc, data: string, zonaId?: st
       const tecnicos = tecnicosDaEquipa(equipaId);
       for (const tipoAtual of tipos) {
         const categoria = categoriaDoTipo(tipoAtual);
+        const servidos = equipa.operadoresServidos?.length
+          ? equipa.operadoresServidos
+          : equipa.competencias.map((c) => c.operadorId);
+        if (!servidos.includes(operadorId)) continue;
         if (!equipa.competencias.some((c) => c.operadorId === operadorId && c.categorias.includes(categoria))) continue;
         const janelas = janelasDe(operadorId, categoria);
         for (const janela of janelas) {

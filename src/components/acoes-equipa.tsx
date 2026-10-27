@@ -33,6 +33,8 @@ const DIAS: Chave[] = [
   "diaSemana.d7",
 ];
 
+const OPERADORES = ["azul", "vermelho", "verde"] as const;
+
 export function AcoesEquipa({
   equipaId,
   equipaNome,
@@ -42,6 +44,7 @@ export function AcoesEquipa({
   horarios,
   membros,
   indisponibilidades,
+  operadoresServidos,
 }: {
   equipaId: string;
   equipaNome: string;
@@ -51,6 +54,7 @@ export function AcoesEquipa({
   horarios: { diaSemana: number; inicio: string; fim: string }[];
   membros: { id: string; nome: string; ativo: boolean }[];
   indisponibilidades: { id: string; data: string; inicio: string; fim: string; motivo: string }[];
+  operadoresServidos: ("azul" | "vermelho" | "verde")[];
 }) {
   const { t, idioma, m } = useT();
   const router = useRouter();
@@ -58,6 +62,7 @@ export function AcoesEquipa({
   const [aTrabalhar, setATrabalhar] = useState(false);
   const [confirmarDesativar, setConfirmarDesativar] = useState(false);
   const [membroADesativar, setMembroADesativar] = useState<{ id: string; nome: string } | null>(null);
+  const [servidos, setServidos] = useState<("azul" | "vermelho" | "verde")[]>(operadoresServidos);
   const nome = equipaNome;
 
   async function executar(trabalho: () => Promise<void>) {
@@ -150,56 +155,104 @@ export function AcoesEquipa({
         </Button>
       </form>
 
-      <form
-        className="grid gap-3 md:grid-cols-2"
-        onSubmit={(evento) => {
-          evento.preventDefault();
-          const dados = new FormData(evento.currentTarget);
-          const fim = String(dados.get("fim") ?? "");
-          void executar(() =>
-            enviar(`/api/equipas/${equipaId}/zona`, {
-              zonaId: String(dados.get("zonaId")),
-              inicio: String(dados.get("inicio")),
-              fim: fim || null,
-              confirmacao: dados.get("confirmacao") === "on",
-            }).then(() => undefined),
-          );
-        }}
-      >
-        <h2 className="text-base font-semibold tracking-tight md:col-span-2">{t("equipas.zonaVigor")}</h2>
-        <div className="space-y-1.5">
-          <Label htmlFor="zona">{t("equipas.zona")}</Label>
-          <select
-            id="zona"
-            name="zonaId"
-            className={campo}
-            defaultValue={zonaAtualId && zonas.some((z) => z.id === zonaAtualId) ? zonaAtualId : (zonas[0]?.id ?? "")}
+      <div className="grid gap-8 md:grid-cols-2">
+        <form
+          className="grid gap-3"
+          onSubmit={(evento) => {
+            evento.preventDefault();
+            const dados = new FormData(evento.currentTarget);
+            const fim = String(dados.get("fim") ?? "");
+            void executar(() =>
+              enviar(`/api/equipas/${equipaId}/zona`, {
+                zonaId: String(dados.get("zonaId")),
+                inicio: String(dados.get("inicio")),
+                fim: fim || null,
+                confirmacao: dados.get("confirmacao") === "on",
+              }).then(() => undefined),
+            );
+          }}
+        >
+          <h2 className="text-base font-semibold tracking-tight">{t("equipas.zonaVigor")}</h2>
+          <div className="space-y-1.5">
+            <Label htmlFor="zona">{t("equipas.zona")}</Label>
+            <select
+              id="zona"
+              name="zonaId"
+              className={campo}
+              defaultValue={zonaAtualId && zonas.some((z) => z.id === zonaAtualId) ? zonaAtualId : (zonas[0]?.id ?? "")}
+            >
+              {zonas.map((zona) => (
+                <option key={zona.id} value={zona.id}>
+                  {zona.codigo} · {zona.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="inicio-zona">{t("comum.desde")}</Label>
+            <SeletorData id="inicio-zona" name="inicio" required />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="fim-zona">{t("comum.ate")}</Label>
+            <SeletorData id="fim-zona" name="fim" />
+          </div>
+          <label className="flex items-center gap-2 text-[13px]/5">
+            <input type="checkbox" name="confirmacao" />
+            {t("equipas.confirmarPassado")}
+          </label>
+          <div>
+            <Button type="submit" variant="outline" disabled={aTrabalhar} className="h-8">
+              {t("equipas.guardarZona")}
+            </Button>
+          </div>
+        </form>
+
+        <div className="space-y-3">
+          <h2 className="text-base font-semibold tracking-tight">{t("equipas.operadoresServidos")}</h2>
+          <p className="text-[13px]/5 text-muted-foreground">{t("equipas.operadoresServidosAjuda")}</p>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label={t("equipas.operadoresServidos")}>
+            {OPERADORES.map((id) => {
+              const ativo = servidos.includes(id);
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={ativo}
+                  disabled={aTrabalhar}
+                  className={`inline-flex h-8 items-center rounded-md border px-2.5 text-[13px]/5 ${
+                    ativo ? "border-primary bg-muted font-medium" : "border-border bg-card text-muted-foreground"
+                  }`}
+                  onClick={() =>
+                    setServidos((atual) => {
+                      if (atual.includes(id)) {
+                        if (atual.length <= 1) return atual;
+                        return atual.filter((item) => item !== id);
+                      }
+                      return OPERADORES.filter((op) => atual.includes(op) || op === id);
+                    })
+                  }
+                >
+                  {t(`operador.${id}`)}
+                </button>
+              );
+            })}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-8"
+            disabled={aTrabalhar || servidos.length === 0}
+            onClick={() =>
+              void executar(async () => {
+                await enviar(`/api/equipas/${equipaId}`, { operadoresServidos: servidos }, "PATCH");
+                toast(t("toast.operadoresGuardados"));
+              })
+            }
           >
-            {zonas.map((zona) => (
-              <option key={zona.id} value={zona.id}>
-                {zona.codigo} · {zona.nome}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="inicio-zona">{t("comum.desde")}</Label>
-          <SeletorData id="inicio-zona" name="inicio" required />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="fim-zona">{t("comum.ate")}</Label>
-          <SeletorData id="fim-zona" name="fim" />
-        </div>
-        <label className="flex items-center gap-2 text-[13px]/5 md:col-span-2">
-          <input type="checkbox" name="confirmacao" />
-          {t("equipas.confirmarPassado")}
-        </label>
-        <div>
-          <Button type="submit" variant="outline" disabled={aTrabalhar}>
-            {t("equipas.guardarZona")}
+            {t("equipas.guardarOperadores")}
           </Button>
         </div>
-      </form>
+      </div>
 
       <div className="space-y-3">
         <h2 className="text-base font-semibold tracking-tight">{t("equipas.membros")}</h2>

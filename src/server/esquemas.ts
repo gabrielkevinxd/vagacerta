@@ -112,10 +112,11 @@ export const esquemaZona = z.object({
 
 export const esquemaEquipa = z.object({
   ativa: z.boolean().optional(),
-  areas: z.array(z.enum(AREAS)).optional(),
+  areas: z.array(z.string().min(1)).optional(),
   horarios: z
     .array(z.object({ diaSemana: z.number().int().min(1).max(7), inicio: hora, fim: hora }))
     .optional(),
+  operadoresServidos: z.array(z.enum(OPERADORES)).min(1).max(3).optional(),
   competencias: z
     .array(
       z.object({

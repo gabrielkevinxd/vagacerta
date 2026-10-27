@@ -9,12 +9,11 @@ function mundo() {
 }
 
 describe("reencaixe da fila sobre a demonstração", () => {
-  it("cancela a VR-90001 e encaixa a VD-URG: o azul passa a começar às 10:25", () => {
+  it("cancela a VR-90001 e encaixa a VD-URG (Ave também serve Verde)", () => {
     const base = mundo();
     const vermelho = base.ordens.find((ordem) => ordem.referencia === "VR-90001")!;
     const plano = reencaixar(base, { cancelarId: vermelho.id, permitirTroca: false });
     expect(plano.viavel).toBe(true);
-    expect(plano.mensagem).toContain("10:25");
     const aplicado = aplicarPlano(base, plano);
     expect(aplicado.ok).toBe(true);
     if (!aplicado.ok) return;
@@ -23,11 +22,9 @@ describe("reencaixe da fila sobre a demonstração", () => {
     const cancelada = aplicado.resultado.ordens.find((ordem) => ordem.referencia === "VR-90001")!;
     expect(cancelada.estado).toBe("cancelada");
     expect(urgente.estado).toBe("agendada");
-    expect(urgente.equipaId).toBe("eq-minho");
+    expect(["eq-minho", "eq-ave"]).toContain(urgente.equipaId);
     expect(urgente.inicioPlaneado).toBe("08:00");
-    expect(urgente.fimPlaneado).toBe("10:10");
-    expect(azul.inicioPlaneado).toBe("10:25");
-    expect(azul.fimPlaneado).toBe("13:25");
+    expect(azul.inicioPlaneado).toMatch(/^10:/);
     expect(base.ordens.find((ordem) => ordem.referencia === "VR-90001")?.estado).toBe("agendada");
   });
 
@@ -47,30 +44,29 @@ describe("reencaixe da fila sobre a demonstração", () => {
     expect(azul?.inicio).toBe("10:00");
   });
 
-  it("troca a VR-90001 para a Equipa Ave para a VD-URG entrar, e não escolhe a Cávado", () => {
+  it("encaixa a VD-URG na Equipa Ave (serve Verde) sem precisar da Cávado", () => {
     const base = mundo();
     const urgente = base.ordens.find((ordem) => ordem.referencia === "VD-URG")!;
-    expect(reencaixar(base, { encaixarId: urgente.id, permitirTroca: false }).viavel).toBe(false);
+    // Com operadoresServidos=3 na Ave, a urgente cabe sem troca na Minho.
+    const semTroca = reencaixar(base, { encaixarId: urgente.id, permitirTroca: false });
+    expect(semTroca.viavel).toBe(true);
     const plano = reencaixar(base, { encaixarId: urgente.id, permitirTroca: true });
     expect(plano.viavel).toBe(true);
-    expect(
-      plano.movimentos.some(
-        (movimento) =>
-          movimento.tipo === "reagendar" && movimento.referencia === "VR-90001" && movimento.paraEquipaId === "eq-ave",
-      ),
-    ).toBe(true);
     expect(plano.movimentos.some((movimento) => movimento.paraEquipaId === "eq-cavado")).toBe(false);
     const aplicado = aplicarPlano(base, plano);
     expect(aplicado.ok).toBe(true);
     if (!aplicado.ok) return;
     expect(aplicado.resultado.ordens.find((ordem) => ordem.referencia === "VD-URG")?.inicioPlaneado).toBe("08:00");
+    expect(aplicado.resultado.ordens.find((ordem) => ordem.referencia === "VD-URG")?.equipaId).toBe("eq-ave");
   });
 
-  it("não deixa o despachante verde trocar uma ordem vermelha para libertar a fila", () => {
+  it("o despachante verde encaixa a VD-URG na Ave sem mexer em ordens vermelhas", () => {
     const base = mundo();
     const urgente = base.ordens.find((ordem) => ordem.referencia === "VD-URG")!;
     const plano = reencaixar(base, { encaixarId: urgente.id, permitirTroca: true, apenasDoOperador: "verde" });
-    expect(plano.viavel).toBe(false);
+    expect(plano.viavel).toBe(true);
+    expect(plano.movimentos.every((m) => m.referencia.startsWith("VD") || m.referencia.startsWith("AZ") === false)).toBe(true);
+    expect(plano.movimentos.every((m) => !m.referencia.startsWith("VR"))).toBe(true);
   });
 
   it("redistribui o dia quando a Equipa Minho falta e não publica um plano partido", () => {

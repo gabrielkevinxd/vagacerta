@@ -19,6 +19,8 @@ import {
 } from "@/lib/demonstracao";
 import { diaDemonstracao } from "@/lib/demonstracao-dia";
 import { eDataIso, type Categoria, type Equipa, type Mundo, type OperadorId, type Ordem, type Tecnologia } from "@/lib/rules";
+import { somarDias } from "@/lib/rules/tempo";
+import { ccosDaFrotaExtra, gerarEquipasExtra } from "@/lib/zonas/frota-seed";
 
 const globalParaDb = globalThis as unknown as { __vcDb?: DatabaseSync };
 
@@ -420,12 +422,16 @@ function semear(db: DatabaseSync): void {
     for (const cco of ccosDemonstracao()) {
       db.prepare("INSERT INTO ccos (id, nome) VALUES (?, ?)").run(cco.id, cco.nome);
     }
-    for (const equipa of mundo.equipas) {
+    const extras = gerarEquipasExtra(193);
+    for (const cco of ccosDaFrotaExtra(extras)) {
+      db.prepare("INSERT OR IGNORE INTO ccos (id, nome) VALUES (?, ?)").run(cco.id, cco.nome);
+    }
+    const inserirEquipa = (equipa: Equipa, ccoId: string) => {
       db.prepare("INSERT INTO equipas (id, codigo, nome, cco_id, base, areas, ativa) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
         equipa.id,
         equipa.codigo,
         equipa.nome,
-        EQUIPA_CCO[equipa.id],
+        ccoId,
         equipa.base,
         JSON.stringify(equipa.areas),
         equipa.ativa ? 1 : 0,
@@ -454,6 +460,12 @@ function semear(db: DatabaseSync): void {
           "INSERT INTO indisponibilidades (id, equipa_id, data, inicio, fim, motivo) VALUES (?, ?, ?, ?, ?, ?)",
         ).run(bloco.id, equipa.id, bloco.data, bloco.inicio, bloco.fim, bloco.motivo);
       }
+    };
+    for (const equipa of mundo.equipas) {
+      inserirEquipa(equipa, EQUIPA_CCO[equipa.id] ?? "cco-minho");
+    }
+    for (const extra of extras) {
+      inserirEquipa(extra.equipa, extra.ccoId);
     }
     for (const vigencia of vigenciasDemonstracao(dia)) {
       db.prepare("INSERT INTO equipa_zona (id, equipa_id, zona_id, inicio, fim) VALUES (?, ?, ?, ?, ?)").run(
@@ -462,6 +474,16 @@ function semear(db: DatabaseSync): void {
         vigencia.zonaId,
         vigencia.inicio,
         vigencia.fim,
+      );
+    }
+    const inicioVig = somarDias(dia, -365);
+    for (const extra of extras) {
+      db.prepare("INSERT INTO equipa_zona (id, equipa_id, zona_id, inicio, fim) VALUES (?, ?, ?, ?, ?)").run(
+        `vig-${extra.equipa.id}`,
+        extra.equipa.id,
+        extra.zonaId,
+        inicioVig,
+        null,
       );
     }
     for (const tecnico of tecnicosDemonstracao()) {
@@ -546,9 +568,10 @@ function inserirOrdem(db: DatabaseSync, ordem: Ordem, criadaPor: string | null, 
   );
 }
 
-export function transacao(trabalho: () => void): void {
+/** Reserva FCFS: BEGIN IMMEDIATE serializa escritores (segundo perde a corrida). */
+export function transacao(trabalho: () => void, imediata = false): void {
   const db = baseDados();
-  db.exec("BEGIN");
+  db.exec(imediata ? "BEGIN IMMEDIATE" : "BEGIN");
   try {
     trabalho();
     db.exec("COMMIT");
@@ -556,6 +579,10 @@ export function transacao(trabalho: () => void): void {
     db.exec("ROLLBACK");
     throw erro;
   }
+}
+
+export function transacaoImediata(trabalho: () => void): void {
+  transacao(trabalho, true);
 }
 
 export function lerMundo(): Mundo {
@@ -569,37 +596,41 @@ export function lerMundo(): Mundo {
   const indisponibilidades = db.prepare("SELECT * FROM indisponibilidades").all() as Record<string, string>[];
   const ordens = db.prepare("SELECT * FROM ordens").all() as Record<string, string | number | null>[];
 
-  const equipas: Equipa[] = equipasRows.map((linha) => ({
-    id: String(linha.id),
-    codigo: String(linha.codigo),
-    nome: String(linha.nome),
-    base: String(linha.base),
-    areas: JSON.parse(String(linha.areas)) as string[],
-    ativa: Number(linha.ativa) === 1,
-    competencias: competencias
+  const equipas: Equipa[] = equipasRows.map((linha) => {
+    const comps = competencias
       .filter((competencia) => competencia.equipa_id === linha.id)
       .map((competencia) => ({
         operadorId: competencia.operador_id as OperadorId,
         categorias: JSON.parse(competencia.categorias) as Categoria[],
         tecnologias: JSON.parse(competencia.tecnologias) as Tecnologia[],
-      })),
-    horarios: horarios
-      .filter((horario) => horario.equipa_id === linha.id)
-      .map((horario) => ({
-        diaSemana: Number(horario.dia_semana),
-        inicio: String(horario.inicio),
-        fim: String(horario.fim),
-      })),
-    indisponibilidades: indisponibilidades
-      .filter((bloco) => bloco.equipa_id === linha.id)
-      .map((bloco) => ({
-        id: bloco.id,
-        data: bloco.data,
-        inicio: bloco.inicio,
-        fim: bloco.fim,
-        motivo: bloco.motivo,
-      })),
-  }));
+      }));
+    return {
+      id: String(linha.id),
+      codigo: String(linha.codigo),
+      nome: String(linha.nome),
+      base: String(linha.base),
+      areas: JSON.parse(String(linha.areas)) as string[],
+      ativa: Number(linha.ativa) === 1,
+      operadoresServidos: comps.map((c) => c.operadorId),
+      competencias: comps,
+      horarios: horarios
+        .filter((horario) => horario.equipa_id === linha.id)
+        .map((horario) => ({
+          diaSemana: Number(horario.dia_semana),
+          inicio: String(horario.inicio),
+          fim: String(horario.fim),
+        })),
+      indisponibilidades: indisponibilidades
+        .filter((bloco) => bloco.equipa_id === linha.id)
+        .map((bloco) => ({
+          id: bloco.id,
+          data: bloco.data,
+          inicio: bloco.inicio,
+          fim: bloco.fim,
+          motivo: bloco.motivo,
+        })),
+    };
+  });
 
   return {
     margemDeslocacaoMin: Number(margem?.valor ?? 15),

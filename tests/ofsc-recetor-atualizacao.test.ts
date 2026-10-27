@@ -23,7 +23,7 @@ function atividade(parcial: Partial<AtividadeOfsc> = {}): AtividadeOfsc {
     status: "pending",
     date: diaTeste(),
     timeSlot: { start: "10:00", end: "12:00" },
-    workZone: "zn-n04",
+    workZone: "0105",
     apptNumber: `AZ-U${Math.random().toString(36).slice(2, 8)}`,
     tipoIntervencao: "instalacao",
     technician: "tec-helena",

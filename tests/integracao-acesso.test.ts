@@ -54,7 +54,7 @@ function eventoValido() {
       status: "pending",
       date: diaTeste(),
       timeSlot: { start: "10:00", end: "12:00" },
-      workZone: "zn-n04",
+      workZone: "0105",
       apptNumber: `AZ-ACE${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
       tipoIntervencao: "instalacao",
       technician: "tec-helena",
@@ -115,7 +115,7 @@ describe("integração: hub-only vs despachante com scope D1", () => {
     entrarComo("tecnico");
     expect((await consolaGET(pedido("GET", "/api/integracao/consola?operador=azul"), contexto())).status).toBe(403);
     expect(
-      (await vagasGET(pedido("GET", "/api/integracao/vagas?operador=azul&data=2032-05-04&zona=zn-n01&tipo=instalacao"), contexto()))
+      (await vagasGET(pedido("GET", "/api/integracao/vagas?operador=azul&data=2032-05-04&zona=0303&tipo=instalacao"), contexto()))
         .status,
     ).toBe(403);
     expect(
@@ -128,11 +128,11 @@ describe("integração: hub-only vs despachante com scope D1", () => {
     entrarComo("azul");
     expect((await consolaGET(pedido("GET", "/api/integracao/consola?operador=azul"), contexto())).status).toBe(200);
     expect(
-      (await vagasGET(pedido("GET", "/api/integracao/vagas?operador=azul&data=2032-05-04&zona=zn-n01&tipo=instalacao"), contexto()))
+      (await vagasGET(pedido("GET", "/api/integracao/vagas?operador=azul&data=2032-05-04&zona=0303&tipo=instalacao"), contexto()))
         .status,
     ).toBe(200);
     expect(
-      (await vagasGET(pedido("GET", "/api/integracao/vagas?operador=vermelho&data=2032-05-04&zona=zn-n01&tipo=instalacao"), contexto()))
+      (await vagasGET(pedido("GET", "/api/integracao/vagas?operador=vermelho&data=2032-05-04&zona=0303&tipo=instalacao"), contexto()))
         .status,
     ).toBe(403);
     const logs = (await (await consolaGET(pedido("GET", "/api/integracao/consola"), contexto())).json()) as {

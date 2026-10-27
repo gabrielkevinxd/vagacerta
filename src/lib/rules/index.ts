@@ -2,6 +2,7 @@ export * from "./agenda";
 export * from "./areas";
 export * from "./catalogo";
 export * from "./dia";
+export * from "./operadores-servidos";
 export * from "./permissoes";
 export * from "./reencaixe";
 export * from "./rotulos";
