@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { montarResumoDia, textoDe } from "@/lib/assistente/frases";
 import { en, folhasDe, ptPT, sufixoPlural, t, tp } from "@/lib/i18n";
 import { traduzirNarrativa } from "@/lib/i18n/motor";
+import { cssFonteInter, tokensDeGlobals } from "@/server/pagina-negada";
 
 describe("catálogos i18n", () => {
   it("pt-PT e en têm as mesmas chaves", () => {
@@ -56,5 +57,18 @@ describe("catálogos i18n", () => {
         pergunta: "onde está AZ-FILA-01",
       }),
     ).toContain("está em fila");
+    expect(textoDe(ptPT, { tipo: "esclarecer", chave: "assistente.verAlertas", vars: { n: 1, data: "2026-10-27" }, pergunta: "alertas" })).toMatch(
+      /^1 alerta no dia/,
+    );
+    expect(textoDe(ptPT, { tipo: "esclarecer", chave: "assistente.generico", vars: { n: 1 }, pergunta: "oi" })).toContain("Há 1 alerta");
+  });
+
+  it("pagina-negada lê tokens de globals.css", () => {
+    const tokens = tokensDeGlobals();
+    expect(tokens.background.toLowerCase()).toBe("#ffffff");
+    expect(tokens.primary.toLowerCase()).toBe("#6e56cf");
+    expect(tokens.foreground.toLowerCase()).toBe("#18181b");
+    const fonte = cssFonteInter();
+    expect(fonte.includes("@font-face") || fonte.includes("system-ui")).toBe(true);
   });
 });

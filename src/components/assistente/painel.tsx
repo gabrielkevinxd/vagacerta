@@ -55,14 +55,10 @@ export function PainelAssistenteCliente({ inicial }: { inicial: PainelAssistente
     setLinhas((atual) => [...atual, { papel: "utilizador", texto: limpo }]);
     setTexto("");
     try {
-      const historico = linhas.slice(-4).flatMap((linha) => {
-        const curto = linha.texto.trim().slice(0, 400);
-        return curto ? [{ papel: linha.papel, texto: curto }] : [];
-      });
+      // O histórico da conversa fica no servidor (não confiar no cliente).
       const resposta = await enviar<RespostaAssistente>("/api/assistente", {
         texto: limpo,
         data,
-        historico,
         propor: propor ?? undefined,
       });
       setLinhas((atual) => [...atual, { papel: "assistente", texto: resposta.mensagem.texto, origem: resposta.origem }]);
@@ -160,11 +156,12 @@ export function PainelAssistenteCliente({ inicial }: { inicial: PainelAssistente
                 type="button"
                 variant="outline"
                 size="default"
-                className="h-8 max-w-full truncate whitespace-nowrap text-left"
+                className="h-8 max-w-full whitespace-nowrap text-left"
+                title={exemplo.rotulo}
                 disabled={aTrabalhar}
                 onClick={() => void perguntar(exemplo.rotulo, exemplo.propor)}
               >
-                {exemplo.rotulo}
+                <span className="truncate">{exemplo.rotulo}</span>
               </Button>
             ))}
           </div>

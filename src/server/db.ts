@@ -166,6 +166,14 @@ function criarEsquema(db: DatabaseSync): void {
       acao TEXT NOT NULL,
       detalhe TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS assistente_historico (
+      id TEXT PRIMARY KEY,
+      utilizador_id TEXT NOT NULL REFERENCES utilizadores(id),
+      papel TEXT NOT NULL,
+      texto TEXT NOT NULL,
+      em TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_assistente_historico_utilizador ON assistente_historico (utilizador_id, em);
     CREATE TABLE IF NOT EXISTS definicoes (
       chave TEXT PRIMARY KEY,
       valor TEXT NOT NULL
@@ -289,6 +297,18 @@ function migrar(db: DatabaseSync): void {
   garantirColuna(db, "ofsc_ausencias", "lote_id", "ALTER TABLE ofsc_ausencias ADD COLUMN lote_id TEXT");
   garantirColuna(db, "indisponibilidades", "lote_id", "ALTER TABLE indisponibilidades ADD COLUMN lote_id TEXT");
   garantirColuna(db, "integracao_logs", "operador_id", "ALTER TABLE integracao_logs ADD COLUMN operador_id TEXT");
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS assistente_historico (
+      id TEXT PRIMARY KEY,
+      utilizador_id TEXT NOT NULL REFERENCES utilizadores(id),
+      papel TEXT NOT NULL,
+      texto TEXT NOT NULL,
+      em TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_assistente_historico_utilizador ON assistente_historico (utilizador_id, em);
+  `);
+  // Órfão do dual-auth removido: o segredo OFSC é só OFSC_WEBHOOK_SECRET.
+  db.prepare("DELETE FROM definicoes WHERE chave = 'segredo_integracao'").run();
   migrarLogsOperador(db);
   semearOfsc(db);
 }
