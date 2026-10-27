@@ -274,4 +274,48 @@ describe("limparSessoesExpiradas", () => {
       (db.prepare("SELECT COUNT(*) AS n FROM assistente_historico WHERE sessao_token = ?").get(token) as { n: number }).n,
     ).toBe(0);
   });
+
+  it("obterAtor com cookie válido limpa sessões expiradas de OUTRO utilizador (S2′)", async () => {
+    const { baseDados } = await import("@/server/db");
+    const db = baseDados();
+    const azul = db.prepare("SELECT id FROM utilizadores WHERE email = ?").get("azul@vagacerta.exemplo") as {
+      id: string;
+    };
+    const vermelho = db.prepare("SELECT id FROM utilizadores WHERE email = ?").get("vermelho@vagacerta.exemplo") as {
+      id: string;
+    };
+    const tokenExpirado = `expirado-outro-${Date.now()}`;
+    const tokenVivo = `vivo-vermelho-${Date.now()}`;
+    const passado = new Date(Date.now() - 60_000).toISOString();
+    const futuro = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
+    db.prepare("INSERT INTO sessoes (token, utilizador_id, expira_em, criada_em) VALUES (?, ?, ?, ?)").run(
+      tokenExpirado,
+      azul.id,
+      passado,
+      passado,
+    );
+    db.prepare(
+      "INSERT INTO assistente_historico (sessao_token, papel, texto, em, origem) VALUES (?, ?, ?, ?, ?)",
+    ).run(tokenExpirado, "utilizador", "histórico azul expirado", passado, null);
+    db.prepare("INSERT INTO sessoes (token, utilizador_id, expira_em, criada_em) VALUES (?, ?, ?, ?)").run(
+      tokenVivo,
+      vermelho.id,
+      futuro,
+      passado,
+    );
+
+    jar.clear();
+    jar.set("vc_sessao", tokenVivo);
+    const { obterAtor } = await import("@/server/sessao");
+    const ator = await obterAtor();
+    expect(ator?.operadorId).toBe("vermelho");
+    // Sem limparSessoesExpiradas() em obterAtor, o token do azul ficaria — o mutante falha aqui.
+    expect(db.prepare("SELECT token FROM sessoes WHERE token = ?").get(tokenExpirado)).toBeUndefined();
+    expect(
+      (db.prepare("SELECT COUNT(*) AS n FROM assistente_historico WHERE sessao_token = ?").get(tokenExpirado) as {
+        n: number;
+      }).n,
+    ).toBe(0);
+    expect(db.prepare("SELECT token FROM sessoes WHERE token = ?").get(tokenVivo)).toBeDefined();
+  });
 });

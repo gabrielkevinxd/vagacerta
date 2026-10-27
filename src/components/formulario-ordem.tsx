@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AREAS } from "@/lib/rules/areas";
@@ -62,6 +62,7 @@ function primeiraJanela(opcoes: JanelaOpcao[]): { inicio: string; fim: string } 
 export function FormularioOrdem({
   operadorFixo,
   zonas,
+  zonasPorArea = {},
   janelas,
   dataInicial,
   equipaIdInicial = null,
@@ -73,6 +74,8 @@ export function FormularioOrdem({
 }: {
   operadorFixo: OperadorId | null;
   zonas: { id: string; codigo: string; nome: string }[];
+  /** IDs de zona válidos por área (DICOFRE / cobertura). */
+  zonasPorArea?: Record<string, string[]>;
   janelas: JanelaOpcao[];
   dataInicial: string;
   equipaIdInicial?: string | null;
@@ -84,6 +87,7 @@ export function FormularioOrdem({
 }) {
   const { t, m } = useT();
   const router = useRouter();
+  const limparEquipaRef = useRef<HTMLButtonElement | null>(null);
   const [operadorId, setOperadorId] = useState<OperadorId>(operadorFixo ?? operadorInicial ?? "azul");
   const [categoria, setCategoria] = useState<(typeof CATEGORIAS)[number]>("instalacao");
   const [tecnologia, setTecnologia] = useState<string>("FTTH");
@@ -100,14 +104,30 @@ export function FormularioOrdem({
   const [janelaInicio, setJanelaInicio] = useState(inicial.inicio);
   const [janelaFim, setJanelaFim] = useState(inicial.fim);
   const [area, setArea] = useState<string>(areaInicial && (AREAS as readonly string[]).includes(areaInicial) ? areaInicial : AREAS[0]);
-  const [zonaId, setZonaId] = useState(zonaIdInicial && zonas.some((z) => z.id === zonaIdInicial) ? zonaIdInicial : (zonas[0]?.id ?? ""));
-  const [equipaId, setEquipaId] = useState<string | null>(equipaIdInicial);
-  const [equipaNome, setEquipaNome] = useState<string | null>(equipaNomeInicial);
+  const idsZonaArea = (zonasPorArea[area] ?? []).length > 0 ? zonasPorArea[area]! : zonas.map((z) => z.id);
+  const zonasVisiveis = zonas.filter((z) => idsZonaArea.includes(z.id));
+  const zonaInicial =
+    zonaIdInicial && idsZonaArea.includes(zonaIdInicial)
+      ? zonaIdInicial
+      : (idsZonaArea[0] ?? zonas[0]?.id ?? "");
+  const [zonaId, setZonaId] = useState(zonaInicial);
+  // equipaId inválido no URL: não pré-selecionar nem enviar.
+  const preselectValida = Boolean(equipaIdInicial && equipaNomeInicial);
+  const [equipaId, setEquipaId] = useState<string | null>(preselectValida ? equipaIdInicial : null);
+  const [equipaNome, setEquipaNome] = useState<string | null>(preselectValida ? equipaNomeInicial : null);
+  const [anuncioEquipa, setAnuncioEquipa] = useState("");
   const [prioridade, setPrioridade] = useState("media");
 
-  function limparEquipa() {
+  function limparEquipa(focarSeguinte = false) {
+    const tinha = Boolean(equipaId);
     setEquipaId(null);
     setEquipaNome(null);
+    if (tinha) setAnuncioEquipa(t("ordens.equipaLimpaAnuncio"));
+    if (focarSeguinte) {
+      queueMicrotask(() => {
+        document.getElementById("categoria")?.focus();
+      });
+    }
   }
   const [modo, setModo] = useState("agendar");
   const [data, setData] = useState(dataInicial);
@@ -142,12 +162,21 @@ export function FormularioOrdem({
 
   function aplicarCategoria(valor: (typeof CATEGORIAS)[number]) {
     setCategoria(valor);
+    limparEquipa();
     const proximas = janelas.filter(
       (linha) => linha.operadorId === operadorId && (linha.categoria === valor || linha.categoria === "qualquer"),
     );
     const janela = primeiraJanela(proximas);
     setJanelaInicio(janela.inicio);
     setJanelaFim(janela.fim);
+  }
+
+  function aplicarArea(valor: string) {
+    setArea(valor);
+    limparEquipa();
+    const ids = zonasPorArea[valor] ?? [];
+    const seguinte = ids.includes(zonaId) ? zonaId : (ids[0] ?? "");
+    setZonaId(seguinte);
   }
 
   const inicioValido = opcoes.some((linha) => linha.inicio === janelaInicio) || HORAS_30.includes(janelaInicio);
@@ -292,13 +321,17 @@ export function FormularioOrdem({
 
       <section className="space-y-3">
         <h2 className="text-[13px]/5 font-semibold tracking-tight">{t("ordens.seccaoVisita")}</h2>
+        <div aria-live="polite" className="sr-only">
+          {anuncioEquipa}
+        </div>
         {equipaId && equipaNome ? (
           <div className="inline-flex h-8 items-center gap-2 rounded-md border border-border bg-muted/60 px-2.5 text-[13px]/5">
             <span>{t("ordens.equipaReservada", { nome: equipaNome })}</span>
             <button
+              ref={limparEquipaRef}
               type="button"
               className="text-muted-foreground underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-              onClick={limparEquipa}
+              onClick={() => limparEquipa(true)}
             >
               {t("ordens.limparEquipa")}
             </button>
@@ -322,7 +355,13 @@ export function FormularioOrdem({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="prioridade">{t("ordens.prioridade")}</Label>
-            <Select value={prioridade} onValueChange={setPrioridade}>
+            <Select
+              value={prioridade}
+              onValueChange={(valor) => {
+                setPrioridade(valor);
+                limparEquipa();
+              }}
+            >
               <SelectTrigger id="prioridade" className="w-full text-[13px]/5">
                 <SelectValue />
               </SelectTrigger>
@@ -353,6 +392,7 @@ export function FormularioOrdem({
               value={inicioEfetivo}
               onValueChange={(valor) => {
                 setJanelaInicio(valor);
+                limparEquipa();
                 const match = opcoes.find((linha) => linha.inicio === valor);
                 if (match) setJanelaFim(match.fim);
               }}
@@ -373,7 +413,13 @@ export function FormularioOrdem({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="janela-fim">{t("ordens.janelaFimHora")}</Label>
-            <Select value={fimEfetivo} onValueChange={setJanelaFim}>
+            <Select
+              value={fimEfetivo}
+              onValueChange={(valor) => {
+                setJanelaFim(valor);
+                limparEquipa();
+              }}
+            >
               <SelectTrigger id="janela-fim" className="w-full font-mono text-[13px]/5" aria-invalid={Boolean(errosCampo.janela) || undefined}>
                 <SelectValue />
               </SelectTrigger>
@@ -443,13 +489,7 @@ export function FormularioOrdem({
           ) : null}
           <div className="space-y-1.5">
             <Label htmlFor="area">{t("ordens.area")}</Label>
-            <Select
-              value={area}
-              onValueChange={(valor) => {
-                setArea(valor);
-                limparEquipa();
-              }}
-            >
+            <Select value={area} onValueChange={aplicarArea}>
               <SelectTrigger id="area" className="w-full text-[13px]/5">
                 <SelectValue />
               </SelectTrigger>
@@ -464,12 +504,18 @@ export function FormularioOrdem({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="zonaId">{t("ordens.zona")}</Label>
-            <Select value={zonaId} onValueChange={setZonaId}>
+            <Select
+              value={zonaId}
+              onValueChange={(valor) => {
+                setZonaId(valor);
+                limparEquipa();
+              }}
+            >
               <SelectTrigger id="zonaId" className="w-full text-[13px]/5">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {zonas.map((zona) => (
+                {zonasVisiveis.map((zona) => (
                   <SelectItem key={zona.id} value={zona.id}>
                     {zona.codigo} · {zona.nome}
                   </SelectItem>
@@ -479,7 +525,13 @@ export function FormularioOrdem({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="modo">{t("ordens.oQueFazer")}</Label>
-            <Select value={modo} onValueChange={setModo}>
+            <Select
+              value={modo}
+              onValueChange={(valor) => {
+                setModo(valor);
+                limparEquipa();
+              }}
+            >
               <SelectTrigger id="modo" className="w-full text-[13px]/5">
                 <SelectValue />
               </SelectTrigger>

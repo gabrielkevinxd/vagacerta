@@ -354,6 +354,7 @@ export const en = {
     semEquipa: "No team",
     equipaReservada: "Team: {nome}",
     limparEquipa: "Clear team",
+    equipaLimpaAnuncio: "Team preselection cleared.",
     gravarFicha: "Save record",
     mudarEstado: "Change status",
     marcar: "Book",

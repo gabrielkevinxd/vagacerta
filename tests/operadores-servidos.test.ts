@@ -159,8 +159,14 @@ describe("operadoresServidos na base", () => {
     const detalhes = segunda.detalhes as { causa?: string; alternativa?: { inicio: string; fim: string; equipa: string } | null };
     expect(detalhes.causa).toBe("outro_operador");
     expect(detalhes.alternativa).toEqual(
-      expect.objectContaining({ inicio: expect.any(String), fim: expect.any(String), equipa: expect.any(String) }),
+      expect.objectContaining({
+        inicio: expect.stringMatching(/^\d{2}:\d{2}$/),
+        fim: expect.stringMatching(/^\d{2}:\d{2}$/),
+        equipa: expect.stringMatching(/\S/),
+        equipaId: expect.stringMatching(/^eq-/),
+      }),
     );
+    expect(detalhes.alternativa!.fim > detalhes.alternativa!.inicio).toBe(true);
   });
 
   it("reencaixe não coloca ordem azul numa equipa que só serve vermelho", () => {
@@ -243,7 +249,8 @@ describe("P1-9 despachante vê equipas sem OFSC/ordens alheias", () => {
 
     const minho = obterEquipa(despachanteAzul, "eq-minho");
     expect(minho.ocupacaoHoje.proprias.every((o) => o.operadorId === "azul")).toBe(true);
-    expect(minho.ocupacaoHoje.minutosOutros).toBeGreaterThanOrEqual(0);
+    // Minutos de outros na semente do dia de demo (VR+VD em Minho).
+    expect(minho.ocupacaoHoje.minutosOutros).toBe(155);
   });
 
   it("vê técnicos, motivos de indisponibilidade e competências dos outros operadores (Diogo)", async () => {

@@ -82,13 +82,15 @@ function pedidoEntregueAoMotor() {
  * em previsualizar e confirmarPlano — mata M2/M11 da revisão X1.
  */
 describe("limitarPedido — limite do pedido de reencaixe na API", () => {
-  const pasta = mkdtempSync(path.join(tmpdir(), "vagacerta-limitar-pedido-"));
+  let pasta: string | undefined;
   const guardado = {
     base: undefined as unknown,
     pasta: undefined as string | undefined,
   };
 
   beforeAll(() => {
+    // Pasta só quando a suite corre (não no import do ficheiro).
+    pasta = mkdtempSync(path.join(tmpdir(), "vagacerta-limitar-pedido-"));
     const global = globalThis as { __vcDb?: unknown };
     guardado.base = global.__vcDb;
     guardado.pasta = process.env.VC_DATA_DIR;
@@ -107,10 +109,12 @@ describe("limitarPedido — limite do pedido de reencaixe na API", () => {
     global.__vcDb = guardado.base as typeof global.__vcDb;
     if (guardado.pasta === undefined) delete process.env.VC_DATA_DIR;
     else process.env.VC_DATA_DIR = guardado.pasta;
-    try {
-      rmSync(pasta, { recursive: true, force: true });
-    } catch {
-      /* tmp */
+    if (pasta) {
+      try {
+        rmSync(pasta, { recursive: true, force: true });
+      } catch {
+        /* tmp */
+      }
     }
   });
 
@@ -158,11 +162,12 @@ describe("limitarPedido — limite do pedido de reencaixe na API", () => {
 
   it("confirmarPlano entrega ao motor o pedido limitado (apenasDoOperador + permitirTroca: false)", () => {
     vi.mocked(reencaixar).mockClear();
-    try {
-      confirmarPlano(despachanteVerde, { encaixarId: "ord-vd-urg", permitirTroca: true }, "x".repeat(16));
-    } catch {
-      /* selo errado: 409 DESATUALIZADO vem depois do motor */
-    }
+    const erro = falha(() =>
+      confirmarPlano(despachanteVerde, { encaixarId: "ord-vd-urg", permitirTroca: true }, "x".repeat(16)),
+    );
+    // Selo inventado → 409 DESATUALIZADO depois de limitarPedido / motor.
+    expect(erro.status).toBe(409);
+    expect(erro.codigo).toBe("DESATUALIZADO");
     expect(pedidoEntregueAoMotor()).toEqual({
       encaixarId: "ord-vd-urg",
       apenasDoOperador: "verde",
@@ -245,5 +250,39 @@ describe("limitarPedido — limite do pedido de reencaixe na API", () => {
         motivo: "VD-URG sai da fila e entra na equipa que ainda tem sequência.",
       },
     ]);
+  });
+
+  it("confirmarPlano com selo válido grava a diferença (x1-a′)", () => {
+    vi.mocked(reencaixar).mockClear();
+    const previa = previsualizar(despachanteVerde, { encaixarId: "ord-vd-urg", permitirTroca: true });
+    expect(previa.viavel).toBe(true);
+    expect(previa.selo.length).toBeGreaterThanOrEqual(16);
+    expect(pedidoEntregueAoMotor()).toEqual({
+      encaixarId: "ord-vd-urg",
+      apenasDoOperador: "verde",
+      permitirTroca: false,
+    });
+
+    const antes = baseDados()
+      .prepare("SELECT estado, equipa_id AS equipaId FROM ordens WHERE id = ?")
+      .get("ord-vd-urg") as { estado: string; equipaId: string | null };
+    expect(antes.estado).toBe("em_espera");
+    expect(antes.equipaId).toBeNull();
+
+    vi.mocked(reencaixar).mockClear();
+    const vista = confirmarPlano(despachanteVerde, { encaixarId: "ord-vd-urg", permitirTroca: true }, previa.selo);
+    expect(vista.viavel).toBe(true);
+    expect(pedidoEntregueAoMotor()).toEqual({
+      encaixarId: "ord-vd-urg",
+      apenasDoOperador: "verde",
+      permitirTroca: false,
+    });
+
+    // Sem gravarDiferença o mutante deixa a ordem em espera — falha aqui.
+    const depois = baseDados()
+      .prepare("SELECT estado, equipa_id AS equipaId FROM ordens WHERE id = ?")
+      .get("ord-vd-urg") as { estado: string; equipaId: string | null };
+    expect(depois.estado).toBe("agendada");
+    expect(depois.equipaId).toBe("eq-m024");
   });
 });
