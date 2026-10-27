@@ -6,7 +6,7 @@ import { diaSemanaIso, somarDias } from "@/lib/rules/tempo";
 import { avaliarMundo, type BaldeDia, type CorridaPolitica } from "./avaliar";
 import { FROTA_GEMEO } from "./frota";
 import { gerarMundo } from "./gerar";
-import { INICIO_HORIZONTE, PEDIDO_OMISSAO, type PedidoSimulacao } from "./pedido";
+import { inicioHorizonte, PEDIDO_OMISSAO, type PedidoSimulacao } from "./pedido";
 import type { Equipa } from "@/lib/rules/tipos";
 import { misturarSemente, mulberry32 } from "./rng";
 import type { PoliticaId } from "@/lib/contratos/gemeo";
@@ -74,8 +74,9 @@ export function correrSimulacao(
   pedido: PedidoSimulacao = PEDIDO_OMISSAO,
   idioma: Idioma = "pt-PT",
   frota: Equipa[] = FROTA_GEMEO,
+  inicio: string = inicioHorizonte(),
 ): RelatorioGemeo {
-  const datas = datasUteis(INICIO_HORIZONTE, pedido.semanas);
+  const datas = datasUteis(inicio, pedido.semanas);
   const totais: Record<PoliticaId, BaldeDia> = {
     independente: baldeVazio(),
     partilhada: baldeVazio(),

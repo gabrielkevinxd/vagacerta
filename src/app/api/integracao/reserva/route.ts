@@ -1,7 +1,9 @@
 import { eOperadorOfsc, type ReservaEstruturada } from "@/lib/ofsc/tipos";
 import { eTipoIntervencao } from "@/lib/ofsc/quotas";
+import { apresentarResultado } from "@/lib/i18n/motor";
 import { exigirIntegracao } from "@/server/autorizacao";
 import { api, lerJson } from "@/server/http";
+import { mensagensAtuais } from "@/server/idioma";
 import { ErroHttp } from "@/server/erros";
 import { criarAtividadeNoBucket } from "@/server/ofsc/criar";
 import { camposEmFalta } from "@/lib/ofsc/interpretador";
@@ -48,5 +50,7 @@ export const POST = api(async (ator, pedido) => {
   };
   const falta = camposEmFalta(reserva);
   if (falta.length) throw new ErroHttp(400, "DADOS_INVALIDOS", `Campos em falta: ${falta.join(", ")}.`);
-  return criarAtividadeNoBucket(reserva);
+  const criada = await criarAtividadeNoBucket(reserva);
+  // contrato OFSC em PT; `apresentacao` para UI no idioma do pedido
+  return { ...criada, apresentacao: apresentarResultado(mensagensAtuais(), criada.resultado) };
 });

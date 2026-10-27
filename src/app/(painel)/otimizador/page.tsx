@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { DATA_DEMONSTRACAO } from "@/lib/demonstracao";
 import { um } from "@/lib/consulta-pagina";
 import type { PlanoVista } from "@/lib/rules/agenda";
 import type { PedidoRealocacao } from "@/lib/rules/reencaixe";
@@ -12,6 +11,7 @@ import { SeletorData } from "@/components/seletor-data";
 import { SemAcesso } from "@/components/sem-acesso";
 import { traduzirMensagem, traduzirPlanoVista } from "@/lib/i18n/motor";
 import { ErroHttp } from "@/server/erros";
+import { diaDemonstracaoAtual } from "@/server/db";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 import { listarEquipas, listarOrdens, previsualizar } from "@/server/servicos";
@@ -34,7 +34,8 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
   const ator = await exigirAtorPagina();
   const consulta = await searchParams;
   const pedida = um(consulta.data);
-  const data = eDataIso(pedida) ? pedida : DATA_DEMONSTRACAO;
+  const diaRico = diaDemonstracaoAtual();
+  const data = eDataIso(pedida) ? pedida : diaRico;
   const central = eCentral(ator);
   const confirmado = um(consulta.confirmado) === "1";
   const erroConsulta = um(consulta.erro);

@@ -1,5 +1,5 @@
 export { correrSimulacao, datasUteis } from "./correr";
-export { INICIO_HORIZONTE, PEDIDO_OMISSAO, normalizarPedido } from "./pedido";
+export { inicioHorizonte, PEDIDO_OMISSAO, normalizarPedido } from "./pedido";
 export type { PedidoSimulacao } from "./pedido";
 export { indicadoresDoDia } from "./indicadores";
 export { FROTA_GEMEO } from "./frota";

@@ -113,7 +113,10 @@ function aplicar(evento: EventoOfsc) {
 
   const origem = evento.operator;
   const act = evento.activity;
-  guardarAtividade(origem, act, null, null);
+  // A ligação à ordem tem de ser lida ANTES de gravar: gravar com null apagava ordem_id e
+  // tornava inalcançáveis o cancelamento e o reagendamento (activityUpdated).
+  const previa = lerAtividade(act.activityId);
+  guardarAtividade(origem, act, previa?.ordem_id ?? null, previa?.referencia ?? null);
   registarLog(
     "origem",
     `OFSC do ${NOME_OPERADOR[origem]} enviou ${evento.eventType} (${act.activityId}, appt ${act.apptNumber || "—"}) no bucket ${act.bucket || BUCKET_DST}.`,
@@ -121,7 +124,6 @@ function aplicar(evento: EventoOfsc) {
   );
 
   const cancelado = /cancel/i.test(act.status);
-  const previa = lerAtividade(act.activityId);
 
   if (cancelado && previa?.ordem_id) {
     const vista = mudarEstado(ATOR_OFSC, previa.ordem_id, "cancelada", "Cancelamento OFSC", "operador");
@@ -223,6 +225,7 @@ function aplicar(evento: EventoOfsc) {
     criarAusenciasOutros(origem, act.activityId, vista.equipaId, vista.data, vista.inicioPlaneado, vista.fimPlaneado, contador);
   }
   marcarProcessado(act.activityId, assinatura, evento.eventType, "Reserva Confirmada");
+  // O contador já traz «(N → N-1)»: não se repete no fim da linha.
   registarLog("vagacerta", `Reserva Confirmada: ${vista.referencia} na ${celula.equipaNome}. ${contador}.`, {
     operadorId: vista.operadorId,
   });

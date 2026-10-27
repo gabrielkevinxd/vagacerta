@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { DATA_DEMONSTRACAO } from "@/lib/demonstracao";
 import { um } from "@/lib/consulta-pagina";
 import { fundirAgenda } from "@/lib/agenda-vista";
 import type { Agenda, BlocoVista, LinhaVista } from "@/lib/rules/agenda";
@@ -14,6 +13,7 @@ import { formatarDataLocale, formatarDataLongaLocale } from "@/lib/i18n/formatac
 import { traduzirMensagem, traduzirNarrativa } from "@/lib/i18n/motor";
 import { eCentral, eDataIso, hojeLisboa, semanaIso, somarDias } from "@/lib/rules";
 import { ErroHttp } from "@/server/erros";
+import { diaDemonstracaoAtual } from "@/server/db";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 import { obterAgenda, preverReagendamento } from "@/server/servicos";
@@ -45,7 +45,8 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
   const ator = await exigirAtorPagina();
   const consulta = await searchParams;
   const pedida = um(consulta.data);
-  const data = eDataIso(pedida) ? pedida : DATA_DEMONSTRACAO;
+  const diaRico = diaDemonstracaoAtual();
+  const data = eDataIso(pedida) ? pedida : diaRico;
   const vista = um(consulta.vista) === "semana" ? "semana" : "dia";
   const intervalo = vista === "semana" ? semanaIso(data) : { inicio: data, fim: data };
   const agenda = obterAgenda(ator, intervalo.inicio, intervalo.fim);
@@ -108,7 +109,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
               vista === "semana" ? t("agenda.semanaSeguinte") : t("agenda.diaSeguinte"),
             )}
             {ligacao(`/agenda?vista=${vista}&data=${hoje}`, t("comum.hoje"))}
-            {ligacao(`/agenda?vista=${vista}&data=${DATA_DEMONSTRACAO}`, t("agenda.demonstracao"))}
+            {ligacao(`/agenda?vista=${vista}&data=${diaRico}`, t("agenda.demonstracao"))}
           </div>
         }
       />

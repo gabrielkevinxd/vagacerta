@@ -86,7 +86,7 @@ export function eOperadorId(valor: string): valor is OperadorId {
   return eOperadorOfsc(valor);
 }
 
-export function atividadeVazia(operadorId: OperadorOfsc): AtividadeOfsc {
+export function atividadeVazia(): AtividadeOfsc {
   return {
     activityId: "",
     resourceId: null,

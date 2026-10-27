@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { DATA_DEMONSTRACAO } from "@/lib/demonstracao";
 import { um } from "@/lib/consulta-pagina";
 import { eCentral, eDataIso, podeGerirEquipas } from "@/lib/rules";
 import { AcoesEquipa } from "@/components/acoes-equipa";
@@ -13,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import type { Chave } from "@/lib/i18n";
 import { formatarDataLocale, formatarDataLongaLocale } from "@/lib/i18n/formatacao";
 import { i18nPedido } from "@/server/idioma";
+import { diaDemonstracaoAtual } from "@/server/db";
 import { exigirAtorPagina } from "@/server/sessao";
 import { listarZonas, obterEquipa } from "@/server/servicos";
 
@@ -38,7 +38,8 @@ async function Conteudo({
   const consulta = await searchParams;
   const { t, idioma } = await i18nPedido();
   const pedida = um(consulta.data);
-  const data = eDataIso(pedida) ? pedida : DATA_DEMONSTRACAO;
+  const diaRico = diaDemonstracaoAtual();
+  const data = eDataIso(pedida) ? pedida : diaRico;
   const ator = await exigirAtorPagina();
   const equipa = obterEquipa(ator, id, data);
   const zonas = listarZonas();

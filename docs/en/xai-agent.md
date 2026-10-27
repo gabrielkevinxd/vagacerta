@@ -13,6 +13,12 @@ Copy `.env.example` to `.env.local`. **Do not commit `.env.local` or any real ke
 
 With a key, the call hits `https://api.x.ai/v1/chat/completions` with tool `preencher_reserva_ofsc` and a low `max_tokens`. On failure it falls back to the parser.
 
-`LLM_API_KEY` / `LLM_BASE_URL` / `LLM_MODEL` are for `/assistente`, which is still **501**. The rest of the app runs without that key.
+## Dispatch assistant (`/assistente`)
+
+The same `XAI_API_KEY` / `XAI_MODEL` pair serves the chat. The model is non-reasoning, with a low `max_tokens`, a short history and a compact summary of the day. Tools (`consultar_operacao`, `listar_alertas`, `propor_reencaixe`) only read or choose a preview.
+
+With no key, or if the call fails, the screen still answers: the **Proactive alerts** panel and the frequent questions are deterministic (overload, quotas, absent technicians, orders without a technician, overlaps). A sentence never saves. Confirm uses the same stamp and the same transaction as `POST /api/otimizar/confirmar`. A dispatcher only sees their operator.
+
+`LLM_API_KEY` / `LLM_BASE_URL` / `LLM_MODEL` are unused.
 
 Tests **do not** call xAI: they mock it (`tests/ofsc-xai.test.ts`).

@@ -4,6 +4,6 @@ A VagaCerta é um protótipo de **agendamento partilhado de visitas técnicas**.
 
 A interface é bilingue: **português europeu** (predefinição) e **inglês**. O seletor **PT | EN** grava o cookie `vc_idioma` e, com sessão, a preferência na conta.
 
-O dia rico da demonstração é **2026-10-27**. A base é SQLite local (`data/vagacerta.sqlite`, `node:sqlite` do Node 22). Não há serviço externo obrigatório.
+O **dia rico** da demonstração é **hoje** em Lisboa (ou a segunda-feira seguinte, se hoje for fim de semana); `VC_DEMO_DIA=AAAA-MM-DD` fixa-o. Fica gravado na base ao semear e todas as datas da demonstração são relativas a ele; para voltar a «hoje» use `npm run demo:reset`. A base é SQLite local (`data/vagacerta.sqlite`, `node:sqlite` do Node 22). Não há serviço externo obrigatório.
 
-Páginas principais: `/entrar`, `/` (painel), `/ordens`, `/equipas`, `/agenda` (Gantt), `/otimizador` (reencaixe), `/gemeo` (simular ou injetar), `/integracao` (OFSC), `/definicoes`, `/assistente` (ainda 501).
+Páginas principais: `/entrar`, `/` (painel), `/ordens`, `/equipas`, `/agenda` (Gantt), `/otimizador` (reencaixe), `/gemeo` (simular ou injetar), `/integracao` (OFSC), `/definicoes`, `/assistente` (chat e alertas; grava só depois de confirmar).
