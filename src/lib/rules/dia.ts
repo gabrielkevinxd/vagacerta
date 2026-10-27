@@ -283,7 +283,9 @@ export function cancelarOrdem(
 ): Resultado<Ordem> {
   const existente = mundo.ordens.find((ordem) => ordem.id === id);
   if (!existente) return falha("NAO_ENCONTRADO", "Não encontrámos a ordem.");
-  if (existente.estado === "cancelada") return { ok: true, mundo, resultado: existente };
+  if (existente.estado === "cancelada") {
+    return falha("JA_CANCELADA", "Esta ordem já está cancelada.");
+  }
   if (!ocupaCapacidade(existente.estado) && existente.estado !== "pendente" && existente.estado !== "em_espera") {
     return falha("CONFLITO", "Esta ordem já não pode ser cancelada.");
   }

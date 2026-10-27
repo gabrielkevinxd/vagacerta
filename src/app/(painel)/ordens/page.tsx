@@ -143,10 +143,16 @@ async function Lista({ searchParams }: { searchParams: Promise<Record<string, st
           idioma={idioma}
           ordemAberta={ordemAberta || undefined}
           selecionavel={ator.papel !== "tecnico"}
+          quemPediuPadrao={ator.papel === "despachante" ? "operador" : "central"}
           ordens={linhas}
         />
       )}
-      <PainelDetalheOrdem ordem={abertaLinha} idioma={idioma} podeAgir={ator.papel !== "tecnico"} />
+      <PainelDetalheOrdem
+        ordem={abertaLinha}
+        idioma={idioma}
+        podeAgir={ator.papel !== "tecnico"}
+        quemPediuPadrao={ator.papel === "despachante" ? "operador" : "central"}
+      />
     </div>
   );
 }

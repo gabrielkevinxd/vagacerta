@@ -79,18 +79,26 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
           />
           <Indicador
             rotulo={t("painel.ocioso")}
-            valor={`${vista.indicadores.minutosOciosos}`}
+            valor={formatarNumero(vista.indicadores.minutosOciosos, idioma)}
             detalhe={t("painel.turnoSemVisita")}
             className="p-3 [&_p:nth-child(2)]:text-xl"
           />
           <Indicador
             rotulo={t("painel.recusadas")}
-            valor={String(vista.indicadores.recusadas)}
+            valor={formatarNumero(vista.indicadores.recusadas, idioma)}
             detalhe={t("painel.filaDia")}
             className="p-3 [&_p:nth-child(2)]:text-xl"
           />
-          <Indicador rotulo={t("painel.agendadas")} valor={String(vista.contagens.agendada)} className="p-3 [&_p:nth-child(2)]:text-xl" />
-          <Indicador rotulo={t("painel.emFila")} valor={String(vista.contagens.emEspera)} className="p-3 [&_p:nth-child(2)]:text-xl" />
+          <Indicador
+            rotulo={t("painel.agendadas")}
+            valor={formatarNumero(vista.contagens.agendada, idioma)}
+            className="p-3 [&_p:nth-child(2)]:text-xl"
+          />
+          <Indicador
+            rotulo={t("painel.emFila")}
+            valor={formatarNumero(vista.contagens.emEspera, idioma)}
+            className="p-3 [&_p:nth-child(2)]:text-xl"
+          />
         </GrelhaIndicadores>
         <ul className="flex flex-wrap gap-2 text-xs text-muted-foreground">
           {cartoes

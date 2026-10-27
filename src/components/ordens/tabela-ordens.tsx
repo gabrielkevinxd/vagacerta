@@ -12,6 +12,7 @@ import {
   tableFeatures,
   useTable,
   type ColumnDef,
+  type RowSelectionState,
   type SortingState,
 } from "@tanstack/react-table";
 import { useT } from "@/components/idioma/provedor";
@@ -26,10 +27,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { enviar } from "@/lib/cliente";
 import { formatarDataLocale } from "@/lib/i18n/formatacao";
 import type { Idioma } from "@/lib/i18n";
-import type { EstadoOrdem, OperadorId } from "@/lib/rules";
+import { estadoCancelavel, QUEM_PEDIU, type EstadoOrdem, type OperadorId, type QuemPediu } from "@/lib/rules";
 import { cn } from "@/lib/utils";
 
 export type LinhaOrdem = {
@@ -54,22 +57,29 @@ const features = tableFeatures({
 
 type Features = typeof features;
 
-function exportarCsv(ordens: LinhaOrdem[], idioma: Idioma) {
+function exportarCsv(
+  ordens: LinhaOrdem[],
+  idioma: Idioma,
+  rotulo: (ordem: LinhaOrdem) => { operador: string; estado: string },
+) {
   const cabecalho = ["ref", "cliente", "data", "janela", "equipa", "operador", "estado"];
-  const linhas = ordens.map((ordem) =>
-    [
+  const linhas = ordens.map((ordem) => {
+    const nomes = rotulo(ordem);
+    return [
       ordem.referencia,
       ordem.clienteNome,
       formatarDataLocale(ordem.data, idioma),
       `${ordem.janelaInicio}-${ordem.janelaFim}`,
       ordem.equipaNome ?? "",
-      ordem.operadorId,
-      ordem.estado,
+      nomes.operador,
+      nomes.estado,
     ]
       .map((celula) => `"${String(celula).replaceAll('"', '""')}"`)
-      .join(","),
-  );
-  const blob = new Blob([[cabecalho.join(","), ...linhas].join("\n")], { type: "text/csv;charset=utf-8" });
+      .join(";");
+  });
+  const blob = new Blob(["\uFEFF" + [cabecalho.join(";"), ...linhas].join("\n")], {
+    type: "text/csv;charset=utf-8",
+  });
   const url = URL.createObjectURL(blob);
   const ancora = document.createElement("a");
   ancora.href = url;
@@ -83,55 +93,27 @@ export function TabelaOrdens({
   idioma,
   ordemAberta,
   selecionavel = true,
+  quemPediuPadrao = "operador",
 }: {
   ordens: LinhaOrdem[];
   idioma: Idioma;
   ordemAberta?: string;
   selecionavel?: boolean;
+  quemPediuPadrao?: QuemPediu;
 }) {
   const { t } = useT();
   const router = useRouter();
-  const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [sorting, setSorting] = useState<SortingState>([{ id: "janela", desc: false }]);
   const [confirmarMassa, setConfirmarMassa] = useState(false);
   const [aCancelarMassa, setACancelarMassa] = useState(false);
+  const [motivo, setMotivo] = useState("");
+  const [quemPediu, setQuemPediu] = useState<QuemPediu>(quemPediuPadrao);
 
   const abrir = (id: string) => {
     const sp = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
     sp.set("ordem", id);
     router.push(`/ordens?${sp.toString()}`, { scroll: false });
-  };
-
-  const limparSelecao = () => setSelecionadas(new Set());
-
-  const idsSelecionados = useMemo(() => [...selecionadas], [selecionadas]);
-  const ordensSelecionadas = useMemo(
-    () => ordens.filter((ordem) => selecionadas.has(ordem.id)),
-    [ordens, selecionadas],
-  );
-
-  const cancelarMassa = async () => {
-    if (aCancelarMassa || idsSelecionados.length === 0) return;
-    setACancelarMassa(true);
-    let ok = 0;
-    let falhas = 0;
-    for (const id of idsSelecionados) {
-      try {
-        await enviar(`/api/ordens/${id}/cancelar`, {
-          motivo: "Cancelamento em massa.",
-          quemPediu: "central",
-        });
-        ok += 1;
-      } catch {
-        falhas += 1;
-      }
-    }
-    setConfirmarMassa(false);
-    setACancelarMassa(false);
-    limparSelecao();
-    if (ok > 0) toast(t("toast.ordensCanceladas", { n: ok }));
-    if (falhas > 0) toast.error(t("toast.ordensCancelarFalhas", { n: falhas }));
-    router.refresh();
   };
 
   const colunas = useMemo<ColumnDef<Features, LinhaOrdem>[]>(() => {
@@ -148,16 +130,8 @@ export function TabelaOrdens({
         ),
         cell: ({ row }) => (
           <Checkbox
-            checked={selecionadas.has(row.original.id) || row.getIsSelected()}
-            onCheckedChange={(v) => {
-              row.toggleSelected(Boolean(v));
-              setSelecionadas((atual) => {
-                const proximo = new Set(atual);
-                if (v) proximo.add(row.original.id);
-                else proximo.delete(row.original.id);
-                return proximo;
-              });
-            }}
+            checked={row.getIsSelected()}
+            onCheckedChange={(v) => row.toggleSelected(Boolean(v))}
             aria-label={row.original.referencia}
           />
         ),
@@ -217,20 +191,66 @@ export function TabelaOrdens({
         accessorKey: "estado",
         id: "estado",
         header: t("comum.estado"),
-        cell: ({ row }) => <EtiquetaEstado estado={row.original.estado} />,
+        cell: ({ row }) => (
+          <div className="min-w-[7.5rem]">
+            <EtiquetaEstado estado={row.original.estado} />
+          </div>
+        ),
       },
     );
     return base;
-  }, [idioma, ordens.length, selecionadas, selecionavel, t]);
+  }, [idioma, ordens.length, selecionavel, t]);
 
   const table = useTable({
     features,
     data: ordens,
     columns: colunas,
-    state: { sorting },
+    state: { sorting, rowSelection },
     onSortingChange: setSorting,
+    onRowSelectionChange: setRowSelection,
     getRowId: (row) => row.id,
+    enableRowSelection: selecionavel,
   });
+
+  const limparSelecao = () => {
+    table.resetRowSelection();
+    setRowSelection({});
+  };
+
+  const ordensSelecionadas = table.getSelectedRowModel().rows.map((row) => row.original);
+  const cancelaveis = ordensSelecionadas.filter((ordem) => estadoCancelavel(ordem.estado));
+  const ignoradas = ordensSelecionadas.length - cancelaveis.length;
+
+  const abrirCancelarMassa = () => {
+    setMotivo("");
+    setQuemPediu(quemPediuPadrao);
+    setConfirmarMassa(true);
+  };
+
+  const cancelarMassa = async () => {
+    const motivoLimpo = motivo.trim();
+    if (aCancelarMassa || cancelaveis.length === 0 || motivoLimpo.length < 3) return;
+    setACancelarMassa(true);
+    let ok = 0;
+    let falhas = 0;
+    for (const ordem of cancelaveis) {
+      try {
+        await enviar(`/api/ordens/${ordem.id}/cancelar`, {
+          motivo: motivoLimpo,
+          quemPediu,
+        });
+        ok += 1;
+      } catch {
+        falhas += 1;
+      }
+    }
+    setConfirmarMassa(false);
+    setACancelarMassa(false);
+    limparSelecao();
+    if (ok > 0) toast(t("toast.ordensCanceladas", { n: ok }));
+    if (falhas > 0) toast.error(t("toast.ordensCancelarFalhas", { n: falhas }));
+    router.refresh();
+  };
 
   return (
     <div className="relative">
@@ -323,9 +343,9 @@ export function TabelaOrdens({
         </table>
       </div>
 
-      {selecionavel && selecionadas.size > 0 ? (
+      {selecionavel && ordensSelecionadas.length > 0 ? (
         <div className="fixed inset-x-0 bottom-4 z-30 mx-auto flex w-fit items-center gap-3 rounded-lg border border-border bg-popover px-3 py-2 shadow-[var(--shadow-popover)]">
-          <span className="text-xs font-medium">{t("tabela.selecionadas", { n: selecionadas.size })}</span>
+          <span className="text-xs font-medium">{t("tabela.selecionadas", { n: ordensSelecionadas.length })}</span>
           <Button
             type="button"
             size="sm"
@@ -337,7 +357,7 @@ export function TabelaOrdens({
           >
             {t("tabela.reagendar")}
           </Button>
-          <Button type="button" size="sm" variant="outline" onClick={() => setConfirmarMassa(true)}>
+          <Button type="button" size="sm" variant="outline" onClick={abrirCancelarMassa} disabled={cancelaveis.length === 0}>
             {t("tabela.cancelar")}
           </Button>
           <Button
@@ -345,7 +365,10 @@ export function TabelaOrdens({
             size="sm"
             variant="ghost"
             onClick={() => {
-              exportarCsv(ordensSelecionadas, idioma);
+              exportarCsv(ordensSelecionadas, idioma, (ordem) => ({
+                operador: t(`operador.${ordem.operadorId}`),
+                estado: t(`estado.${ordem.estado}`),
+              }));
               limparSelecao();
             }}
           >
@@ -357,14 +380,50 @@ export function TabelaOrdens({
       <Dialog open={confirmarMassa} onOpenChange={setConfirmarMassa}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("confirmar.cancelarMassaTitulo", { n: selecionadas.size })}</DialogTitle>
-            <DialogDescription>{t("confirmar.cancelarMassaDetalhe")}</DialogDescription>
+            <DialogTitle>{t("confirmar.cancelarMassaTitulo", { n: cancelaveis.length })}</DialogTitle>
+            <DialogDescription>
+              {t("confirmar.cancelarMassaDetalhe")}
+              {ignoradas > 0 ? ` ${t("confirmar.cancelarMassaIgnoradas", { n: ignoradas })}` : ""}
+            </DialogDescription>
           </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="motivo-massa">{t("ordens.motivoSimples")}</Label>
+              <Textarea
+                id="motivo-massa"
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                required
+                minLength={3}
+                rows={3}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="quem-massa">{t("ordens.quemPediu")}</Label>
+              <select
+                id="quem-massa"
+                className="h-9 w-full rounded-md border border-input bg-card px-2.5 text-[13px]/5"
+                value={quemPediu}
+                onChange={(e) => setQuemPediu(e.target.value as QuemPediu)}
+              >
+                {QUEM_PEDIU.map((item) => (
+                  <option key={item} value={item}>
+                    {t(`quem.${item}`)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setConfirmarMassa(false)} disabled={aCancelarMassa}>
               {t("comum.cancelar")}
             </Button>
-            <Button type="button" variant="destructive" onClick={() => void cancelarMassa()} disabled={aCancelarMassa}>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => void cancelarMassa()}
+              disabled={aCancelarMassa || cancelaveis.length === 0 || motivo.trim().length < 3}
+            >
               {t("tabela.cancelar")}
             </Button>
           </DialogFooter>

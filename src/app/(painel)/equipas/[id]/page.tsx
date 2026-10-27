@@ -136,17 +136,6 @@ async function Conteudo({
           </ul>
         )}
       </section>
-      <section className="space-y-2">
-        <h2 className="text-base font-semibold tracking-tight">{t("equipas.membros")}</h2>
-        <ul className="text-[13px]/5">
-          {equipa.membros.map((membro) => (
-            <li key={membro.id}>
-              {membro.nome}
-              {membro.ativo ? "" : ` ${t("comum.inativo")}`}
-            </li>
-          ))}
-        </ul>
-      </section>
       {central ? (
         <AcoesEquipa
           equipaId={equipa.id}
@@ -158,20 +147,33 @@ async function Conteudo({
           indisponibilidades={equipa.indisponibilidades}
         />
       ) : (
-        <section className="space-y-2">
-          <h2 className="text-base font-semibold tracking-tight">{t("equipas.indisponibilidades")}</h2>
-          {equipa.indisponibilidades.length === 0 ? (
-            <p className="text-[13px]/5 text-muted-foreground">{t("equipas.nenhumaIndisp")}</p>
-          ) : (
+        <>
+          <section className="space-y-2">
+            <h2 className="text-base font-semibold tracking-tight">{t("equipas.membros")}</h2>
             <ul className="text-[13px]/5">
-              {equipa.indisponibilidades.map((bloco) => (
-                <li key={bloco.id}>
-                  {formatarDataLocale(bloco.data, idioma)} {bloco.inicio}–{bloco.fim} · {bloco.motivo}
+              {equipa.membros.map((membro) => (
+                <li key={membro.id}>
+                  {membro.nome}
+                  {membro.ativo ? "" : ` ${t("comum.inativo")}`}
                 </li>
               ))}
             </ul>
-          )}
-        </section>
+          </section>
+          <section className="space-y-2">
+            <h2 className="text-base font-semibold tracking-tight">{t("equipas.indisponibilidades")}</h2>
+            {equipa.indisponibilidades.length === 0 ? (
+              <p className="text-[13px]/5 text-muted-foreground">{t("equipas.nenhumaIndisp")}</p>
+            ) : (
+              <ul className="text-[13px]/5">
+                {equipa.indisponibilidades.map((bloco) => (
+                  <li key={bloco.id}>
+                    {formatarDataLocale(bloco.data, idioma)} {bloco.inicio}–{bloco.fim} · {bloco.motivo}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </>
       )}
     </div>
   );

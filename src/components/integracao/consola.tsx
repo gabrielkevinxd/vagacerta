@@ -135,6 +135,7 @@ export function ConsolaIntegracao({
   const [logs, setLogs] = useState<Log[]>([]);
   const [retries, setRetries] = useState(0);
   const [celulas, setCelulas] = useState<Celula[]>([]);
+  const [zonas, setZonas] = useState<{ id: string; codigo: string; nome: string }[]>([]);
 
   function campo<K extends keyof Formulario>(chave: K, valor: Formulario[K]) {
     setForm((atual) => ({ ...atual, [chave]: valor }));
@@ -160,6 +161,17 @@ export function ConsolaIntegracao({
     const dados = await enviar<{ celulas: Celula[] }>(`/api/integracao/vagas?${q}`, undefined, "GET");
     setCelulas(dados.celulas);
   }
+
+  useEffect(() => {
+    void enviar<{ id: string; codigo: string; nome: string }[]>("/api/zonas", undefined, "GET")
+      .then((lista) => {
+        setZonas(lista);
+        if (lista[0] && form.zona === FORM_VAZIO.zona && !lista.some((z) => z.id === form.zona)) {
+          setForm((atual) => ({ ...atual, zona: lista[0]!.id }));
+        }
+      })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     void refrescar().catch(() => undefined);
@@ -351,6 +363,20 @@ export function ConsolaIntegracao({
               <span className="mb-1 block text-muted-foreground">{textos.campos[chave]}</span>
               {chave === "data" ? (
                 <SeletorData valor={form.data} onChange={(iso) => campo("data", iso)} required />
+              ) : chave === "zona" ? (
+                <select
+                  className="h-10 w-full rounded-lg border border-input bg-background px-2 text-[13px]/5"
+                  value={form.zona}
+                  onChange={(e) => campo("zona", e.target.value)}
+                  required
+                >
+                  {zonas.length === 0 ? <option value={form.zona}>{form.zona}</option> : null}
+                  {zonas.map((zona) => (
+                    <option key={zona.id} value={zona.id}>
+                      {zona.codigo} · {zona.nome}
+                    </option>
+                  ))}
+                </select>
               ) : (
                 <input
                   className="h-10 w-full rounded-lg border border-input bg-background px-2 text-[13px]/5"

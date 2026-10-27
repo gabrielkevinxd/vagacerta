@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useT } from "@/components/idioma/provedor";
 import type { Chave } from "@/lib/i18n";
 import { formatarDataLocale } from "@/lib/i18n/formatacao";
+import { traduzirMensagem } from "@/lib/i18n/motor";
 import { enviar } from "@/lib/cliente";
 import { SeletorData } from "@/components/seletor-data";
 import { Button } from "@/components/ui/button";
@@ -49,7 +50,7 @@ export function AcoesEquipa({
   membros: { id: string; nome: string; ativo: boolean }[];
   indisponibilidades: { id: string; data: string; inicio: string; fim: string; motivo: string }[];
 }) {
-  const { t, idioma } = useT();
+  const { t, idioma, m } = useT();
   const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
   const [aTrabalhar, setATrabalhar] = useState(false);
@@ -64,7 +65,8 @@ export function AcoesEquipa({
       await trabalho();
       router.refresh();
     } catch (falha) {
-      setErro(falha instanceof Error ? falha.message : t("comum.pedidoFalhou"));
+      const texto = falha instanceof Error ? falha.message : "";
+      setErro(traduzirMensagem(m, texto) || t("comum.pedidoFalhou"));
     } finally {
       setATrabalhar(false);
     }

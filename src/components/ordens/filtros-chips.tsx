@@ -16,7 +16,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { formatarDataLocale } from "@/lib/i18n/formatacao";
 import type { Idioma } from "@/lib/i18n";
-import { ESTADOS_ORDEM, OPERADORES, type EstadoOrdem, type OperadorId } from "@/lib/rules";
+import { DATA_DEMONSTRACAO } from "@/lib/demonstracao";
+import { ESTADOS_ORDEM, OPERADORES, hojeLisboa, type EstadoOrdem, type OperadorId } from "@/lib/rules";
 
 function qs(params: Record<string, string | undefined>) {
   const sp = new URLSearchParams();
@@ -139,13 +140,12 @@ export function FiltrosChips({
           <DropdownMenuLabel>{t("comum.data")}</DropdownMenuLabel>
           <DropdownMenuItem
             onSelect={() => {
-              const hoje = new Date().toISOString().slice(0, 10);
-              router.push(qs({ ...base, data: hoje }));
+              router.push(qs({ ...base, data: hojeLisboa() }));
             }}
           >
             {t("comum.hoje")}
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => router.push(qs({ ...base, data: "2026-10-27" }))}>
+          <DropdownMenuItem onSelect={() => router.push(qs({ ...base, data: DATA_DEMONSTRACAO }))}>
             {t("painel.demonstracao")}
           </DropdownMenuItem>
         </DropdownMenuContent>

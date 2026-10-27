@@ -387,7 +387,10 @@ export function mudarEstado(ator: Ator, id: string, estado: EstadoOrdem, motivo?
     exigir(ator.papel !== "tecnico", 403, "SEM_PERMISSAO", "O técnico não cancela ordens.");
     exigir(Boolean(motivo?.trim()), 400, "DADOS_INVALIDOS", "Cancelar exige um motivo.");
     const resultado = cancelarOrdem(antes, id, motivo!.trim(), quemPediu ?? "central");
-    if (!resultado.ok) throw new ErroHttp(400, resultado.codigo, resultado.mensagem);
+    if (!resultado.ok) {
+      const status = resultado.codigo === "JA_CANCELADA" ? 409 : 400;
+      throw new ErroHttp(status, resultado.codigo, resultado.mensagem);
+    }
     gravarDiferença(ator, antes, resultado.mundo, `${ordem!.referencia} cancelada.`);
     return verOrdem(resultado.resultado);
   }

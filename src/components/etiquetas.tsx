@@ -44,8 +44,13 @@ export function EtiquetaOperador({ id, nome, soPonto = false }: { id: OperadorId
 export function EtiquetaEstado({ estado }: { estado: EstadoOrdem }) {
   const { t } = useT();
   return (
-    <span className={cn("inline-flex h-5 items-center gap-1 rounded-md border px-1.5 text-[11px]/4 font-medium", ESTILO_ESTADO[estado])}>
-      <span className="size-1.5 rounded-full bg-current opacity-70" aria-hidden />
+    <span
+      className={cn(
+        "inline-flex h-5 shrink-0 items-center gap-1 whitespace-nowrap rounded-md border px-1.5 text-[11px]/4 font-medium",
+        ESTILO_ESTADO[estado],
+      )}
+    >
+      <span className="size-1.5 shrink-0 rounded-full bg-current opacity-70" aria-hidden />
       {t(`estado.${estado}`)}
     </span>
   );

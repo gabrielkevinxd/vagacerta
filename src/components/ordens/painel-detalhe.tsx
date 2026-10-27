@@ -16,11 +16,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { enviar } from "@/lib/cliente";
+import { traduzirMensagem } from "@/lib/i18n/motor";
 import { formatarDataLocale } from "@/lib/i18n/formatacao";
 import type { Idioma } from "@/lib/i18n";
+import { estadoCancelavel, QUEM_PEDIU, type QuemPediu } from "@/lib/rules";
 import type { LinhaOrdem } from "./tabela-ordens";
 
 function useXl() {
@@ -39,19 +43,25 @@ export function PainelDetalheOrdem({
   ordem,
   idioma,
   podeAgir = true,
+  quemPediuPadrao = "operador",
 }: {
   ordem: LinhaOrdem | null;
   idioma: Idioma;
   podeAgir?: boolean;
+  quemPediuPadrao?: QuemPediu;
 }) {
-  const { t } = useT();
+  const { t, m } = useT();
   const router = useRouter();
   const xl = useXl();
   const aberto = Boolean(ordem);
   const [confirmarCancelar, setConfirmarCancelar] = useState(false);
   const [refACancelar, setRefACancelar] = useState("");
   const [idACancelar, setIdACancelar] = useState("");
+  const [motivo, setMotivo] = useState("");
+  const [quemPediu, setQuemPediu] = useState<QuemPediu>(quemPediuPadrao);
   const [aCancelar, setACancelar] = useState(false);
+
+  const podeCancelarOrdem = Boolean(podeAgir && ordem && estadoCancelavel(ordem.estado));
 
   const fechar = () => {
     const sp = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
@@ -61,21 +71,24 @@ export function PainelDetalheOrdem({
   };
 
   const pedirCancelar = () => {
-    if (!ordem || !podeAgir) return;
+    if (!ordem || !podeCancelarOrdem) return;
     setRefACancelar(ordem.referencia);
     setIdACancelar(ordem.id);
+    setMotivo("");
+    setQuemPediu(quemPediuPadrao);
     setConfirmarCancelar(true);
   };
 
   const cancelar = async () => {
     const ref = refACancelar || ordem?.referencia;
     const id = idACancelar || ordem?.id;
-    if (!ref || !id || aCancelar) return;
+    const motivoLimpo = motivo.trim();
+    if (!ref || !id || aCancelar || motivoLimpo.length < 3) return;
     setACancelar(true);
     try {
       await enviar(`/api/ordens/${id}/cancelar`, {
-        motivo: "Cancelada a partir do painel de detalhe.",
-        quemPediu: "central",
+        motivo: motivoLimpo,
+        quemPediu,
       });
       setConfirmarCancelar(false);
       toast(t("toast.ordemCancelada", { ref }), {
@@ -88,7 +101,8 @@ export function PainelDetalheOrdem({
                 router.refresh();
               })
               .catch((falha) => {
-                toast.error(falha instanceof Error ? falha.message : t("comum.pedidoFalhou"));
+                const texto = falha instanceof Error ? falha.message : "";
+                toast.error(traduzirMensagem(m, texto) || t("comum.pedidoFalhou"));
               });
           },
         },
@@ -97,7 +111,8 @@ export function PainelDetalheOrdem({
       fechar();
       router.refresh();
     } catch (falha) {
-      toast.error(falha instanceof Error ? falha.message : t("comum.pedidoFalhou"));
+      const texto = falha instanceof Error ? falha.message : "";
+      toast.error(traduzirMensagem(m, texto) || t("comum.pedidoFalhou"));
     } finally {
       setACancelar(false);
     }
@@ -144,9 +159,11 @@ export function PainelDetalheOrdem({
                   <Button type="button" variant="outline" size="sm" disabled>
                     {t("tabela.reagendar")}
                   </Button>
-                  <Button type="button" variant="destructive" size="sm" onClick={pedirCancelar}>
-                    {t("tabela.cancelarOrdem")}
-                  </Button>
+                  {podeCancelarOrdem ? (
+                    <Button type="button" variant="destructive" size="sm" onClick={pedirCancelar}>
+                      {t("tabela.cancelarOrdem")}
+                    </Button>
+                  ) : null}
                 </SheetFooter>
               ) : null}
             </>
@@ -160,11 +177,44 @@ export function PainelDetalheOrdem({
             <DialogTitle>{t("confirmar.cancelarOrdemTitulo", { ref: refACancelar || ordem?.referencia || "—" })}</DialogTitle>
             <DialogDescription>{t("confirmar.cancelarOrdemDetalhe")}</DialogDescription>
           </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="motivo-painel">{t("ordens.motivoSimples")}</Label>
+              <Textarea
+                id="motivo-painel"
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                required
+                minLength={3}
+                rows={3}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="quem-painel">{t("ordens.quemPediu")}</Label>
+              <select
+                id="quem-painel"
+                className="h-9 w-full rounded-md border border-input bg-card px-2.5 text-[13px]/5"
+                value={quemPediu}
+                onChange={(e) => setQuemPediu(e.target.value as QuemPediu)}
+              >
+                {QUEM_PEDIU.map((item) => (
+                  <option key={item} value={item}>
+                    {t(`quem.${item}`)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setConfirmarCancelar(false)} disabled={aCancelar}>
               {t("comum.cancelar")}
             </Button>
-            <Button type="button" variant="destructive" onClick={() => void cancelar()} disabled={aCancelar}>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => void cancelar()}
+              disabled={aCancelar || motivo.trim().length < 3}
+            >
               {t("tabela.cancelarOrdem")}
             </Button>
           </DialogFooter>
