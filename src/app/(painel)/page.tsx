@@ -44,13 +44,13 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
               {t("comum.dia")}
             </label>
             <SeletorData id="data" name="data" defaultValue={data} className="w-auto" />
-            <Button type="submit" size="sm" variant="outline">
+            <Button type="submit" variant="outline">
               {t("comum.ver")}
             </Button>
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline">
               <Link href={`/?data=${hoje}`}>{t("comum.hoje")}</Link>
             </Button>
-            <Button asChild variant="ghost" size="sm">
+            <Button asChild variant="ghost">
               <Link href={`/?data=${DATA_DEMONSTRACAO}`}>{t("painel.demonstracao")}</Link>
             </Button>
           </form>

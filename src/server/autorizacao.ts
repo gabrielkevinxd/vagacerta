@@ -10,7 +10,7 @@ export function exigirIntegracao(ator: Ator): void {
   }
 }
 
-export function exigirCentral(ator: Ator, mensagem = "Só a central pode executar esta acção."): void {
+export function exigirCentral(ator: Ator, mensagem = "Só a central pode executar esta ação."): void {
   if (!eCentral(ator)) {
     throw new ErroHttp(403, "SEM_PERMISSAO", mensagem);
   }

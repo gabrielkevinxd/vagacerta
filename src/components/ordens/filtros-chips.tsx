@@ -79,7 +79,7 @@ export function FiltrosChips({
   }
 
   return (
-    <div className="flex h-9 flex-wrap items-center gap-2">
+    <div className="flex min-h-8 flex-wrap items-center gap-2">
       <form
         className="relative"
         action="/ordens"
@@ -105,7 +105,7 @@ export function FiltrosChips({
         <Link
           key={chip.chave}
           href={qs(chip.limpar)}
-          className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2 text-xs font-medium text-foreground transition-colors hover:bg-muted foco-anel"
+          className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-background px-2.5 text-[13px]/5 font-medium text-foreground transition-colors hover:bg-muted foco-anel"
         >
           {chip.rotulo}
           <X className="size-3.5 text-muted-foreground" strokeWidth={1.75} />
@@ -113,7 +113,7 @@ export function FiltrosChips({
       ))}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button type="button" variant="outline" size="sm" className="h-7 gap-1">
+          <Button type="button" variant="outline" className="gap-1">
             <Plus className="size-3.5" strokeWidth={1.75} />
             {t("filtros.adicionar")}
           </Button>

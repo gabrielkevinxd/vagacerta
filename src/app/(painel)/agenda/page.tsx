@@ -138,11 +138,11 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
               <input type="hidden" name="inicio" value={um(consulta.inicio)} />
               <input type="hidden" name="vista" value={vista} />
               <input type="hidden" name="data" value={data} />
-              <button type="submit" className="inline-flex h-10 items-center rounded-lg bg-primary px-4 text-[13px]/5 font-medium text-primary-foreground">
+              <button type="submit" className="inline-flex h-8 items-center rounded-lg bg-primary px-4 text-[13px]/5 font-medium text-primary-foreground">
                 {t("agenda.guardarLugar")}
               </button>
             </form>
-            <Link href={base} className="inline-flex h-10 items-center rounded-lg border border-border bg-card px-4 text-[13px]/5">
+            <Link href={base} className="inline-flex h-8 items-center rounded-lg border border-border bg-card px-4 text-[13px]/5">
               {t("comum.voltar")}
             </Link>
           </div>
@@ -156,7 +156,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
           <input type="hidden" name="prever" value="1" />
           <label className="space-y-1 text-[13px]/5">
             <span className="font-medium">{t("comum.equipa")}</span>
-            <select name="equipaId" defaultValue={escolhida.equipa.equipaId} className="h-10 w-full rounded-lg border border-input bg-background px-2">
+            <select name="equipaId" defaultValue={escolhida.equipa.equipaId} className="h-8 w-full rounded-lg border border-input bg-background px-2">
               {agenda.dias
                 .flatMap((dia) => dia.equipas)
                 .filter((equipa, indice, lista) => lista.findIndex((item) => item.equipaId === equipa.equipaId) === indice)
@@ -169,7 +169,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
           </label>
           <label className="space-y-1 text-[13px]/5">
             <span className="font-medium">{t("comum.dia")}</span>
-            <select name="dia" defaultValue={escolhida.data} className="h-10 w-full rounded-lg border border-input bg-background px-2">
+            <select name="dia" defaultValue={escolhida.data} className="h-8 w-full rounded-lg border border-input bg-background px-2">
               {agenda.dias.map((dia) => (
                 <option key={dia.data} value={dia.data}>
                   {formatarDataLongaLocale(dia.data, idioma)}
@@ -179,9 +179,9 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
           </label>
           <label className="space-y-1 text-[13px]/5">
             <span className="font-medium">{t("comum.inicio")}</span>
-            <input name="inicio" type="time" step={300} required defaultValue={escolhida.bloco.inicio} className="h-10 w-full rounded-lg border border-input bg-background px-2" />
+            <input name="inicio" type="time" step={300} required defaultValue={escolhida.bloco.inicio} className="h-8 w-full rounded-lg border border-input bg-background px-2" />
           </label>
-          <button type="submit" className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-[13px]/5 font-medium text-primary-foreground">
+          <button type="submit" className="inline-flex h-8 items-center justify-center rounded-lg bg-primary px-4 text-[13px]/5 font-medium text-primary-foreground">
             {t("comum.previsualizar")}
           </button>
         </form>

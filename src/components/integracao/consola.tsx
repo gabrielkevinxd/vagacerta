@@ -268,7 +268,7 @@ export function ConsolaIntegracao({
           <label className="text-[13px]/5">
             <span className="mb-1 block text-muted-foreground">{textos.escolherOperador}</span>
             <select
-              className="h-10 rounded-lg border border-input bg-background px-2 text-[13px]/5"
+              className="h-8 rounded-lg border border-input bg-background px-2 text-[13px]/5"
               value={operador}
               disabled={Boolean(operadorFixo)}
               onChange={(e) => setOperador(e.target.value as OperadorId)}
@@ -287,7 +287,7 @@ export function ConsolaIntegracao({
           <label className="text-[13px]/5">
             <span className="mb-1 block text-muted-foreground">{textos.campos.tipoIntervencao}</span>
             <select
-              className="h-10 rounded-lg border border-input bg-background px-2 text-[13px]/5"
+              className="h-8 rounded-lg border border-input bg-background px-2 text-[13px]/5"
               value={form.tipoIntervencao}
               onChange={(e) => campo("tipoIntervencao", e.target.value as Formulario["tipoIntervencao"])}
             >
@@ -371,7 +371,7 @@ export function ConsolaIntegracao({
                 <SeletorData valor={form.data} onChange={(iso) => campo("data", iso)} required />
               ) : chave === "zona" ? (
                 <select
-                  className="h-10 w-full rounded-lg border border-input bg-background px-2 text-[13px]/5"
+                  className="h-8 w-full rounded-lg border border-input bg-background px-2 text-[13px]/5"
                   value={form.zona}
                   onChange={(e) => campo("zona", e.target.value)}
                   required
@@ -385,7 +385,7 @@ export function ConsolaIntegracao({
                 </select>
               ) : (
                 <input
-                  className="h-10 w-full rounded-lg border border-input bg-background px-2 text-[13px]/5"
+                  className="h-8 w-full rounded-lg border border-input bg-background px-2 text-[13px]/5"
                   value={form[chave]}
                   onChange={(e) => campo(chave, e.target.value)}
                   required={chave !== "tecnicoId"}
@@ -400,7 +400,7 @@ export function ConsolaIntegracao({
             <label key={chave} className="text-[13px]/5">
               <span className="mb-1 block text-muted-foreground">{textos.campos[chave]}</span>
               <input
-                className="h-10 w-full rounded-lg border border-dashed border-input bg-background px-2 text-[13px]/5"
+                className="h-8 w-full rounded-lg border border-dashed border-input bg-background px-2 text-[13px]/5"
                 value={form[chave]}
                 onChange={(e) => campo(chave, e.target.value)}
               />

@@ -18,7 +18,7 @@ describe("navItemAtivo", () => {
     expect(navItemAtivo("/ordens", "/equipas")).toBe(false);
   });
 
-  it("não activa irmãos com prefixo partilhado", () => {
+  it("não ativa irmãos com prefixo partilhado", () => {
     expect(navItemAtivo("/assistente", "/agenda")).toBe(false);
     expect(navItemAtivo("/otimizador", "/ordens")).toBe(false);
   });

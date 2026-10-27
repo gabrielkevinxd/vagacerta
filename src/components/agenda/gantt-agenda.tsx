@@ -63,9 +63,9 @@ type Fantasma = {
 };
 
 const primario =
-  "inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-[13px]/5 font-medium text-primary-foreground disabled:opacity-50";
+  "inline-flex h-8 items-center justify-center rounded-lg bg-primary px-4 text-[13px]/5 font-medium text-primary-foreground disabled:opacity-50";
 const secundario =
-  "inline-flex h-10 items-center justify-center rounded-lg border border-border bg-card px-4 text-[13px]/5 font-medium disabled:opacity-50";
+  "inline-flex h-8 items-center justify-center rounded-lg border border-border bg-card px-4 text-[13px]/5 font-medium disabled:opacity-50";
 
 const LigacaoAgenda = createContext({ vista: "dia" as "dia" | "semana", ancora: "" });
 
@@ -1127,7 +1127,7 @@ function FormularioMover({
       <p className="text-[13px]/5 font-medium md:col-span-4">{t("agenda.enviarEquipa")}</p>
       <label className="space-y-1 text-[13px]/5">
         <span className="font-medium">{t("comum.equipa")}</span>
-        <select name="equipaId" defaultValue={equipaInicial} className="h-10 w-full rounded-lg border border-input bg-background px-2">
+        <select name="equipaId" defaultValue={equipaInicial} className="h-8 w-full rounded-lg border border-input bg-background px-2">
           {agenda.dias
             .flatMap((dia) => dia.equipas)
             .filter((equipa, indice, lista) => lista.findIndex((item) => item.equipaId === equipa.equipaId) === indice)
@@ -1140,7 +1140,7 @@ function FormularioMover({
       </label>
       <label className="space-y-1 text-[13px]/5">
         <span className="font-medium">{t("comum.dia")}</span>
-        <select name="dia" defaultValue={dataInicial} className="h-10 w-full rounded-lg border border-input bg-background px-2">
+        <select name="dia" defaultValue={dataInicial} className="h-8 w-full rounded-lg border border-input bg-background px-2">
           {agenda.dias.map((dia) => (
             <option key={dia.data} value={dia.data}>
               {formatarDataLongaLocale(dia.data, idioma)}
@@ -1150,7 +1150,7 @@ function FormularioMover({
       </label>
       <label className="space-y-1 text-[13px]/5">
         <span className="font-medium">{t("comum.inicio")}</span>
-        <input name="inicio" type="time" step={300} required defaultValue={inicioInicial} className="h-10 w-full rounded-lg border border-input bg-background px-2" />
+        <input name="inicio" type="time" step={300} required defaultValue={inicioInicial} className="h-8 w-full rounded-lg border border-input bg-background px-2" />
       </label>
       <button type="submit" className={primario}>
         {t("comum.previsualizar")}

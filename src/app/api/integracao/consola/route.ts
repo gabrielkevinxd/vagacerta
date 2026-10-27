@@ -1,5 +1,6 @@
 import { api } from "@/server/http";
 import { exigirIntegracao } from "@/server/autorizacao";
+import { ErroHttp } from "@/server/erros";
 import { filtrarLogsDespachante, listarAtividades, listarLogs, listarRetries } from "@/server/ofsc/loja";
 import { eOperadorOfsc } from "@/lib/ofsc/tipos";
 
@@ -8,19 +9,25 @@ export const GET = api(async (ator, pedido) => {
   const url = new URL(pedido.url);
   const depoisDe = url.searchParams.get("depoisDe") ?? undefined;
   const operadorPedido = url.searchParams.get("operador") ?? "azul";
-  const despachante = ator.papel === "despachante" && Boolean(ator.operadorId);
-  const operador = despachante ? ator.operadorId! : operadorPedido;
-  const logsBrutos = despachante
-    ? listarLogs(depoisDe, 120, { operadorId: ator.operadorId! })
-    : listarLogs(depoisDe);
-  const logs = despachante ? filtrarLogsDespachante(logsBrutos, ator.operadorId!) : logsBrutos;
-  const retriesBrutos = listarRetries();
-  const retries = despachante
-    ? retriesBrutos.filter((r) => r.operador_id === ator.operadorId).map((r) => ({ id: r.id }))
-    : retriesBrutos;
+  if (ator.papel === "despachante") {
+    if (!ator.operadorId) {
+      throw new ErroHttp(403, "SEM_PERMISSAO", "Só vê a capacidade do seu operador.");
+    }
+    const operador = ator.operadorId;
+    const logsBrutos = listarLogs(depoisDe, 120, { operadorId: operador });
+    const logs = filtrarLogsDespachante(logsBrutos, operador);
+    const retries = listarRetries()
+      .filter((r) => r.operador_id === operador)
+      .map((r) => ({ id: r.id }));
+    return {
+      logs,
+      retries,
+      atividades: eOperadorOfsc(operador) ? listarAtividades(operador) : [],
+    };
+  }
   return {
-    logs,
-    retries,
-    atividades: eOperadorOfsc(operador) ? listarAtividades(operador) : [],
+    logs: listarLogs(depoisDe),
+    retries: listarRetries(),
+    atividades: eOperadorOfsc(operadorPedido) ? listarAtividades(operadorPedido) : [],
   };
 });

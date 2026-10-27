@@ -315,13 +315,17 @@ export function listarLogs(
 ): LinhaLog[] {
   if (filtro?.operadorId) {
     const op = filtro.operadorId;
+    // Globais (*) só sem JSON (pedido/resposta nulos).
     if (depoisDe) {
       return baseDados()
         .prepare(
           `SELECT * FROM integracao_logs
            WHERE quando > ?
              AND coluna != 'outros'
-             AND (operador_id = ? OR operador_id = ?)
+             AND (
+               operador_id = ?
+               OR (operador_id = ? AND pedido IS NULL AND resposta IS NULL)
+             )
            ORDER BY quando
            LIMIT ?`,
         )
@@ -331,7 +335,10 @@ export function listarLogs(
       .prepare(
         `SELECT * FROM integracao_logs
          WHERE coluna != 'outros'
-           AND (operador_id = ? OR operador_id = ?)
+           AND (
+             operador_id = ?
+             OR (operador_id = ? AND pedido IS NULL AND resposta IS NULL)
+           )
          ORDER BY quando DESC
          LIMIT ?`,
       )
@@ -346,13 +353,14 @@ export function listarLogs(
   return baseDados().prepare("SELECT * FROM integracao_logs ORDER BY quando DESC LIMIT ?").all(limite).reverse() as LinhaLog[];
 }
 
-/** Logs visíveis ao despachante: nunca «outros»; só o próprio operador; globais só com marcador explícito. */
+/** Logs visíveis ao despachante: próprio operador; globais `*` só sem JSON. */
 export function filtrarLogsDespachante(logs: LinhaLog[], operadorId: string): LinhaLog[] {
-  return logs.filter(
-    (log) =>
-      log.coluna !== "outros" &&
-      (log.operador_id === operadorId || log.operador_id === OPERADOR_LOG_GLOBAL),
-  );
+  return logs.filter((log) => {
+    if (log.coluna === "outros") return false;
+    if (log.operador_id === operadorId) return true;
+    if (log.operador_id === OPERADOR_LOG_GLOBAL) return !log.pedido && !log.resposta;
+    return false;
+  });
 }
 
 export function ligarOrdem(activityId: string, ordemId: string, referencia: string): void {

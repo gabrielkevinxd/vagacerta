@@ -7,7 +7,9 @@ import { AcoesEquipa } from "@/components/acoes-equipa";
 import { Carregamento } from "@/components/carregamento";
 import { EstadoVazio } from "@/components/estado-vazio";
 import { EtiquetaEstado, EtiquetaOperador } from "@/components/etiquetas";
+import { DefinirMigalha } from "@/components/migalhas-contexto";
 import { SeletorData } from "@/components/seletor-data";
+import { Button } from "@/components/ui/button";
 import type { Chave } from "@/lib/i18n";
 import { formatarDataLocale, formatarDataLongaLocale } from "@/lib/i18n/formatacao";
 import { i18nPedido } from "@/server/idioma";
@@ -44,6 +46,7 @@ async function Conteudo({
 
   return (
     <div className="space-y-8">
+      <DefinirMigalha href={`/equipas/${equipa.id}`} rotulo={equipa.nome} />
       <div className="space-y-2">
         <Link href="/equipas" className="text-[13px]/5 text-muted-foreground underline">
           {t("nav.equipas")}
@@ -103,9 +106,9 @@ async function Conteudo({
               {t("comum.data")}
             </label>
             <SeletorData id="data" name="data" defaultValue={data} className="w-auto" />
-            <button type="submit" className="h-9 rounded-lg border border-border px-3 text-[13px]/5">
+            <Button type="submit" variant="outline">
               {t("comum.ver")}
-            </button>
+            </Button>
           </form>
         </div>
         <p className="text-[13px]/5">
