@@ -43,12 +43,23 @@ npm start
 Outros comandos:
 
 ```bash
-npm test          # motor, gémeo, agenda e chaves i18n (pt-PT e en)
+npm test          # motor, gémeo, agenda, acessos, 404, dia rico e cobertura das traduções
 npm run typecheck
+npm run lint      # sem erros nem avisos
 npm run demo:reset   # apaga data/vagacerta.sqlite; o próximo arranque volta a semear
 ```
 
 A base é SQLite em `data/vagacerta.sqlite` (módulo `node:sqlite` do Node 22). É criada e semeada na primeira leitura, quando a tabela de operadores está vazia. Não é preciso um serviço externo.
+
+Variáveis de ambiente (todas opcionais; ver `.env.example`):
+
+| Variável | Para quê |
+| --- | --- |
+| `VC_DEMO_DIA` | `AAAA-MM-DD`. Fixa o «dia rico» da demonstração (ver «Contas de demonstração»). Sem ela, é hoje em Lisboa |
+| `VC_OFSC_SEGREDO` | Segredo partilhado do webhook OFSC e do OFSC simulado (ver «Autenticação da integração»). Sem ela, usa-se um segredo de desenvolvimento, gerado e guardado só na base local |
+| `VC_DATA_DIR` | Pasta da base SQLite (por omissão `data`) |
+| `XAI_API_KEY`, `XAI_MODEL` | Agente do operador em `/integracao` |
+| `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` | Assistente (ainda não ligado) |
 
 ## Contas de demonstração
 
@@ -61,7 +72,9 @@ A base é SQLite em `data/vagacerta.sqlite` (módulo `node:sqlite` do Node 22). 
 | Despachante Verde Beatriz Lamego | verde@vagacerta.exemplo | vagacerta-verde |
 | Técnico Rui Salgado, Equipa Minho | tecnico.minho@vagacerta.exemplo | vagacerta-tecnico |
 
-O dia rico da demonstração é **2026-10-27**. No painel há um atalho para esse dia.
+O **dia rico** da demonstração é **hoje** (fuso `Europe/Lisbon`); se hoje for sábado ou domingo, é a segunda-feira seguinte. Não há data fixa: a história abaixo acontece sempre «hoje». `VC_DEMO_DIA=AAAA-MM-DD` fixa o dia (testes e filmagens reproduzíveis; um fim de semana avança do mesmo modo). No painel há um atalho para esse dia.
+
+O dia rico é gravado na base ao semear (`definicoes.dia_demonstracao`) e todas as datas da demonstração são relativas a ele. Uma base criada num dia continua com esse dia: para voltar a «hoje», `npm run demo:reset`. Os dados são fictícios e óbvios: telefones `900 000 0xx`, moradas «Rua Exemplo N, <cidade>». O horizonte do gémeo começa na segunda-feira da semana do dia rico, por isso os números do gémeo são os mesmos em qualquer semana.
 
 História útil para o reencaixe, com a central (administrador ou supervisor) e «Permitir uma troca de equipa»:
 
@@ -86,14 +99,16 @@ src/app/(painel)/     páginas com sessão
 
 O motor devolve um `Mundo` novo. Quem grava é `sincronizarMundo`. Confirmar um plano volta a correr `reencaixar` e compara o selo HMAC (`segredo_plano` na base). O cliente não manda a lista de movimentos.
 
-A sessão é o cookie `vc_sessao` (httpOnly). A inatividade expira ao fim de 8 horas; o cookie dura 30 dias. A expiração desliza na leitura. O cookie só é escrito em `POST /api/sessao/entrar` e `POST /api/sessao/sair`. Sem cookie, `src/proxy.ts` manda as páginas para `/entrar`. Uma sessão expirada na base continua a ser recusada na leitura.
+A sessão é o cookie `vc_sessao` (httpOnly). A inatividade expira ao fim de 8 horas; o cookie dura 30 dias. A expiração desliza na leitura. O cookie só é escrito em `POST /api/sessao/entrar` e `POST /api/sessao/sair` (o `GET` de `/api/sessao/sair` responde 405: terminar a sessão é uma ação, não um link). Sem cookie, `src/proxy.ts` manda as páginas para `/entrar`. Uma sessão expirada na base continua a ser recusada na leitura.
+
+O `proxy` também decide, antes de a página começar a ser enviada, o que é 404 e o que é 403 (com `cacheComponents` o Next envia primeiro o esqueleto e depois já não consegue mudar o estado HTTP): `/ordens/:id` e `/equipas/:id` que o ator não pode ler dão 404 com a página «não encontrada» no idioma escolhido; `/integracao` para quem não é da central dá 403, com uma página que explica que a consola mostra os três operadores ao mesmo tempo e por isso é da central. A página é HTML autónomo (não ecoa o identificador pedido).
 
 Com `cacheComponents`, a leitura da sessão nas páginas está dentro de `Suspense`.
 
 ### Perfis
 
-- **Administrador e supervisor** (a central): vêem tudo, gerem equipas, margem, faltas e trocas.
-- **Despachante**: lista, ficha e marcação só do seu operador. Na agenda e no plano, o trabalho dos outros é um bloco `vista: "ocupada"` (início, fim, duração). Um `GET` de uma ordem alheia responde 404, para não confirmar que existe.
+- **Administrador e supervisor** (a central): vêem tudo, gerem equipas, margem, faltas e trocas, e são os únicos que usam a integração OFSC (`/integracao` e `/api/integracao/*`).
+- **Despachante**: lista, ficha e marcação só do seu operador. Na agenda e no plano, o trabalho dos outros é um bloco `vista: "ocupada"` (início, fim, duração). Um `GET` de uma ordem alheia responde 404, para não confirmar que existe. A página `/ordens/:id` faz o mesmo: uma ordem alheia e uma ordem inexistente dão a mesma página «Ordem não encontrada», com estado HTTP 404 (em produção e em desenvolvimento).
 - **Técnico**: só a sua equipa, com cliente e morada, porque é ele que executa. Pode passar `agendada → em_curso → concluída`. Não cria ordens nem reorganiza o dia.
 
 Estados que ocupam capacidade: `agendada`, `em_curso`, `concluida`. `em_curso` e `concluida`, e qualquer ordem com `inicioFixado`, não deslizam no recálculo. A fila é `em_espera`.
@@ -108,20 +123,22 @@ O Operador Verde exige tecnologia. Desligamento só existe nos alarmes do Verde.
 
 A UI lê `src/lib/i18n/pt-PT.ts` e `src/lib/i18n/en.ts`. As chaves coincidem (teste em `tests/i18n.test.ts`). Datas e números usam `pt-PT` ou `en-GB`. As mensagens de API seguem o cookie `vc_idioma`. O motor puro continua a devolver texto interno em português; a fronteira HTTP traduz.
 
+Essa tradução está em `src/lib/i18n/motor.ts` (`traduzirMensagem`, `traduzirHistoria`, `traduzirLogOfsc`, `traduzirNarrativa`): cada código de erro do motor e do servidor (`erros.*` e `motor.*`), cada linha de história de uma ordem, cada linha da consola de integração (`ofsc.log.*`, por exemplo «Reserva Confirmada: …» → «Booking confirmed: …»), o resultado da reserva, a nota do agente («Modo sem IA — …») e o plano do reencaixe («Encaixar VD-URG não cabe: …»). Em português o texto sai exatamente como o motor o escreveu. `tests/i18n-cobertura.test.ts` varre o código e falha se aparecer uma frase de erro ou de registo sem texto em português **e** em inglês. Os painéis de JSON da consola (`<pre>`) mostram o contrato OFSC tal como circula e ficam em português (valores como `Reserva Confirmada` e `Capacidade Esgotada` fazem parte desse contrato).
+
 ## Páginas
 
 | Rota | Estado |
 | --- | --- |
 | `/entrar` | Sessão |
 | `/` | Painel do dia |
-| `/ordens`, `/ordens/nova`, `/ordens/:id` | Lista, criação, ficha, histórico, estados, marcação e pré-visualização |
-| `/equipas`, `/equipas/:id` | Ficha, zona, horário, técnicos, indisponibilidades, minutos dos outros |
+| `/ordens`, `/ordens/nova`, `/ordens/:id` | Lista, criação (a zona acompanha a área), ficha, histórico, estados, marcação e pré-visualização. Ordem alheia ou inexistente: página «Ordem não encontrada», 404 |
+| `/equipas`, `/equipas/:id` | Ficha, zona, horário, técnicos, indisponibilidades, minutos dos outros. Equipa que o ator não vê: página «Equipa não encontrada», 404 |
 | `/otimizador` | Antes e depois textual, com selo. Não é o Gantt |
 | `/definicoes` | Margem de deslocação (central) |
 | `/agenda` | Gantt de dia e de semana, com arrasto, pré-visualização e lista no telemóvel |
 | `/assistente` | Placeholder (`POST /api/assistente` continua 501) |
 | `/gemeo` | Gémeo: só simular, ou injetar na aplicação pela semente (OFSC + quotas) |
-| `/integracao` | Agente OFSC, consola em três colunas e cenários |
+| `/integracao` | Agente OFSC, consola em três colunas e cenários. Só a central (os outros recebem 403) |
 
 Em `/otimizador`, a pré-visualização faz-se com um pedido GET. Com `prever=1` o servidor chama `previsualizar` e, se o plano for viável, a confirmação envia o `selo` para `confirmarPlano`. Os parâmetros são `data`, `modo` (`encaixar`, `cancelar`, `falta`), `ordemId`, `equipaId`, `troca=1` e `motivo`. O contrato estável para os outros agentes continua a ser `POST /api/otimizar` e `POST /api/otimizar/confirmar`.
 
@@ -133,7 +150,14 @@ Pedido autenticado falhado:
 { "codigo": "NAO_AUTENTICADO", "mensagem": "Inicie sessão para continuar." }
 ```
 
-Códigos usados: `NAO_AUTENTICADO` (401), `SEM_PERMISSAO` (403), `NAO_ENCONTRADO` (404), `DADOS_INVALIDOS` (400), `DATA_INVALIDA`, `HORIZONTE`, `JANELA_INVALIDA`, `TECNOLOGIA_INVALIDA`, `CATEGORIA_INVALIDA`, `REFERENCIA_DUPLICADA` (409), `INVIAVEL` (409), `DESATUALIZADO` (409), `CONFLITO`, `PASSADO`, `INTERVALO`, `NAO_IMPLEMENTADO` (501), `ERRO_INTERNO` (500).
+Códigos usados: `NAO_AUTENTICADO` (401), `SEM_PERMISSAO` (403), `NAO_ENCONTRADO` (404), `METODO_NAO_PERMITIDO` (405, com `Allow: POST`), `DADOS_INVALIDOS` (400), `DATA_INVALIDA` (400), `HORIZONTE` (400), `JANELA_INVALIDA`, `TECNOLOGIA_INVALIDA`, `CATEGORIA_INVALIDA`, `REFERENCIA_DUPLICADA` (409), `INVIAVEL` (409), `DESATUALIZADO` (409), `CONFLITO`, `PASSADO` (400), `INTERVALO` (400), `NAO_IMPLEMENTADO` (501), `ERRO_INTERNO` (500).
+
+- `DATA_INVALIDA`: a data não é um `AAAA-MM-DD` real.
+- `PASSADO`: um despachante marca ou reagenda para um dia já passado; ou uma zona com início no passado sem `confirmacao: true`.
+- `INTERVALO`: o fim é anterior ao início (agenda, indisponibilidade ou vigência) ou o intervalo da agenda passa de 15 dias.
+- `HORIZONTE`: além dos 15 dias do Azul e do Vermelho, ou dos 21 do Verde.
+- `DADOS_INVALIDOS`: inclui a zona que não serve a área da ordem (a mensagem diz quais as zonas possíveis).
+- `NAO_AUTENTICADO` / `SEM_PERMISSAO` na integração OFSC: ver «Autenticação da integração».
 
 O corpo de sucesso é o recurso, ou `{ "ok": true }` quando a operação não tem mais nada a dizer.
 
@@ -143,7 +167,7 @@ O corpo de sucesso é o recurso, ou `{ "ok": true }` quando a operação não te
 | --- | --- | --- | --- |
 | GET | `/api/saude` | — | `{ ok, servico }` público |
 | POST | `/api/sessao/entrar` | `{ email, palavraPasse }` | `{ ator }` |
-| POST | `/api/sessao/sair` | — | `{ ok: true }` |
+| POST | `/api/sessao/sair` | — | `{ ok: true }`. Um `GET` responde 405 `METODO_NAO_PERMITIDO` e não termina a sessão |
 | GET | `/api/sessao` | — | `{ ator }` |
 | GET | `/api/catalogo` | — | operadores, categorias, tecnologias, janelas |
 | GET | `/api/zonas` | — | `{ id, codigo, nome, regiao }[]` |
@@ -185,7 +209,7 @@ Corpo de criação:
   operadorId: "azul" | "vermelho" | "verde";
   referencia: string;
   area: string;          // uma localidade de AREAS
-  zonaId: string;
+  zonaId: string;        // tem de servir a área: a zona por omissão da área, ou a de uma equipa que a cubra (senão 400 DADOS_INVALIDOS)
   categoria: "instalacao" | "suporte" | "adicional" | "desligamento";
   tecnologia: "FTTH" | "CABO" | "DTH" | "SEA" | "ALARMES" | null;
   data: "AAAA-MM-DD";
@@ -200,7 +224,7 @@ Corpo de criação:
 
 Reagendar: `{ equipaId?, data?, janelaInicio?, janelaFim?, inicioPlaneado?: "HH:MM" | null }`. `inicioPlaneado` com hora fixa o início dentro da janela. `null` liberta o início.
 
-O despachante não marca para além do horizonte do operador (Azul e Vermelho 15 dias, Verde 21) nem em dias passados.
+O despachante não marca para além do horizonte do operador (Azul e Vermelho 15 dias, Verde 21: `HORIZONTE`) nem em dias passados (`PASSADO`). O horizonte conta a partir de hoje em Lisboa. Na página «Nova ordem», a zona acompanha a área escolhida; o servidor recusa na mesma uma zona incoerente enviada à mão.
 
 ### Equipas
 
@@ -229,7 +253,7 @@ A vigência da zona é inclusiva. Repetir um período já coberto não altera na
 
 Devolve `PublicacaoVagas`: duração, margem e `janelas[]` com `estado` `disponivel | opcional | indisponivel`, `equipasLivres` e o estado por equipa. Não inclui ordens de outros operadores.
 
-`GET /api/agenda?de=&ate=` — no máximo 15 dias. Resposta `Agenda`:
+`GET /api/agenda?de=&ate=` — no máximo 15 dias (`INTERVALO` se passar ou se `ate` for anterior a `de`; `DATA_INVALIDA` se uma data não existir). Resposta `Agenda`:
 
 ```ts
 {
@@ -346,7 +370,7 @@ Tipos em `src/lib/contratos/assistente.ts`: `PedidoAssistente`, `IntencaoDespach
 
 ### Gémeo (`/gemeo`)
 
-Tipos em `src/lib/contratos/gemeo.ts`: `PedidoGemeo`, `MetricasPolitica`, `RelatorioGemeo`. Semente `SEMENTE_GEMEO = 20261027`.
+Tipos em `src/lib/contratos/gemeo.ts`: `PedidoGemeo`, `MetricasPolitica`, `RelatorioGemeo`. Semente `SEMENTE_GEMEO = 20261027` (um número que sorteia, não a data do dia rico). O horizonte começa na segunda-feira da semana do dia rico (`inicioHorizonte`). A semente sorteia por posição no horizonte, por isso os números são os mesmos em qualquer semana; só o calendário da série diária muda.
 
 `GET` e `POST /api/gemeo` (só a central) devolvem `RelatorioGemeo`. O corpo do POST é `PedidoGemeo`:
 
@@ -378,7 +402,7 @@ A reserva é estruturada. Cada pedido leva `zona` (workZone), `data`, `janela` (
 
 A capacidade é por quotas: 3 instalações ou 8 manutenções por técnico e por dia (1 instalação ≡ 8/3 manutenções). A grelha mostra o contador **N → N-1**.
 
-Resposta ao operador: **Reserva Confirmada** (`PATCH` com `resourceId`) ou **Reserva Recusada** com motivo `Capacidade Esgotada`, `Zona Fechada`, `Fora da janela` ou `Técnico indisponível`, e uma alternativa. A notificação aos outros é `POST`/`PATCH`/`DELETE` de ausências mais o contador, por exemplo `Técnico 1, 2026-10-27, instalações = 0 vagas`. Plataforma em baixo → fila de novas tentativas.
+Resposta ao operador: **Reserva Confirmada** (`PATCH` com `resourceId`) ou **Reserva Recusada** com motivo `Capacidade Esgotada`, `Zona Fechada`, `Fora da janela` ou `Técnico indisponível`, e uma alternativa. A notificação aos outros é `POST`/`PATCH`/`DELETE` de ausências mais o contador, por exemplo `Técnico 1, AAAA-MM-DD, instalações = 0 vagas`. Plataforma em baixo → fila de novas tentativas.
 
 Contrato OFSC (não há outros endpoints OFSC):
 
@@ -392,6 +416,21 @@ Contrato OFSC (não há outros endpoints OFSC):
 Cada equipa partilhada tem um `resourceId` distinto em cada operador (`AZ_RES_MINHO`, `VR_RES_MINHO`, `VD_RES_MINHO`, …).
 
 Em `/integracao` escolhe-se primeiro a vaga na grelha (tempo real: `GET /api/integracao/vagas`) e depois confirma-se (`POST /api/integracao/reserva`). O texto em linguagem natural (`POST /api/integracao/agente`) só preenche campos; não inventa data, zona, janela nem técnico.
+
+### Autenticação da integração
+
+Nada na integração OFSC é público.
+
+| Rotas | Quem pode chamar |
+| --- | --- |
+| `POST /api/integracao/ofsc/eventos` (webhook) e `/api/ofsc/{operador}/…` (OFSC simulado) | Quem apresenta o **segredo da integração**, ou uma **sessão da central** |
+| `GET/POST /api/integracao/{vagas,reserva,agente,consola,cenarios,reconciliar,saude}` e a página `/integracao` | Só uma **sessão da central** |
+
+- O segredo vai no cabeçalho `x-vagacerta-segredo: <segredo>` ou em `Authorization: Bearer <segredo>`. A comparação é em tempo constante.
+- O segredo é `VC_OFSC_SEGREDO`. Sem essa variável, a aplicação gera um segredo de desenvolvimento na primeira utilização e guarda-o só na base local (`definicoes.segredo_integracao`). Não é escrito em nenhum registo nem devolvido por nenhuma rota. Em produção defina `VC_OFSC_SEGREDO`.
+- Sem credenciais, ou com um segredo errado: 401 `NAO_AUTENTICADO`. Com a sessão de um despachante ou de um técnico: 403 `SEM_PERMISSAO` («Só a central usa a integração OFSC.»). Um segredo certo **não** dá acesso às rotas só da central: o OFSC fala com o webhook, não com a consola.
+- A consola é da central porque é «cross-operador»: mostra as três colunas (o OFSC do operador, a VagaCerta e o OFSC dos outros), corre os onze cenários e reconcilia os três operadores ao mesmo tempo. Um despachante vê apenas o seu operador; o técnico, a sua equipa.
+- Os onze cenários e a consola continuam a funcionar com a sessão da central: criam a atividade e disparam o evento dentro do servidor (o `POST` ao webhook que aparece na coluna do meio é o contrato, registado na consola). Um OFSC real ou um script externo é que precisa do segredo.
 
 ### Agente do operador e chave xAI
 

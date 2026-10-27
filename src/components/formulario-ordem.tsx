@@ -25,11 +25,14 @@ export interface JanelaOpcao {
 export function FormularioOrdem({
   operadorFixo,
   zonas,
+  zonasPorArea,
   janelas,
   dataInicial,
 }: {
   operadorFixo: OperadorId | null;
   zonas: { id: string; codigo: string; nome: string }[];
+  /** Zonas que servem cada área; a primeira de cada lista é a predefinida (ver `zonasPorArea` em `servicos.ts`). */
+  zonasPorArea: Record<string, string[]>;
   janelas: JanelaOpcao[];
   dataInicial: string;
 }) {
@@ -40,6 +43,7 @@ export function FormularioOrdem({
   const [tecnologia, setTecnologia] = useState<string>("FTTH");
   const [janela, setJanela] = useState("");
   const [area, setArea] = useState<string>(AREAS[0]);
+  const [zonaId, setZonaId] = useState<string>(zonasPorArea[AREAS[0]]?.[0] ?? zonas[0]?.id ?? "");
   const [data, setData] = useState(dataInicial);
   const [erro, setErro] = useState<string | null>(null);
   const [aGuardar, setAGuardar] = useState(false);
@@ -55,6 +59,19 @@ export function FormularioOrdem({
 
   const janelaAtual = opcoes.find((linha) => `${linha.inicio}|${linha.fim}` === janela) ?? opcoes[0];
 
+  // A zona acompanha a área: só se oferecem as zonas que a servem, pela ordem de `zonasPorArea` (a predefinida primeiro).
+  const zonasDaArea = useMemo(() => {
+    const ids = zonasPorArea[area] ?? [];
+    const serve = ids.flatMap((id) => zonas.filter((zona) => zona.id === id));
+    return serve.length > 0 ? serve : zonas;
+  }, [zonas, zonasPorArea, area]);
+
+  function escolherArea(nova: string) {
+    setArea(nova);
+    setZonaId(zonasPorArea[nova]?.[0] ?? zonas[0]?.id ?? "");
+    setVagas(null);
+  }
+
   async function submeter(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     if (!janelaAtual) {
@@ -69,7 +86,7 @@ export function FormularioOrdem({
         operadorId,
         referencia: String(dados.get("referencia") ?? ""),
         area,
-        zonaId: String(dados.get("zonaId") ?? ""),
+        zonaId,
         categoria,
         tecnologia: operadorId === "verde" ? tecnologia : null,
         data,
@@ -164,7 +181,7 @@ export function FormularioOrdem({
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="area">{t("ordens.area")}</Label>
-        <select id="area" className={campo} value={area} onChange={(evento) => setArea(evento.target.value)}>
+        <select id="area" className={campo} value={area} onChange={(evento) => escolherArea(evento.target.value)}>
           {AREAS.map((item) => (
             <option key={item} value={item}>
               {item}
@@ -174,13 +191,24 @@ export function FormularioOrdem({
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="zonaId">{t("ordens.zona")}</Label>
-        <select id="zonaId" name="zonaId" className={campo} required defaultValue={zonas[0]?.id}>
-          {zonas.map((zona) => (
+        <select
+          id="zonaId"
+          name="zonaId"
+          className={campo}
+          required
+          value={zonaId}
+          onChange={(evento) => setZonaId(evento.target.value)}
+          aria-describedby="zonaAjuda"
+        >
+          {zonasDaArea.map((zona) => (
             <option key={zona.id} value={zona.id}>
               {zona.codigo} · {zona.nome}
             </option>
           ))}
         </select>
+        <p id="zonaAjuda" className="text-xs text-muted-foreground">
+          {t("ordens.zonaAjuda")}
+        </p>
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="prioridade">{t("ordens.prioridade")}</Label>

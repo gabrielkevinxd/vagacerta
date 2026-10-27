@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { DATA_DEMONSTRACAO } from "@/lib/demonstracao";
 import { um } from "@/lib/consulta-pagina";
 import { eCentral, eDataIso, podeGerirEquipas } from "@/lib/rules";
 import { AcoesEquipa } from "@/components/acoes-equipa";
@@ -9,6 +9,9 @@ import { EstadoVazio } from "@/components/estado-vazio";
 import { EtiquetaEstado, EtiquetaOperador } from "@/components/etiquetas";
 import type { Chave } from "@/lib/i18n";
 import { formatarDataLongaLocale } from "@/lib/i18n/formatacao";
+import { traduzirHistoria } from "@/lib/i18n/motor";
+import { diaDemonstracaoAtual } from "@/server/db";
+import { ErroHttp } from "@/server/erros";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 import { listarZonas, obterEquipa } from "@/server/servicos";
@@ -33,11 +36,20 @@ async function Conteudo({
 }) {
   const { id } = await params;
   const consulta = await searchParams;
-  const { t, idioma } = await i18nPedido();
+  const { t, idioma, m } = await i18nPedido();
   const pedida = um(consulta.data);
-  const data = eDataIso(pedida) ? pedida : DATA_DEMONSTRACAO;
   const ator = await exigirAtorPagina();
-  const equipa = obterEquipa(ator, id, data);
+  const data = eDataIso(pedida) ? pedida : diaDemonstracaoAtual();
+  let equipa: ReturnType<typeof obterEquipa>;
+  try {
+    equipa = obterEquipa(ator, id, data);
+  } catch (erro) {
+    // Equipa inexistente, ou de outra equipa para um técnico: página «Equipa não encontrada» (not-found.tsx).
+    if (erro instanceof ErroHttp && erro.status === 404) notFound();
+    throw erro;
+  }
+  // Os motivos da semente («Formação de segurança») e das faltas publicadas pelo reencaixe estão escritos em PT.
+  const indisponibilidades = equipa.indisponibilidades.map((bloco) => ({ ...bloco, motivo: traduzirHistoria(m, bloco.motivo) }));
   const zonas = listarZonas();
   const central = podeGerirEquipas(ator);
 
@@ -124,7 +136,7 @@ async function Conteudo({
                     {ordem.inicioPlaneado ?? ordem.janelaInicio}–{ordem.fimPlaneado ?? ordem.janelaFim}
                   </span>
                   <span className="font-medium">{ordem.referencia}</span>
-                  <EtiquetaOperador id={ordem.operadorId} nome={ordem.operadorNome} />
+                  <EtiquetaOperador id={ordem.operadorId} />
                   <EtiquetaEstado estado={ordem.estado} />
                   <span className="text-sm text-muted-foreground">
                     {ordem.clienteNome} · {ordem.morada}
@@ -153,16 +165,16 @@ async function Conteudo({
           zonas={zonas}
           horarios={equipa.horarios}
           membros={equipa.membros}
-          indisponibilidades={equipa.indisponibilidades}
+          indisponibilidades={indisponibilidades}
         />
       ) : (
         <section className="space-y-2">
           <h2 className="font-heading text-xl">{t("equipas.indisponibilidades")}</h2>
-          {equipa.indisponibilidades.length === 0 ? (
+          {indisponibilidades.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("equipas.nenhumaIndisp")}</p>
           ) : (
             <ul className="text-sm">
-              {equipa.indisponibilidades.map((bloco) => (
+              {indisponibilidades.map((bloco) => (
                 <li key={bloco.id}>
                   {bloco.data.split("-").reverse().join("/")} {bloco.inicio}–{bloco.fim} · {bloco.motivo}
                 </li>

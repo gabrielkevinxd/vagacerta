@@ -757,6 +757,8 @@ function Bloco({
 }) {
   const { t } = useT();
   const ocupada = bloco.vista === "ocupada";
+  // Visita curta = cartão estreito: o nome do cliente ficaria cortado («Si…»). Mostra-se só a hora; o nome está no tooltip e na ficha.
+  const estreito = bloco.duracaoMin < 100;
   const rotulo = ocupada
     ? t("agenda.ocupadaAria", { inicio: bloco.inicio, fim: bloco.fim, n: bloco.duracaoMin })
     : t("agenda.visitaAria", { referencia: bloco.referencia ?? "", cliente: bloco.clienteNome ?? "", inicio: bloco.inicio, fim: bloco.fim });
@@ -788,7 +790,7 @@ function Bloco({
       <span className="block truncate text-[11px] font-semibold leading-tight">{ocupada ? t("comum.ocupada") : bloco.referencia}</span>
       <span className="block truncate text-[11px] leading-tight opacity-95">
         {bloco.inicio}–{bloco.fim}
-        {ocupada ? ` · ${bloco.duracaoMin} ${t("comum.minutos")}` : bloco.clienteNome ? ` · ${bloco.clienteNome}` : ""}
+        {ocupada ? ` · ${bloco.duracaoMin} ${t("comum.minutos")}` : bloco.clienteNome && !estreito ? ` · ${bloco.clienteNome}` : ""}
       </span>
       {conflito ? <span className="block truncate text-[10px] font-semibold leading-tight">{t("comum.conflito")}</span> : null}
     </div>

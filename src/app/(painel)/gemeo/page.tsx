@@ -1,12 +1,13 @@
 import { Suspense } from "react";
 import { um } from "@/lib/consulta-pagina";
-import { correrSimulacao, normalizarPedido, PEDIDO_OMISSAO } from "@/lib/gemeo";
+import { correrSimulacao, inicioHorizonte, normalizarPedido, PEDIDO_OMISSAO } from "@/lib/gemeo";
 import { traduzirMensagem } from "@/lib/i18n/motor";
 import { eCentral } from "@/lib/rules";
 import { Carregamento } from "@/components/carregamento";
 import { BotaoApagarLote, BotaoInjetar } from "@/components/gemeo/controlos-injetar";
 import { ComparacaoPesos, BarrasPolitica, SerieDiaria, TabelaPoliticas } from "@/components/gemeo/graficos";
 import { LegendaOperadores } from "@/components/legenda-operadores";
+import { diaDemonstracaoAtual } from "@/server/db";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 import { listarLotes, relatorioDoLote } from "@/server/gemeo-injetar";
@@ -72,7 +73,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
         relatorio = null;
       }
     } else if (modo === "simular") {
-      relatorio = correrSimulacao(pedido, idioma);
+      relatorio = correrSimulacao(pedido, idioma, undefined, inicioHorizonte(diaDemonstracaoAtual()));
     }
   }
   const qs = `semente=${pedido.semente}&semanas=${pedido.semanas}&replicas=${pedido.replicas}&procura=${pedido.procura}&faltas=${pedido.probabilidadeFalta}&margem=${pedido.margemDeslocacaoMin}&azul=${pedido.pesos.azul}&vermelho=${pedido.pesos.vermelho}&verde=${pedido.pesos.verde}`;

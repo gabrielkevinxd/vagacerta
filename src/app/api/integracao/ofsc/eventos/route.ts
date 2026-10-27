@@ -1,18 +1,25 @@
 import { NextResponse } from "next/server";
+import { traduzirMensagem } from "@/lib/i18n/motor";
 import { eOperadorOfsc, type AtividadeOfsc, type EventoOfsc } from "@/lib/ofsc/tipos";
 import { tipoDeCategoria } from "@/lib/ofsc/quotas";
+import { apiIntegracao } from "@/server/http";
+import { mensagensAtuais } from "@/server/idioma";
 import { processarEventoOfsc } from "@/server/ofsc/recetor";
 
-export async function POST(pedido: Request) {
+/** 400 DADOS_INVALIDOS com a frase no idioma do pedido. */
+function invalido(frase: string) {
+  return NextResponse.json({ codigo: "DADOS_INVALIDOS", mensagem: traduzirMensagem(mensagensAtuais(), frase) }, { status: 400 });
+}
+
+// Webhook OFSC → VagaCerta. Exige o segredo da integração ou uma sessão da central (ver `integracao-auth.ts`).
+export const POST = apiIntegracao(async (pedido) => {
   const bruto = (await pedido.json().catch(() => null)) as Record<string, unknown> | null;
-  if (!bruto || typeof bruto !== "object") {
-    return NextResponse.json({ codigo: "DADOS_INVALIDOS", mensagem: "JSON em falta." }, { status: 400 });
-  }
+  if (!bruto || typeof bruto !== "object") return invalido("JSON em falta.");
   const operator = String(bruto.operator ?? bruto.operador ?? "");
   const eventType = String(bruto.eventType ?? bruto.type ?? "");
   const activity = (bruto.activity ?? bruto) as Record<string, unknown>;
   if (!eOperadorOfsc(operator) || (eventType !== "activityCreated" && eventType !== "activityUpdated")) {
-    return NextResponse.json({ codigo: "DADOS_INVALIDOS", mensagem: "eventType ou operator inválido." }, { status: 400 });
+    return invalido("eventType ou operator inválido.");
   }
   const slot = (activity.timeSlot as { start?: string; end?: string } | undefined) ?? {};
   const tipoBruto = String(activity.tipoIntervencao ?? activity.activityType ?? "instalacao");
@@ -43,14 +50,7 @@ export async function POST(pedido: Request) {
       note: String(activity.note ?? ""),
     },
   };
-  if (!evento.activity.activityId || !evento.activity.date) {
-    return NextResponse.json({ codigo: "DADOS_INVALIDOS", mensagem: "activityId e date são obrigatórios." }, { status: 400 });
-  }
-  try {
-    const resultado = await processarEventoOfsc(evento);
-    return NextResponse.json(resultado);
-  } catch (erro) {
-    const mensagem = erro instanceof Error ? erro.message : "falha";
-    return NextResponse.json({ codigo: "ERRO_INTERNO", mensagem }, { status: 500 });
-  }
-}
+  if (!evento.activity.activityId || !evento.activity.date) return invalido("activityId e date são obrigatórios.");
+  // Os erros do recetor (ErroHttp: 400/409…) saem com o seu código e estado; qualquer outro vira 500 ERRO_INTERNO.
+  return processarEventoOfsc(evento);
+});

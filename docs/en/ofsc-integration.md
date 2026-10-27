@@ -2,6 +2,21 @@
 
 Closed contract: **these six surfaces only**. No other OFSC endpoints. Operators: `azul`, `vermelho`, `verde`. Bucket: `DST_TELECOM`. Each shared team has one `resourceId` per operator (`AZ_RES_MINHO`, `VR_RES_MINHO`, `VD_RES_MINHO`, …).
 
+## Authentication
+
+Nothing in the integration is public.
+
+| Routes | Who may call |
+| --- | --- |
+| `POST /api/integracao/ofsc/eventos` (webhook) and `/api/ofsc/{operator}/…` (simulated OFSC) | Whoever presents the **integration secret**, or a **hub session** |
+| `GET/POST /api/integracao/{vagas,reserva,agente,consola,cenarios,reconciliar,saude}` and the `/integracao` page | A **hub session** only |
+
+- Secret: `x-vagacerta-segredo: <secret>` header or `Authorization: Bearer <secret>`; constant-time comparison.
+- The secret is `VC_OFSC_SEGREDO`. Without the variable, a development secret is generated on first use, kept in the local database only (`definicoes.segredo_integracao`) and never printed nor returned. Set `VC_OFSC_SEGREDO` in production.
+- No credentials, or a wrong secret: 401 `NAO_AUTENTICADO`. A dispatcher's or technician's session: 403 `SEM_PERMISSAO`. A correct secret does not open the hub-only routes.
+- The console is hub-only because it is cross-operator: three columns (the operator's OFSC, VagaCerta, the other OFSC instances), the eleven scenarios and reconciliation touch all three operators at once.
+- The console's scenarios and booking run inside the server with the hub session; only a real OFSC or an external script needs the secret.
+
 ## The 6 endpoints
 
 ### 1. Webhook OFSC → VagaCerta
@@ -86,4 +101,6 @@ Live grid: `GET /api/integracao/vagas`. Confirm: `POST /api/integracao/reserva`.
 | `evento_duplicado` | Second webhook ignored |
 | `ofsc_em_baixo` | Retry queue and reconcile |
 
-The console (`GET /api/integracao/consola`) has three columns: originating OFSC, VagaCerta, other OFSC instances.
+The console (`GET /api/integracao/consola`, hub only) has three columns: originating OFSC, VagaCerta, other OFSC instances.
+
+Language: the console lines (“Reserva Confirmada: …”, “Evento duplicado …: ignorado.”, “… OFSC … em baixo; ficou na fila.”, …) come out in Portuguese or English according to the chosen language (“Booking confirmed: …”, “Duplicate event …: ignored.”, “… OFSC is down; queued for retry.”). What is OFSC contract — the JSON in the `<pre>` panels and the values `Reserva Confirmada`, `Reserva Recusada`, `Capacidade Esgotada`… — is not translated. The confirmation line shows the counter once: `Reserva Confirmada: AZ-1 na Equipa Minho. Inês Caldeira, 2026-11-03, instalações = 2 vagas (3 → 2).`

@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { DATA_DEMONSTRACAO } from "@/lib/demonstracao";
-import { JANELAS_INICIO } from "@/lib/rules";
+import { proximoDiaUtil } from "@/lib/demonstracao-dia";
+import { hojeLisboa, JANELAS_INICIO } from "@/lib/rules";
 import { Carregamento } from "@/components/carregamento";
 import { FormularioOrdem } from "@/components/formulario-ordem";
+import { diaDemonstracaoAtual } from "@/server/db";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
-import { listarZonas } from "@/server/servicos";
+import { listarZonas, zonasPorArea } from "@/server/servicos";
 
 async function Conteudo() {
   const { t } = await i18nPedido();
@@ -23,6 +24,8 @@ async function Conteudo() {
     );
   }
   const zonas = listarZonas();
+  // Dia por omissão: o dia rico da demonstração; se já passou, o próximo dia útil (um despachante não marca no passado).
+  const dataInicial = proximoDiaUtil([diaDemonstracaoAtual(), hojeLisboa()].sort().pop()!);
   return (
     <div className="space-y-5">
       <div>
@@ -32,8 +35,9 @@ async function Conteudo() {
       <FormularioOrdem
         operadorFixo={ator.papel === "despachante" ? ator.operadorId : null}
         zonas={zonas}
+        zonasPorArea={zonasPorArea()}
         janelas={JANELAS_INICIO}
-        dataInicial={DATA_DEMONSTRACAO}
+        dataInicial={dataInicial}
       />
     </div>
   );

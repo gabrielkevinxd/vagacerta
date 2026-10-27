@@ -1,6 +1,6 @@
 import "server-only";
 
-import { datasUteis, gerarMundo, INICIO_HORIZONTE, indicadoresDoDia, type PedidoSimulacao } from "@/lib/gemeo";
+import { datasUteis, gerarMundo, inicioHorizonte, indicadoresDoDia, type PedidoSimulacao } from "@/lib/gemeo";
 import { tipoDeCategoria, categoriaDoTipo } from "@/lib/ofsc/quotas";
 import { zonaDaArea } from "@/lib/ofsc/zonas";
 import type { ReservaEstruturada } from "@/lib/ofsc/tipos";
@@ -10,7 +10,7 @@ import { ATOR_OFSC } from "@/server/ofsc/recetor";
 import { criarAtividadeNoBucket } from "@/server/ofsc/criar";
 import { listarGrelha } from "@/server/ofsc/grelha";
 import { criarOrdem } from "@/server/servicos";
-import { baseDados, lerMundo } from "@/server/db";
+import { baseDados, diaDemonstracaoAtual, lerMundo } from "@/server/db";
 import { ErroHttp } from "@/server/erros";
 import type { RelatorioGemeo } from "@/lib/contratos/gemeo";
 import { eCentral, type Ator } from "@/lib/rules";
@@ -124,8 +124,9 @@ export function relatorioDoLote(loteId: string, idioma: Idioma = "pt-PT"): Relat
 
 export async function injetarLote(pedido: PedidoSimulacao): Promise<{ loteId: string; relatorio: RelatorioGemeo }> {
   const mundo = lerMundo();
-  const datas = datasUteis(INICIO_HORIZONTE, pedido.semanas);
-  const inicio = datas[0] ?? INICIO_HORIZONTE;
+  const horizonte = inicioHorizonte(diaDemonstracaoAtual());
+  const datas = datasUteis(horizonte, pedido.semanas);
+  const inicio = datas[0] ?? horizonte;
   const loteId = idDoLote(pedido.semente, inicio);
   apagarLote(loteId);
   baseDados()

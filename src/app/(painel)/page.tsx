@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { DATA_DEMONSTRACAO } from "@/lib/demonstracao";
 import { um } from "@/lib/consulta-pagina";
 import { formatarDataLongaLocale, formatarNumero } from "@/lib/i18n/formatacao";
 import { COR_OPERADOR, eDataIso, hojeLisboa } from "@/lib/rules";
@@ -8,6 +7,7 @@ import { Carregamento } from "@/components/carregamento";
 import { EstadoVazio } from "@/components/estado-vazio";
 import { EtiquetaEstado, EtiquetaOperador } from "@/components/etiquetas";
 import { LegendaOperadores } from "@/components/legenda-operadores";
+import { diaDemonstracaoAtual } from "@/server/db";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 import { painel } from "@/server/servicos";
@@ -24,8 +24,9 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
   const { t, idioma } = await i18nPedido();
   const parametros = await searchParams;
   const pedido = um(parametros.data);
-  const data = eDataIso(pedido) ? pedido : DATA_DEMONSTRACAO;
   const ator = await exigirAtorPagina();
+  const diaRico = diaDemonstracaoAtual();
+  const data = eDataIso(pedido) ? pedido : diaRico;
   const vista = painel(ator, data);
   const hoje = hojeLisboa();
   const cartoes = [
@@ -59,7 +60,7 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
           <Link className="text-sm underline" href={`/?data=${hoje}`}>
             {t("comum.hoje")}
           </Link>
-          <Link className="text-sm underline" href={`/?data=${DATA_DEMONSTRACAO}`}>
+          <Link className="text-sm underline" href={`/?data=${diaRico}`}>
             {t("painel.demonstracao")}
           </Link>
         </form>

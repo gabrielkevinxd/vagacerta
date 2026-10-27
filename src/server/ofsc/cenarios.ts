@@ -1,24 +1,49 @@
 import "server-only";
 
-import { DATA_DEMONSTRACAO } from "@/lib/demonstracao";
+import { somarDiasUteis } from "@/lib/demonstracao-dia";
 import type { ReservaEstruturada } from "@/lib/ofsc/tipos";
+import { diaDemonstracaoAtual } from "@/server/db";
 import { definirOfscEmBaixo, ofscEmBaixo } from "./loja";
 import { reconciliarOfsc } from "./cliente";
 import { actualizarAtividadeOfsc, criarAtividadeNoBucket } from "./criar";
 import { processarEventoOfsc, publicarFaltaEquipa } from "./recetor";
 import { avaliarReserva, listarGrelha } from "./grelha";
 
-function reserva(parcial: Partial<ReservaEstruturada> & Pick<ReservaEstruturada, "operadorId" | "apptNumber">): ReservaEstruturada {
+/**
+ * Os cenários usam dias úteis a seguir ao dia rico da demonstração (5 dias úteis depois é a mesma
+ * terça-feira da semana seguinte, 6 a quarta, 7 a quinta…): assim correm em qualquer dia, sempre em dias de trabalho.
+ */
+function diasDosCenarios() {
+  const dia = diaDemonstracaoAtual();
+  const depois = (n: number) => somarDiasUteis(dia, n);
+  return {
+    demonstracao: dia,
+    livre: depois(5),
+    quota: depois(13),
+    reagendamento: depois(6),
+    reagendado: depois(7),
+    cancelamento: depois(8),
+    falta: depois(5),
+    paralelo: depois(10),
+    duplicado: depois(11),
+    ofscEmBaixo: depois(12),
+  };
+}
+
+function reserva(
+  parcial: Partial<ReservaEstruturada> & Pick<ReservaEstruturada, "operadorId" | "apptNumber">,
+  dataPadrao = diasDosCenarios().livre,
+): ReservaEstruturada {
   return {
     zona: "zn-n01",
-    data: "2026-11-03",
+    data: dataPadrao,
     janelaInicio: "10:00",
     janelaFim: "12:00",
     tipoIntervencao: "instalacao",
     resourceId: "AZ_RES_MINHO",
     tecnicoId: "tec-rui",
     customerName: "Cliente cenário",
-    streetAddress: "Rua da Reserva 1",
+    streetAddress: "Rua Exemplo 1",
     city: "Braga",
     postalCode: "4700-024",
     latitude: "41.545",
@@ -28,9 +53,10 @@ function reserva(parcial: Partial<ReservaEstruturada> & Pick<ReservaEstruturada,
 }
 
 export async function correrCenario(id: string): Promise<unknown> {
+  const dias = diasDosCenarios();
   switch (id) {
     case "vaga_livre": {
-      const grelha = listarGrelha("azul", "2026-11-03", "zn-n01", "instalacao");
+      const grelha = listarGrelha("azul", dias.livre, "zn-n01", "instalacao");
       const celula = grelha[0];
       if (!celula) return { erro: "sem vaga" };
       return criarAtividadeNoBucket(
@@ -46,7 +72,7 @@ export async function correrCenario(id: string): Promise<unknown> {
       );
     }
     case "capacidade_esgotada": {
-      const data = "2026-11-13";
+      const data = dias.quota;
       const resultados = [];
       for (let i = 0; i < 4; i += 1) {
         resultados.push(
@@ -69,7 +95,7 @@ export async function correrCenario(id: string): Promise<unknown> {
       return avaliarReserva({
         operadorId: "azul",
         zona: "zn-inexistente",
-        data: "2026-11-03",
+        data: dias.livre,
         janelaInicio: "10:00",
         janelaFim: "12:00",
         tipoIntervencao: "instalacao",
@@ -89,7 +115,7 @@ export async function correrCenario(id: string): Promise<unknown> {
         reserva({
           operadorId: "azul",
           apptNumber: "AZ-IND-1",
-          data: DATA_DEMONSTRACAO,
+          data: dias.demonstracao,
           resourceId: "AZ_RES_CAVADO",
           tecnicoId: "tec-marta",
           zona: "zn-n02",
@@ -100,32 +126,32 @@ export async function correrCenario(id: string): Promise<unknown> {
       );
     case "reagendamento": {
       const criado = await criarAtividadeNoBucket(
-        reserva({ operadorId: "azul", apptNumber: "AZ-REAG-1", data: "2026-11-04", customerName: "Carla Reagenda" }),
+        reserva({ operadorId: "azul", apptNumber: "AZ-REAG-1", data: dias.reagendamento, customerName: "Carla Reagenda" }),
       );
       return actualizarAtividadeOfsc("azul", criado.atividade.activityId, {
-        date: "2026-11-05",
+        date: dias.reagendado,
         timeSlot: { start: "13:00", end: "15:00" },
       });
     }
     case "cancelamento_reencaixe": {
       const ocupante = await criarAtividadeNoBucket(
-        reserva({ operadorId: "azul", apptNumber: "AZ-CANC-1", data: "2026-11-06", customerName: "Ocupante" }),
+        reserva({ operadorId: "azul", apptNumber: "AZ-CANC-1", data: dias.cancelamento, customerName: "Ocupante" }),
       );
       return actualizarAtividadeOfsc("azul", ocupante.atividade.activityId, { status: "cancelled" });
     }
     case "falta_equipa":
-      publicarFaltaEquipa("eq-litoral", "2026-11-03", "Falta da Equipa Litoral (cenário)");
+      publicarFaltaEquipa("eq-litoral", dias.falta, "Falta da Equipa Litoral (cenário)");
       return { ok: true, equipaId: "eq-litoral" };
     case "dois_operadores": {
       return Promise.all([
         criarAtividadeNoBucket(
-          reserva({ operadorId: "azul", apptNumber: "AZ-PAR-1", data: "2026-11-10", resourceId: "AZ_RES_MINHO" }),
+          reserva({ operadorId: "azul", apptNumber: "AZ-PAR-1", data: dias.paralelo, resourceId: "AZ_RES_MINHO" }),
         ),
         criarAtividadeNoBucket(
           reserva({
             operadorId: "vermelho",
             apptNumber: "VR-PAR-1",
-            data: "2026-11-10",
+            data: dias.paralelo,
             resourceId: "VR_RES_AVE",
             janelaInicio: "09:00",
             janelaFim: "12:00",
@@ -135,7 +161,7 @@ export async function correrCenario(id: string): Promise<unknown> {
     }
     case "evento_duplicado": {
       const criado = await criarAtividadeNoBucket(
-        reserva({ operadorId: "azul", apptNumber: "AZ-DUP-1", data: "2026-11-11" }),
+        reserva({ operadorId: "azul", apptNumber: "AZ-DUP-1", data: dias.duplicado }),
       );
       const segunda = await processarEventoOfsc({
         eventType: "activityCreated",
@@ -147,7 +173,7 @@ export async function correrCenario(id: string): Promise<unknown> {
     case "ofsc_em_baixo": {
       definirOfscEmBaixo("vermelho", true);
       const criado = await criarAtividadeNoBucket(
-        reserva({ operadorId: "azul", apptNumber: "AZ-DOWN-1", data: "2026-11-12" }),
+        reserva({ operadorId: "azul", apptNumber: "AZ-DOWN-1", data: dias.ofscEmBaixo }),
       );
       const ainda = ofscEmBaixo("vermelho");
       definirOfscEmBaixo("vermelho", false);

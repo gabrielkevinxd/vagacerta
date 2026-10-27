@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { janelasDe } from "@/lib/rules/catalogo";
 import { eCentral, podeCancelar, podeMarcarOperador, podeReagendar } from "@/lib/rules";
@@ -6,15 +7,25 @@ import { AcoesOrdem } from "@/components/acoes-ordem";
 import { Carregamento } from "@/components/carregamento";
 import { EtiquetaEstado, EtiquetaOperador } from "@/components/etiquetas";
 import { formatarDataLocale, formatarInstante } from "@/lib/i18n/formatacao";
+import { traduzirHistoria } from "@/lib/i18n/motor";
+import { ErroHttp } from "@/server/erros";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 import { listarEquipas, obterOrdem } from "@/server/servicos";
 
 async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { t, idioma } = await i18nPedido();
+  const { t, idioma, m } = await i18nPedido();
   const ator = await exigirAtorPagina();
-  const { ordem, historico } = obterOrdem(ator, id);
+  let encontrada: ReturnType<typeof obterOrdem> | null = null;
+  try {
+    encontrada = obterOrdem(ator, id);
+  } catch (erro) {
+    // Ordem alheia ou inexistente: página «Ordem não encontrada» (not-found.tsx), nunca o erro cru do servidor.
+    if (erro instanceof ErroHttp && erro.status === 404) notFound();
+    throw erro;
+  }
+  const { ordem, historico } = encontrada;
   const equipas = listarEquipas(ator).map((equipa) => ({ id: equipa.id, nome: equipa.nome }));
   const janelas = janelasDe(ordem.operadorId, ordem.categoria);
   const central = eCentral(ator);
@@ -27,7 +38,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
         </Link>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="font-heading text-3xl">{ordem.referencia}</h1>
-          <EtiquetaOperador id={ordem.operadorId} nome={ordem.operadorNome} />
+          <EtiquetaOperador id={ordem.operadorId} />
           <EtiquetaEstado estado={ordem.estado} />
         </div>
         <p className="text-sm text-muted-foreground">
@@ -70,14 +81,14 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
         {ordem.nota ? (
           <div className="md:col-span-2">
             <dt className="text-muted-foreground">{t("ordens.nota")}</dt>
-            <dd>{ordem.nota}</dd>
+            <dd>{traduzirHistoria(m, ordem.nota)}</dd>
           </div>
         ) : null}
         {ordem.motivoCancelamento ? (
           <div className="md:col-span-2">
             <dt className="text-muted-foreground">{t("ordens.cancelamento")}</dt>
             <dd>
-              {ordem.motivoCancelamento}
+              {traduzirHistoria(m, ordem.motivoCancelamento)}
               {ordem.quemPediu ? ` · ${t(`quem.${ordem.quemPediu}`)}` : ""}
             </dd>
           </div>
@@ -128,10 +139,10 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
         <ol className="space-y-2">
           {historico.map((linha) => (
             <li key={linha.id} className="rounded-lg border border-border bg-card px-3 py-2 text-sm">
-              <p>{linha.detalhe}</p>
+              <p>{traduzirHistoria(m, linha.detalhe)}</p>
               <p className="text-muted-foreground">
                 {formatarInstante(linha.quando, idioma)}
-                {linha.autor ? ` · ${linha.autor}` : ""}
+                {linha.autor ? ` · ${traduzirHistoria(m, linha.autor)}` : ""}
               </p>
             </li>
           ))}

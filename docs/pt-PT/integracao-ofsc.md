@@ -2,6 +2,21 @@
 
 Contrato fechado: **só estes seis pontos**. Não há outros endpoints OFSC. Operadores: `azul`, `vermelho`, `verde`. Bucket: `DST_TELECOM`. Cada equipa partilhada tem um `resourceId` por operador (`AZ_RES_MINHO`, `VR_RES_MINHO`, `VD_RES_MINHO`, …).
 
+## Autenticação
+
+Nenhum ponto da integração é público.
+
+| Rotas | Quem pode chamar |
+| --- | --- |
+| `POST /api/integracao/ofsc/eventos` (webhook) e `/api/ofsc/{operador}/…` (OFSC simulado) | Quem apresenta o **segredo da integração**, ou uma **sessão da central** |
+| `GET/POST /api/integracao/{vagas,reserva,agente,consola,cenarios,reconciliar,saude}` e a página `/integracao` | Só uma **sessão da central** |
+
+- Segredo: cabeçalho `x-vagacerta-segredo: <segredo>` ou `Authorization: Bearer <segredo>`; comparação em tempo constante.
+- O segredo é `VC_OFSC_SEGREDO`. Sem a variável, gera-se um segredo de desenvolvimento na primeira utilização, guardado só na base local (`definicoes.segredo_integracao`) e nunca impresso nem devolvido. Em produção, defina `VC_OFSC_SEGREDO`.
+- Sem credenciais, ou segredo errado: 401 `NAO_AUTENTICADO`. Sessão de despachante ou de técnico: 403 `SEM_PERMISSAO`. O segredo certo não abre as rotas só da central.
+- A consola é só da central porque é «cross-operador»: três colunas (o OFSC do operador, a VagaCerta, o OFSC dos outros), os onze cenários e a reconciliação mexem nos três operadores ao mesmo tempo.
+- Os cenários e a reserva da consola correm dentro do servidor com a sessão da central; só um OFSC real ou um script externo precisa do segredo.
+
 ## Os 6 endpoints
 
 ### 1. Webhook OFSC → VagaCerta
@@ -86,4 +101,6 @@ Grelha em tempo real: `GET /api/integracao/vagas`. Confirmação: `POST /api/int
 | `evento_duplicado` | Segundo webhook ignorado |
 | `ofsc_em_baixo` | Fila de tentativas e reconciliação |
 
-A consola (`GET /api/integracao/consola`) tem três colunas: OFSC do operador, VagaCerta, OFSC dos outros.
+A consola (`GET /api/integracao/consola`, só a central) tem três colunas: OFSC do operador, VagaCerta, OFSC dos outros.
+
+Idioma: as linhas da consola («Reserva Confirmada: …», «Evento duplicado … ignorado.», «… em baixo; ficou na fila.», …) saem em português ou em inglês conforme o idioma escolhido («Booking confirmed: …», «Duplicate event …: ignored.», «… OFSC is down; queued for retry.»). O que é contrato OFSC — os JSON dos painéis `<pre>` e os valores `Reserva Confirmada`, `Reserva Recusada`, `Capacidade Esgotada`… — não se traduz. O contador da linha de confirmação aparece uma só vez: `Reserva Confirmada: AZ-1 na Equipa Minho. Inês Caldeira, 2026-11-03, instalações = 2 vagas (3 → 2).`

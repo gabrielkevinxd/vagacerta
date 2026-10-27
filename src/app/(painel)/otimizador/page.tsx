@@ -1,12 +1,12 @@
 import { Suspense } from "react";
-import { DATA_DEMONSTRACAO } from "@/lib/demonstracao";
 import { um } from "@/lib/consulta-pagina";
 import type { PlanoVista } from "@/lib/rules/agenda";
 import type { PedidoRealocacao } from "@/lib/rules/reencaixe";
 import { eCentral, eDataIso } from "@/lib/rules";
 import { Carregamento } from "@/components/carregamento";
 import { PlanoComparacao } from "@/components/plano-comparacao";
-import { traduzirMensagem, traduzirPlanoVista } from "@/lib/i18n/motor";
+import { traduzirMensagem, traduzirNarrativa, traduzirPlanoVista } from "@/lib/i18n/motor";
+import { diaDemonstracaoAtual } from "@/server/db";
 import { ErroHttp } from "@/server/erros";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
@@ -30,7 +30,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
   const ator = await exigirAtorPagina();
   const consulta = await searchParams;
   const pedida = um(consulta.data);
-  const data = eDataIso(pedida) ? pedida : DATA_DEMONSTRACAO;
+  const data = eDataIso(pedida) ? pedida : diaDemonstracaoAtual();
   const central = eCentral(ator);
   const confirmado = um(consulta.confirmado) === "1";
   const erroConsulta = um(consulta.erro);
@@ -58,7 +58,8 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
 
   let plano: PlanoVista | null = null;
   let pedido: PedidoRealocacao | null = null;
-  let aviso: string | null = erroConsulta || null;
+  // O erro de «Confirmar este plano» chega pelo URL (ação do servidor) com o texto do motor: traduz-se aqui.
+  let aviso: string | null = erroConsulta ? traduzirNarrativa(m, erroConsulta) : null;
 
   if (prever && !aviso) {
     if (um(consulta.modo) === "falta" && !central) {

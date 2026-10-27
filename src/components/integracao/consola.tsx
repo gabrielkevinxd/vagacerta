@@ -67,7 +67,7 @@ type Formulario = {
 
 const FORM_VAZIO: Formulario = {
   zona: "zn-n01",
-  data: "2026-11-03",
+  data: "",
   janelaInicio: "",
   janelaFim: "",
   tipoIntervencao: "instalacao",
@@ -82,9 +82,21 @@ const FORM_VAZIO: Formulario = {
   longitude: "",
 };
 
+function lerConsola(operador: OperadorId) {
+  return enviar<{ logs: Log[]; retries: { id: string }[] }>(`/api/integracao/consola?operador=${operador}`, undefined, "GET");
+}
+
+function lerGrelha(operador: OperadorId, filtro: Pick<Formulario, "data" | "zona" | "tipoIntervencao">) {
+  const q = new URLSearchParams({ operador, data: filtro.data, zona: filtro.zona, tipo: filtro.tipoIntervencao });
+  return enviar<{ celulas: Celula[] }>(`/api/integracao/vagas?${q}`, undefined, "GET");
+}
+
 export function ConsolaIntegracao({
+  dataInicial,
   textos,
 }: {
+  /** Dia por omissão da reserva: 5 dias úteis depois do dia rico da demonstração (calculado no servidor). */
+  dataInicial: string;
   textos: {
     corpo: string;
     escolherOperador: string;
@@ -116,7 +128,7 @@ export function ConsolaIntegracao({
 }) {
   const [operador, setOperador] = useState<OperadorId>("azul");
   const [texto, setTexto] = useState(textos.exemplo);
-  const [form, setForm] = useState<Formulario>(FORM_VAZIO);
+  const [form, setForm] = useState<Formulario>({ ...FORM_VAZIO, data: dataInicial });
   const [emFalta, setEmFalta] = useState<string[]>([]);
   const [modo, setModo] = useState<"ia" | "sem_ia" | null>(null);
   const [detalhe, setDetalhe] = useState("");
@@ -131,37 +143,49 @@ export function ConsolaIntegracao({
     setForm((atual) => ({ ...atual, [chave]: valor }));
   }
 
+  // Depois de uma ação do utilizador (confirmar, correr um cenário) a consola e a grelha voltam a ser lidas.
   async function refrescar() {
-    const dados = await enviar<{ logs: Log[]; retries: { id: string }[] }>(
-      `/api/integracao/consola?operador=${operador}`,
-      undefined,
-      "GET",
-    );
-    setLogs(dados.logs as Log[]);
+    const dados = await lerConsola(operador);
+    setLogs(dados.logs);
     setRetries(dados.retries.length);
   }
 
   async function refrescarGrelha() {
-    const q = new URLSearchParams({
-      operador,
-      data: form.data,
-      zona: form.zona,
-      tipo: form.tipoIntervencao,
-    });
-    const dados = await enviar<{ celulas: Celula[] }>(`/api/integracao/vagas?${q}`, undefined, "GET");
+    const dados = await lerGrelha(operador, form);
     setCelulas(dados.celulas);
   }
 
+  // A consola atualiza-se sozinha a cada 1,5 s. O estado só muda dentro do `.then` (depois de a resposta chegar),
+  // nunca no corpo do efeito; `ativo` evita atualizar uma consola que já mudou de operador ou saiu do ecrã.
   useEffect(() => {
-    void refrescar().catch(() => undefined);
-    const id = window.setInterval(() => {
-      void refrescar().catch(() => undefined);
-    }, 1500);
-    return () => window.clearInterval(id);
+    let ativo = true;
+    const carregar = () => {
+      lerConsola(operador)
+        .then((dados) => {
+          if (!ativo) return;
+          setLogs(dados.logs);
+          setRetries(dados.retries.length);
+        })
+        .catch(() => undefined);
+    };
+    carregar();
+    const id = window.setInterval(carregar, 1500);
+    return () => {
+      ativo = false;
+      window.clearInterval(id);
+    };
   }, [operador]);
 
   useEffect(() => {
-    void refrescarGrelha().catch(() => undefined);
+    let ativo = true;
+    lerGrelha(operador, { data: form.data, zona: form.zona, tipoIntervencao: form.tipoIntervencao })
+      .then((dados) => {
+        if (ativo) setCelulas(dados.celulas);
+      })
+      .catch(() => undefined);
+    return () => {
+      ativo = false;
+    };
   }, [operador, form.data, form.zona, form.tipoIntervencao]);
 
   async function atalho(ev: React.FormEvent) {
@@ -195,12 +219,13 @@ export function ConsolaIntegracao({
     setErro(null);
     setDecisao(null);
     try {
-      const resposta = await enviar<{ resultado: { decisao?: string; motivo?: string; contador?: string } }>(
+      const resposta = await enviar<{ apresentacao?: string; resultado: { decisao?: string; motivo?: string; contador?: string } }>(
         "/api/integracao/reserva",
         { ...form, operadorId: operador, tecnicoId: form.tecnicoId || null },
       );
       const d = resposta.resultado;
-      setDecisao([d.decisao, d.motivo, d.contador].filter(Boolean).join(" — "));
+      // `apresentacao` vem do servidor já no idioma do utilizador; os campos do resultado são o contrato (sempre em PT).
+      setDecisao(resposta.apresentacao || [d.decisao, d.motivo, d.contador].filter(Boolean).join(" — "));
       await refrescar();
       await refrescarGrelha();
     } catch (falha) {

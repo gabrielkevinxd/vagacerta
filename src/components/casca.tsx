@@ -56,10 +56,14 @@ function itensDe(ator: Ator, traduzir: (chave: Chave) => string) {
   itens.push({ href: "/agenda", rotulo: traduzir("nav.agenda") });
   if (ator.papel !== "tecnico") {
     itens.push({ href: "/assistente", rotulo: traduzir("nav.assistente") });
-    itens.push({ href: "/integracao", rotulo: traduzir("nav.integracao") });
   }
   if (eCentral(ator)) {
-    itens.push({ href: "/gemeo", rotulo: traduzir("nav.gemeo") }, { href: "/definicoes", rotulo: traduzir("nav.definicoes") });
+    // A consola de integração mostra o OFSC dos três operadores: só a central a usa.
+    itens.push(
+      { href: "/integracao", rotulo: traduzir("nav.integracao") },
+      { href: "/gemeo", rotulo: traduzir("nav.gemeo") },
+      { href: "/definicoes", rotulo: traduzir("nav.definicoes") },
+    );
   }
   return itens;
 }

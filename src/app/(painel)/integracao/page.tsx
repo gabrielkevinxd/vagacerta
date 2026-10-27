@@ -2,15 +2,30 @@ import { Suspense } from "react";
 import { Carregamento } from "@/components/carregamento";
 import { ConsolaIntegracao } from "@/components/integracao/consola";
 import { XAI_MODELO_OMISSAO, modeloXai } from "@/lib/ofsc/xai";
+import { somarDiasUteis } from "@/lib/demonstracao-dia";
+import { eCentral } from "@/lib/rules";
+import { diaDemonstracaoAtual } from "@/server/db";
 import { i18nPedido } from "@/server/idioma";
+import { exigirAtorPagina } from "@/server/sessao";
 
 async function Conteudo() {
   const { t } = await i18nPedido();
+  const ator = await exigirAtorPagina();
+  // O proxy já responde 403 a quem não é da central; esta verificação protege a página mesmo sem o proxy.
+  if (!eCentral(ator)) {
+    return (
+      <div className="max-w-2xl space-y-2">
+        <h1 className="font-heading text-3xl">{t("integracao.titulo")}</h1>
+        <p className="text-sm text-muted-foreground">{t("integracao.soCentral")}</p>
+      </div>
+    );
+  }
   const modelo = modeloXai() || XAI_MODELO_OMISSAO;
   return (
     <div className="space-y-4">
       <h1 className="font-heading text-3xl">{t("integracao.titulo")}</h1>
       <ConsolaIntegracao
+        dataInicial={somarDiasUteis(diaDemonstracaoAtual(), 5)}
         textos={{
           corpo: t("integracao.corpo"),
           escolherOperador: t("integracao.escolherOperador"),
