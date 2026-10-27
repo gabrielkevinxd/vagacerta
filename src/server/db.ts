@@ -289,8 +289,8 @@ function migrar(db: DatabaseSync): void {
   semearOfsc(db);
 }
 
-/** Backfill `operador_id` quando dedutível; apaga o resto. Globais passam a `*`. */
-function migrarLogsOperador(db: DatabaseSync): void {
+/** Backfill `operador_id` quando dedutível; apaga o resto. Globais passam a `*`. Exportada para testes. */
+export function migrarLogsOperador(db: DatabaseSync): void {
   const nulos = db
     .prepare(
       "SELECT id, historia, metodo, caminho, pedido, resposta FROM integracao_logs WHERE operador_id IS NULL",
@@ -329,7 +329,8 @@ function deduzirOperadorLog(linha: {
   if (/\bvermelho\b|\/ofsc\/vermelho\b|\bVR[_-]/i.test(texto)) hits.add("vermelho");
   if (/\bverde\b|\/ofsc\/verde\b|\bVD[_-]/i.test(texto)) hits.add("verde");
   if (hits.size === 1) return [...hits][0]!;
-  if (hits.size > 1) return "*";
+  // Multi-operador (propagação) → apagar; nunca promover a global com JSON.
+  if (hits.size > 1) return null;
   return null;
 }
 

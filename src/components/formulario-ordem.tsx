@@ -213,7 +213,7 @@ export function FormularioOrdem({
               required
               minLength={3}
               aria-invalid={Boolean(errosCampo.clienteNome) || undefined}
-              className="h-9 text-[13px]/5"
+              className="text-[13px]/5"
             />
             <ErroCampo mensagem={errosCampo.clienteNome} />
           </div>
@@ -227,7 +227,7 @@ export function FormularioOrdem({
               required
               minLength={5}
               aria-invalid={Boolean(errosCampo.clienteContacto) || undefined}
-              className="h-9 text-[13px]/5"
+              className="text-[13px]/5"
             />
             <ErroCampo mensagem={errosCampo.clienteContacto} />
           </div>
@@ -241,7 +241,7 @@ export function FormularioOrdem({
               required
               minLength={5}
               aria-invalid={Boolean(errosCampo.morada) || undefined}
-              className="h-9 text-[13px]/5"
+              className="text-[13px]/5"
             />
             <ErroCampo mensagem={errosCampo.morada} />
           </div>
@@ -254,7 +254,7 @@ export function FormularioOrdem({
           <div className="space-y-1.5">
             <Label htmlFor="categoria">{t("ordens.tipoServico")}</Label>
             <Select value={categoria} onValueChange={(valor) => aplicarCategoria(valor as (typeof CATEGORIAS)[number])}>
-              <SelectTrigger id="categoria" className="h-9 w-full text-[13px]/5">
+              <SelectTrigger id="categoria" className="w-full text-[13px]/5">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -269,7 +269,7 @@ export function FormularioOrdem({
           <div className="space-y-1.5">
             <Label htmlFor="prioridade">{t("ordens.prioridade")}</Label>
             <Select value={prioridade} onValueChange={setPrioridade}>
-              <SelectTrigger id="prioridade" className="h-9 w-full text-[13px]/5">
+              <SelectTrigger id="prioridade" className="w-full text-[13px]/5">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -295,7 +295,7 @@ export function FormularioOrdem({
                 if (match) setJanelaFim(match.fim);
               }}
             >
-              <SelectTrigger id="janela-inicio" className="h-9 w-full font-mono text-[13px]/5" aria-invalid={Boolean(errosCampo.janela) || undefined}>
+              <SelectTrigger id="janela-inicio" className="w-full font-mono text-[13px]/5" aria-invalid={Boolean(errosCampo.janela) || undefined}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -312,7 +312,7 @@ export function FormularioOrdem({
           <div className="space-y-1.5">
             <Label htmlFor="janela-fim">{t("ordens.janelaFimHora")}</Label>
             <Select value={fimEfetivo} onValueChange={setJanelaFim}>
-              <SelectTrigger id="janela-fim" className="h-9 w-full font-mono text-[13px]/5" aria-invalid={Boolean(errosCampo.janela) || undefined}>
+              <SelectTrigger id="janela-fim" className="w-full font-mono text-[13px]/5" aria-invalid={Boolean(errosCampo.janela) || undefined}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -334,7 +334,7 @@ export function FormularioOrdem({
               </p>
             ) : (
               <Select value={operadorId} onValueChange={(valor) => aplicarOperador(valor as OperadorId)}>
-                <SelectTrigger id="operador" className="h-9 w-full text-[13px]/5">
+                <SelectTrigger id="operador" className="w-full text-[13px]/5">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -358,7 +358,7 @@ export function FormularioOrdem({
               minLength={3}
               placeholder="AZ-25001"
               aria-invalid={Boolean(errosCampo.referencia) || undefined}
-              className="h-9 font-mono text-[13px]/5"
+              className="font-mono text-[13px]/5"
             />
             <ErroCampo mensagem={errosCampo.referencia} />
           </div>
@@ -366,7 +366,7 @@ export function FormularioOrdem({
             <div className="space-y-1.5">
               <Label htmlFor="tecnologia">{t("ordens.tecnologia")}</Label>
               <Select value={tecnologia} onValueChange={setTecnologia}>
-                <SelectTrigger id="tecnologia" className="h-9 w-full text-[13px]/5">
+                <SelectTrigger id="tecnologia" className="w-full text-[13px]/5">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -382,7 +382,7 @@ export function FormularioOrdem({
           <div className="space-y-1.5">
             <Label htmlFor="area">{t("ordens.area")}</Label>
             <Select value={area} onValueChange={setArea}>
-              <SelectTrigger id="area" className="h-9 w-full text-[13px]/5">
+              <SelectTrigger id="area" className="w-full text-[13px]/5">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -397,7 +397,7 @@ export function FormularioOrdem({
           <div className="space-y-1.5">
             <Label htmlFor="zonaId">{t("ordens.zona")}</Label>
             <Select value={zonaId} onValueChange={setZonaId}>
-              <SelectTrigger id="zonaId" className="h-9 w-full text-[13px]/5">
+              <SelectTrigger id="zonaId" className="w-full text-[13px]/5">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -412,7 +412,7 @@ export function FormularioOrdem({
           <div className="space-y-1.5">
             <Label htmlFor="modo">{t("ordens.oQueFazer")}</Label>
             <Select value={modo} onValueChange={setModo}>
-              <SelectTrigger id="modo" className="h-9 w-full text-[13px]/5">
+              <SelectTrigger id="modo" className="w-full text-[13px]/5">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

@@ -389,7 +389,7 @@ Contrato OFSC (não há outros endpoints OFSC):
   - `PATCH /api/ofsc/{operador}/resources/{resourceId}/absences/{id}`
   - `DELETE /api/ofsc/{operador}/resources/{resourceId}/absences/{id}`
 
-Estas rotas exigem o segredo partilhado `OFSC_WEBHOOK_SECRET` (cabeçalho `x-vagacerta-ofsc-secret` ou `Authorization: Bearer …`). Em demonstração, o valor por omissão é `vagacerta-demo-ofsc` (ver `.env.example`). As chamadas internas do motor usam `aplicarChamadaOfsc` e não passam pelo HTTP.
+Estas rotas exigem o segredo partilhado `OFSC_WEBHOOK_SECRET` (cabeçalho `x-vagacerta-ofsc-secret` ou `Authorization: Bearer …`). Fora de `NODE_ENV=production`, se a variável não estiver definida, usa-se o valor de demonstração `vagacerta-demo-ofsc` (ver `.env.example`). Em produção sem variável, as rotas respondem 503. As chamadas internas do motor usam `aplicarChamadaOfsc` e não passam pelo HTTP.
 
 Cada equipa partilhada tem um `resourceId` distinto em cada operador (`AZ_RES_MINHO`, `VR_RES_MINHO`, `VD_RES_MINHO`, …).
 
