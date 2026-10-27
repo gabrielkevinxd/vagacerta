@@ -9,6 +9,7 @@ import { useT } from "@/components/idioma/provedor";
 import { CATEGORIAS, OPERADORES, PRIORIDADES, TECNOLOGIAS, type OperadorId } from "@/lib/rules/tipos";
 import type { PublicacaoVagas } from "@/lib/rules/vagas";
 import { enviar } from "@/lib/cliente";
+import { SeletorData } from "@/components/seletor-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -283,7 +284,7 @@ export function FormularioOrdem({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="data">{t("comum.data")}</Label>
-            <Input id="data" type="date" value={data} onChange={(evento) => setData(evento.target.value)} required className="h-9 text-[13px]/5" />
+            <SeletorData id="data" valor={data} onChange={setData} required />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="janela-inicio">{t("ordens.janelaInicioHora")}</Label>

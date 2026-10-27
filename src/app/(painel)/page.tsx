@@ -11,8 +11,8 @@ import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
 import { GrelhaIndicadores, Indicador } from "@/components/layout/indicador";
 import { Seccao } from "@/components/layout/superficie";
 import { LegendaOperadores } from "@/components/legenda-operadores";
+import { SeletorData } from "@/components/seletor-data";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 import { painel } from "@/server/servicos";
@@ -43,7 +43,7 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
             <label className="text-xs font-medium text-muted-foreground" htmlFor="data">
               {t("comum.dia")}
             </label>
-            <Input id="data" name="data" type="date" defaultValue={data} className="h-8 w-auto" />
+            <SeletorData id="data" name="data" defaultValue={data} className="w-auto" />
             <Button type="submit" size="sm">
               {t("comum.ver")}
             </Button>

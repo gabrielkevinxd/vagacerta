@@ -7,6 +7,7 @@ import { useT } from "@/components/idioma/provedor";
 import type { Chave } from "@/lib/i18n";
 import { formatarDataLocale } from "@/lib/i18n/formatacao";
 import { enviar } from "@/lib/cliente";
+import { SeletorData } from "@/components/seletor-data";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -173,11 +174,11 @@ export function AcoesEquipa({
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="inicio-zona">{t("comum.desde")}</Label>
-          <Input id="inicio-zona" name="inicio" type="date" required />
+          <SeletorData id="inicio-zona" name="inicio" required />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="fim-zona">{t("comum.ate")}</Label>
-          <Input id="fim-zona" name="fim" type="date" />
+          <SeletorData id="fim-zona" name="fim" />
         </div>
         <label className="flex items-center gap-2 text-[13px]/5 md:col-span-2">
           <input type="checkbox" name="confirmacao" />
@@ -277,7 +278,7 @@ export function AcoesEquipa({
         >
           <div className="space-y-1.5">
             <Label htmlFor="data-un">{t("comum.data")}</Label>
-            <Input id="data-un" name="data" type="date" required />
+            <SeletorData id="data-un" name="data" required />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="motivo-un">{t("comum.motivo")}</Label>
