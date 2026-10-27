@@ -103,8 +103,16 @@ describe("operadoresServidos na base", () => {
     const erro = falha(() => guardarEquipa(central, "eq-minho", { operadoresServidos: ["azul"] }));
     expect(erro.status).toBe(409);
     expect(erro.codigo).toBe("OPERADOR_COM_ORDENS");
-    const detalhes = erro.detalhes as { ordens?: { referencia: string }[]; remocoes?: string[] };
-    expect(detalhes.remocoes).toEqual(expect.arrayContaining(["vermelho", "verde"]));
+    const detalhes = erro.detalhes as {
+      ordens?: { referencia: string; operadorId: string }[];
+      remocoes?: string[];
+    };
+    // remocoes = só operadores com ordens a bloquear, ordem azul → vermelho → verde
+    const bloqueantes = [...new Set((detalhes.ordens ?? []).map((o) => o.operadorId))];
+    expect(detalhes.remocoes).toEqual(["azul", "vermelho", "verde"].filter((op) => bloqueantes.includes(op)));
+    expect(detalhes.remocoes!.length).toBeGreaterThan(0);
+    expect(detalhes.remocoes).toContain("vermelho");
+    expect(detalhes.remocoes).not.toContain("azul"); // não estava a ser removido
     const refs = (detalhes.ordens ?? []).map((o) => o.referencia);
     expect(refs.some((r) => /VR-90001|AZ-24081|VR-CANC|AZ-24160|VR-88420/.test(r))).toBe(true);
   });

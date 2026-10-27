@@ -86,15 +86,22 @@ export function AcoesEquipa({
     setServidos(operadoresServidos);
   }
 
+  function listarOperadores(ids: OperadorId[], artigo: "o" | "do" | "none" = "o") {
+    const ordenados = OPERADORES.filter((op) => ids.includes(op));
+    const locale = idioma === "en" ? "en" : "pt-PT";
+    const nomes = ordenados.map((id) => {
+      const nome = t(`operador.${id}`);
+      if (idioma === "en" || artigo === "none") return nome;
+      return `${artigo} ${nome}`;
+    });
+    if (nomes.length === 0) return "—";
+    return new Intl.ListFormat(locale, { type: "conjunction" }).format(nomes);
+  }
+
   function mensagemOperadorComOrdens(detalhes: { remocoes?: OperadorId[]; ordens?: OrdemFutura[] } | undefined) {
     const ordens = detalhes?.ordens ?? [];
     const remocoes = detalhes?.remocoes ?? [];
-    const operador =
-      remocoes.length > 0
-        ? new Intl.ListFormat(idioma === "en" ? "en" : "pt-PT", { type: "conjunction" }).format(
-            remocoes.map((id) => t(`operador.${id}`)),
-          )
-        : "—";
+    const operador = listarOperadores(remocoes, "o");
     const n = Math.max(ordens.length, 1);
     const marca = "\u0001";
     const prefixo = tp("equipas.operadorComOrdens", n, { operador, lista: marca, n });
@@ -449,17 +456,13 @@ export function AcoesEquipa({
           <DialogHeader>
             <DialogTitle>
               {t("equipas.deixarDeServirTitulo", {
-                operador: new Intl.ListFormat(idioma === "en" ? "en" : "pt-PT", { type: "conjunction" }).format(
-                  (aConfirmarRemocao ?? []).map((id) => t(`operador.${id}`)),
-                ),
+                operador: listarOperadores(aConfirmarRemocao ?? [], "o"),
               })}
             </DialogTitle>
             <DialogDescription>
               {t("equipas.deixarDeServirDetalhe", {
                 equipa: nome,
-                operador: new Intl.ListFormat(idioma === "en" ? "en" : "pt-PT", { type: "conjunction" }).format(
-                  (aConfirmarRemocao ?? []).map((id) => t(`operador.${id}`)),
-                ),
+                operador: listarOperadores(aConfirmarRemocao ?? [], "do"),
               })}
             </DialogDescription>
           </DialogHeader>

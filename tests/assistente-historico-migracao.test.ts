@@ -217,10 +217,12 @@ describe("migração assistente_historico (#11 / #12 → sessão)", () => {
 });
 
 describe("limparSessoesExpiradas", () => {
-  it("apaga sessões expiradas e o histórico ligado sem chamadas à API", async () => {
-    const { baseDados, limparSessoesExpiradas } = await import("@/server/db");
+  it("no open da BD não limpa sessões; no login apaga expiradas e o histórico ligado", async () => {
+    const { baseDados } = await import("@/server/db");
     const db = baseDados();
-    const utilizador = db.prepare("SELECT id FROM utilizadores LIMIT 1").get() as { id: string };
+    const utilizador = db.prepare("SELECT id FROM utilizadores WHERE email = ?").get("admin@vagacerta.exemplo") as {
+      id: string;
+    };
     const token = `expirado-${Date.now()}`;
     const passado = new Date(Date.now() - 60_000).toISOString();
     db.prepare("INSERT INTO sessoes (token, utilizador_id, expira_em, criada_em) VALUES (?, ?, ?, ?)").run(
@@ -232,9 +234,40 @@ describe("limparSessoesExpiradas", () => {
     db.prepare(
       "INSERT INTO assistente_historico (sessao_token, papel, texto, em, origem) VALUES (?, ?, ?, ?, ?)",
     ).run(token, "utilizador", "ghost", passado, null);
+
+    // Reabrir / migrar não deve chamar limparSessoesExpiradas (evita new Date no prerender).
+    const { migrarAssistenteHistorico } = await import("@/server/db");
+    migrarAssistenteHistorico(db);
+    expect(db.prepare("SELECT token FROM sessoes WHERE token = ?").get(token)).toBeDefined();
     expect(
       (db.prepare("SELECT COUNT(*) AS n FROM assistente_historico WHERE sessao_token = ?").get(token) as { n: number }).n,
     ).toBe(1);
+
+    jar.clear();
+    const { entrar } = await import("@/server/sessao");
+    const ator = await entrar("admin@vagacerta.exemplo", "vagacerta-admin");
+    expect(ator).not.toBeNull();
+    expect(db.prepare("SELECT token FROM sessoes WHERE token = ?").get(token)).toBeUndefined();
+    expect(
+      (db.prepare("SELECT COUNT(*) AS n FROM assistente_historico WHERE sessao_token = ?").get(token) as { n: number }).n,
+    ).toBe(0);
+  });
+
+  it("limparSessoesExpiradas apaga sessões expiradas e o histórico por CASCADE", async () => {
+    const { baseDados, limparSessoesExpiradas } = await import("@/server/db");
+    const db = baseDados();
+    const utilizador = db.prepare("SELECT id FROM utilizadores LIMIT 1").get() as { id: string };
+    const token = `expirado-directo-${Date.now()}`;
+    const passado = new Date(Date.now() - 60_000).toISOString();
+    db.prepare("INSERT INTO sessoes (token, utilizador_id, expira_em, criada_em) VALUES (?, ?, ?, ?)").run(
+      token,
+      utilizador.id,
+      passado,
+      passado,
+    );
+    db.prepare(
+      "INSERT INTO assistente_historico (sessao_token, papel, texto, em, origem) VALUES (?, ?, ?, ?, ?)",
+    ).run(token, "utilizador", "ghost", passado, null);
     limparSessoesExpiradas(db);
     expect(db.prepare("SELECT token FROM sessoes WHERE token = ?").get(token)).toBeUndefined();
     expect(

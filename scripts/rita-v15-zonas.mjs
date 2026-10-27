@@ -1,7 +1,7 @@
 /**
- * Capturas Rita v13 — não altera a SQLite partilhada.
+ * Capturas Rita v15 — não altera a SQLite partilhada.
  * Arranca next start com VC_DATA_DIR temporário; no fim mata o processo e apaga a pasta.
- * Mutações (horário Ave / AZ-V13) só no temp, e só depois das capturas de despacho + agenda limpa.
+ * Mutações (horário Ave / AZ-V15) só no temp, e só depois das capturas de despacho + agenda limpa.
  */
 import { chromium } from "playwright-core";
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
@@ -9,10 +9,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn } from "node:child_process";
 
-const OUT = "/cursor/stores/self/media/rita/v13";
-const PORT = process.env.RITA_PORT ?? "4488";
+const OUT = "/cursor/stores/self/media/rita/v15";
+const PORT = process.env.RITA_PORT ?? "4510";
 const ROOT = new URL("..", import.meta.url).pathname;
-const dataDir = mkdtempSync(join(tmpdir(), "rita-v13-"));
+const dataDir = mkdtempSync(join(tmpdir(), "rita-v15-"));
 mkdirSync(join(OUT, "central-1440"), { recursive: true });
 mkdirSync(join(OUT, "despacho-1440"), { recursive: true });
 
@@ -112,6 +112,13 @@ try {
     await page.waitForTimeout(800);
     await shot(page, join(OUT, "central-1440", "05-agenda-filtro-distrito-municipio.png"));
 
+    await page.goto(
+      `${BASE}/ordens/nova?equipaId=eq-ave&area=Guimarães&zonaId=0308&data=2035-03-13&inicio=09:00&fim=12:00&operador=vermelho`,
+      { waitUntil: "networkidle" },
+    );
+    await page.getByText(/Equipa:|Team:/i).first().waitFor({ state: "visible", timeout: 15000 });
+    await shot(page, join(OUT, "central-1440", "05b-nova-ordem-equipa-preselecionada.png"));
+
     await central.close();
   }
 
@@ -129,8 +136,9 @@ try {
     await shot(page, join(OUT, "despacho-1440", "01-equipa-folha-despachante-leitura.png"));
 
     await page.goto(`${BASE}/equipas?distrito=Braga`, { waitUntil: "networkidle" });
+    await page.getByRole("columnheader", { name: /Técnicos|Technicians/i }).waitFor({ state: "visible", timeout: 15000 });
     await page.waitForTimeout(500);
-    await shot(page, join(OUT, "despacho-1440", "02-equipas-lista-filtros.png"));
+    await shot(page, join(OUT, "despacho-1440", "02-equipas-lista-filtros-tecnicos.png"));
 
     await page.goto(`${BASE}/agenda?vista=dia&distrito=Braga`, { waitUntil: "networkidle" });
     await page.waitForTimeout(800);
@@ -156,7 +164,7 @@ try {
     const criada = await page.request.post(`${BASE}/api/ordens`, {
       data: {
         operadorId: "azul",
-        referencia: `AZ-V13-${Date.now().toString(36).slice(-5)}`,
+        referencia: `AZ-V15-${Date.now().toString(36).slice(-5)}`,
         area: "Guimarães",
         zonaId: "0308",
         categoria: "instalacao",
@@ -165,9 +173,9 @@ try {
         janelaInicio: "08:00",
         janelaFim: "10:00",
         prioridade: "alta",
-        clienteNome: "Primeiro V13",
+        clienteNome: "Primeiro V15",
         clienteContacto: "900111222",
-        morada: "Rua V13 1, Guimarães",
+        morada: "Rua V15 1, Guimarães",
         nota: "",
         equipaId: "eq-ave",
         modo: "agendar",
@@ -187,10 +195,10 @@ try {
       operador: "vermelho",
     });
     await page.goto(`${BASE}/ordens/nova?${qs}`, { waitUntil: "networkidle" });
-    await page.locator("#clienteNome").fill("Segundo V13");
+    await page.locator("#clienteNome").fill("Segundo V15");
     await page.locator("#clienteContacto").fill("900333444");
-    await page.locator("#morada").fill("Rua V13 2, Guimarães");
-    await page.locator("#referencia").fill(`VR-V13-${Date.now().toString(36).slice(-5)}`);
+    await page.locator("#morada").fill("Rua V15 2, Guimarães");
+    await page.locator("#referencia").fill(`VR-V15-${Date.now().toString(36).slice(-5)}`);
     const resposta409 = page.waitForResponse(
       (r) => r.url().includes("/api/ordens") && r.request().method() === "POST",
       { timeout: 15000 },
@@ -212,7 +220,7 @@ try {
   }
 
   await browser.close();
-  console.log("done v13");
+  console.log("done v15");
 } catch (erro) {
   console.error(erro);
   console.error("--- server logs ---\n", logs.slice(-4000));
