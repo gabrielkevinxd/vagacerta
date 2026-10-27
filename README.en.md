@@ -52,7 +52,7 @@ Environment variables (all optional; see `.env.example`):
 | Variable | Purpose |
 | --- | --- |
 | `VC_DEMO_DIA` | `YYYY-MM-DD`. Pins the demo's “rich day” (see “Demo accounts”). Without it, the rich day is today in Lisbon |
-| `VC_OFSC_SEGREDO` | Shared secret for the OFSC webhook and the simulated OFSC (see “OFSC integration”). Without it, a development secret is generated and kept in the local database only |
+| `OFSC_WEBHOOK_SECRET` | Shared secret for the OFSC webhook and the simulated OFSC (`x-vagacerta-ofsc-secret` or Bearer). Outside production, defaults to the demo value in `.env.example`; in production unset → 503 |
 | `VC_DATA_DIR` | Folder of the SQLite database (default `data`) |
 | `XAI_API_KEY`, `XAI_MODEL` | The operator agent in `/integracao` |
 | `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` | Assistant (not wired yet) |
@@ -105,8 +105,8 @@ Nothing in the OFSC integration is public.
 | `POST /api/integracao/ofsc/eventos` (webhook) and `/api/ofsc/{operator}/…` (simulated OFSC) | Whoever presents the **integration secret**, or a **hub session** |
 | `GET/POST /api/integracao/{vagas,reserva,agente,consola,cenarios,reconciliar,saude}` and the `/integracao` page | A **hub session** only |
 
-- The secret goes in the `x-vagacerta-segredo: <secret>` header or in `Authorization: Bearer <secret>`. It is compared in constant time.
-- The secret is `VC_OFSC_SEGREDO`. Without it, the app generates a development secret on first use and keeps it in the local database only (`definicoes.segredo_integracao`). It is never logged nor returned by any route. Set `VC_OFSC_SEGREDO` in production.
+- The secret goes in the `x-vagacerta-ofsc-secret: <secret>` header or in `Authorization: Bearer <secret>`. It is compared in constant time.
+- The secret is `OFSC_WEBHOOK_SECRET`. Without it, the app generates a development secret on first use and keeps it in the local database only (`definicoes.segredo_integracao`). It is never logged nor returned by any route. Set `OFSC_WEBHOOK_SECRET` in production.
 - No credentials, or a wrong secret: 401 `NAO_AUTENTICADO`. A dispatcher's or technician's session: 403 `SEM_PERMISSAO` (“Only the hub uses the OFSC integration.”). A correct secret does **not** open the hub-only routes: OFSC talks to the webhook, not to the console.
 - The console is hub-only because it is cross-operator: it shows the three columns (the operator's OFSC, VagaCerta, the other operators' OFSC), runs the eleven scenarios and reconciles all three operators at once. A dispatcher sees only their own operator; a technician only their own team.
 - The eleven scenarios and the console keep working with the hub session: they create the activity and fire the event inside the server. An external OFSC or script is what needs the secret.

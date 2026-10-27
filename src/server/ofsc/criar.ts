@@ -38,6 +38,7 @@ export async function criarAtividadeNoBucket(reserva: ReservaEstruturada, activi
     caminho: `/ofsc/${reserva.operadorId}/bucket/${BUCKET_DST}`,
     pedido: atividade,
     codigo: 201,
+    operadorId: reserva.operadorId,
   });
   const resultado = await processarEventoOfsc({
     eventType: "activityCreated",

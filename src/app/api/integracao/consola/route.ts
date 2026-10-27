@@ -1,22 +1,45 @@
 import { traduzirLogOfsc } from "@/lib/i18n/motor";
-import { apiCentral } from "@/server/http";
-import { mensagensAtuais } from "@/server/idioma";
-import { listarAtividades, listarLogs, listarRetries } from "@/server/ofsc/loja";
 import { eOperadorOfsc } from "@/lib/ofsc/tipos";
+import { exigirIntegracao } from "@/server/autorizacao";
+import { ErroHttp } from "@/server/erros";
+import { api } from "@/server/http";
+import { mensagensAtuais } from "@/server/idioma";
+import { filtrarLogsDespachante, listarAtividades, listarLogs, listarRetries } from "@/server/ofsc/loja";
 
-// A consola mostra o OFSC de todos os operadores (três colunas): só a central a usa.
-export const GET = apiCentral(async (_ator, pedido) => {
+export const GET = api(async (ator, pedido) => {
+  exigirIntegracao(ator);
   const url = new URL(pedido.url);
   const depoisDe = url.searchParams.get("depoisDe") ?? undefined;
-  const operador = url.searchParams.get("operador") ?? "azul";
+  const operadorPedido = url.searchParams.get("operador") ?? "azul";
   const mensagens = mensagensAtuais();
+
+  if (ator.papel === "despachante") {
+    if (!ator.operadorId) {
+      throw new ErroHttp(403, "SEM_PERMISSAO", "Só vê a capacidade do seu operador.");
+    }
+    const operador = ator.operadorId;
+    const logsBrutos = listarLogs(depoisDe, 120, { operadorId: operador });
+    const logs = filtrarLogsDespachante(logsBrutos, operador).map((linha) => ({
+      ...linha,
+      historia: traduzirLogOfsc(mensagens, linha.historia),
+    }));
+    const retries = listarRetries()
+      .filter((r) => r.operador_id === operador)
+      .map((r) => ({ id: r.id }));
+    return {
+      logs,
+      retries,
+      atividades: eOperadorOfsc(operador) ? listarAtividades(operador) : [],
+    };
+  }
+
   return {
-    // A história de cada linha foi escrita em PT quando o evento aconteceu; aqui sai no idioma do pedido.
-    logs: (listarLogs(depoisDe) as { historia: string }[]).map((linha) => ({
+    // História gravada em PT; sai no idioma do pedido.
+    logs: listarLogs(depoisDe).map((linha) => ({
       ...linha,
       historia: traduzirLogOfsc(mensagens, linha.historia),
     })),
     retries: listarRetries(),
-    atividades: eOperadorOfsc(operador) ? listarAtividades(operador) : [],
+    atividades: eOperadorOfsc(operadorPedido) ? listarAtividades(operadorPedido) : [],
   };
 });

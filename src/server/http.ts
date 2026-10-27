@@ -5,7 +5,8 @@ import { IDIOMA_OMISSAO, mensagensDe, t } from "@/lib/i18n";
 import { traduzirMensagem } from "@/lib/i18n/motor";
 import { ErroHttp, exigir } from "./erros";
 import { comIdiomaAsync, lerIdiomaPedido } from "./idioma";
-import { autenticarIntegracao, MENSAGEM_SO_CENTRAL_INTEGRACAO } from "./integracao-auth";
+import { MENSAGEM_SO_CENTRAL_INTEGRACAO } from "./integracao-auth";
+import { respostaSeSegredoOfscInvalido } from "./ofsc/segredo";
 import { obterAtor } from "./sessao";
 
 type Contexto = { params: Promise<Record<string, string>> };
@@ -53,8 +54,9 @@ export function apiCentral<C extends Contexto = Contexto>(
 }
 
 /**
- * Rotas do contrato OFSC (webhook e endpoints simulados): segredo partilhado ou sessão da central.
- * O `handler` pode devolver uma `Response` já pronta (com o seu estado HTTP) ou um corpo JSON.
+ * Rotas do contrato OFSC (webhook e endpoints simulados): segredo partilhado PR#2
+ * (`OFSC_WEBHOOK_SECRET` / `x-vagacerta-ofsc-secret`). Sem sessão de browser.
+ * O `handler` pode devolver uma `Response` já pronta ou um corpo JSON.
  */
 export function apiIntegracao<C extends Contexto = Contexto>(handler: (pedido: Request, contexto: C) => Promise<unknown> | unknown) {
   return async (pedido: Request, contexto: C) => {
@@ -62,7 +64,8 @@ export function apiIntegracao<C extends Contexto = Contexto>(handler: (pedido: R
     return comIdiomaAsync(idioma, async () => {
       const mensagens = mensagensDe(idioma);
       try {
-        await autenticarIntegracao(pedido);
+        const negado = respostaSeSegredoOfscInvalido(pedido);
+        if (negado) return negado;
         const resposta = await handler(pedido, contexto);
         return resposta instanceof Response ? resposta : NextResponse.json(resposta ?? { ok: true });
       } catch (erro) {

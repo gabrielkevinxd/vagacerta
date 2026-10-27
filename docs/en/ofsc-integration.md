@@ -11,8 +11,8 @@ Nothing in the integration is public.
 | `POST /api/integracao/ofsc/eventos` (webhook) and `/api/ofsc/{operator}/…` (simulated OFSC) | Whoever presents the **integration secret**, or a **hub session** |
 | `GET/POST /api/integracao/{vagas,reserva,agente,consola,cenarios,reconciliar,saude}` and the `/integracao` page | A **hub session** only |
 
-- Secret: `x-vagacerta-segredo: <secret>` header or `Authorization: Bearer <secret>`; constant-time comparison.
-- The secret is `VC_OFSC_SEGREDO`. Without the variable, a development secret is generated on first use, kept in the local database only (`definicoes.segredo_integracao`) and never printed nor returned. Set `VC_OFSC_SEGREDO` in production.
+- Secret: `x-vagacerta-ofsc-secret: <secret>` header or `Authorization: Bearer <secret>`; constant-time comparison.
+- The secret is `OFSC_WEBHOOK_SECRET`. Without the variable, a development secret is generated on first use, kept in the local database only (`definicoes.segredo_integracao`) and never printed nor returned. Set `OFSC_WEBHOOK_SECRET` in production.
 - No credentials, or a wrong secret: 401 `NAO_AUTENTICADO`. A dispatcher's or technician's session: 403 `SEM_PERMISSAO`. A correct secret does not open the hub-only routes.
 - The console is hub-only because it is cross-operator: three columns (the operator's OFSC, VagaCerta, the other OFSC instances), the eleven scenarios and reconciliation touch all three operators at once.
 - The console's scenarios and booking run inside the server with the hub session; only a real OFSC or an external script needs the secret.

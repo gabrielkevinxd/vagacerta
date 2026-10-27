@@ -30,7 +30,7 @@ npm run demo:reset    # deletes data/vagacerta.sqlite; next boot reseeds
 | Variable | Purpose |
 | --- | --- |
 | `VC_DEMO_DIA` | `YYYY-MM-DD`: pins the demo's “rich day” (a weekend moves to the following Monday). Without it, it is today in Lisbon. It only counts when the database is seeded: run `npm run demo:reset` to seed again |
-| `VC_OFSC_SEGREDO` | Shared secret for the OFSC webhook and the simulated OFSC (`x-vagacerta-segredo` header or `Authorization: Bearer`). Without it there is a development secret, generated and kept in the local database only, never printed |
+| `OFSC_WEBHOOK_SECRET` | Shared secret for the OFSC webhook and the simulated OFSC (`x-vagacerta-ofsc-secret` header or `Authorization: Bearer`). Without it there is a development secret, generated and kept in the local database only, never printed |
 | `VC_DATA_DIR` | Folder of the SQLite database (default `data`); tests use a temporary folder |
 | `XAI_API_KEY`, `XAI_MODEL`, `LLM_*` | See [xAI agent](xai-agent.md) |
 

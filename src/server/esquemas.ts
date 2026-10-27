@@ -62,6 +62,7 @@ export const esquemaPedido = z.object({
   permitirTroca: z.boolean().optional(),
   apenasReferencias: z.array(z.string()).optional(),
   motivo: z.string().trim().max(240).optional(),
+  quemPediu: z.enum(QUEM_PEDIU).optional(),
   data: data.optional(),
 });
 

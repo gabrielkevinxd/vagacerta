@@ -1,21 +1,25 @@
 import { Suspense } from "react";
+import { DATA_DEMONSTRACAO } from "@/lib/demonstracao";
 import { um } from "@/lib/consulta-pagina";
 import type { PlanoVista } from "@/lib/rules/agenda";
 import type { PedidoRealocacao } from "@/lib/rules/reencaixe";
 import { eCentral, eDataIso } from "@/lib/rules";
 import { Carregamento } from "@/components/carregamento";
+import { Alerta } from "@/components/layout/alerta";
+import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
 import { PlanoComparacao } from "@/components/plano-comparacao";
-import { traduzirMensagem, traduzirNarrativa, traduzirPlanoVista } from "@/lib/i18n/motor";
-import { diaDemonstracaoAtual } from "@/server/db";
+import { SeletorData } from "@/components/seletor-data";
+import { SemAcesso } from "@/components/sem-acesso";
+import { traduzirMensagem, traduzirPlanoVista } from "@/lib/i18n/motor";
 import { ErroHttp } from "@/server/erros";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 import { listarEquipas, listarOrdens, previsualizar } from "@/server/servicos";
 import { confirmarPlanoAcao } from "./accoes";
 
-const campo = "h-10 w-full rounded-lg border border-input bg-card px-2.5 text-sm";
+const campo = "h-8 w-full rounded-md border border-input bg-background px-2.5 text-[13px]/5";
 const botao =
-  "inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground";
+  "inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-[13px]/5 font-medium text-primary-foreground transition-colors hover:bg-primary/90";
 
 type Modo = "encaixar" | "cancelar" | "falta";
 
@@ -30,17 +34,19 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
   const ator = await exigirAtorPagina();
   const consulta = await searchParams;
   const pedida = um(consulta.data);
-  const data = eDataIso(pedida) ? pedida : diaDemonstracaoAtual();
+  const data = eDataIso(pedida) ? pedida : DATA_DEMONSTRACAO;
   const central = eCentral(ator);
   const confirmado = um(consulta.confirmado) === "1";
   const erroConsulta = um(consulta.erro);
 
   if (ator.papel === "tecnico") {
     return (
-      <div className="space-y-2">
-        <h1 className="font-heading text-3xl">{t("reencaixe.titulo")}</h1>
-        <p>{t("reencaixe.tecnico")}</p>
-      </div>
+      <SemAcesso
+        tituloPagina={t("reencaixe.titulo")}
+        titulo={t("acesso.semAcesso")}
+        detalhe={t("acesso.soCentralArea")}
+        accao={t("acesso.voltarPainel")}
+      />
     );
   }
 
@@ -58,8 +64,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
 
   let plano: PlanoVista | null = null;
   let pedido: PedidoRealocacao | null = null;
-  // O erro de «Confirmar este plano» chega pelo URL (ação do servidor) com o texto do motor: traduz-se aqui.
-  let aviso: string | null = erroConsulta ? traduzirNarrativa(m, erroConsulta) : null;
+  let aviso: string | null = erroConsulta || null;
 
   if (prever && !aviso) {
     if (um(consulta.modo) === "falta" && !central) {
@@ -87,26 +92,19 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
   }
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="font-heading text-3xl">{t("reencaixe.titulo")}</h1>
-        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{t("reencaixe.intro")}</p>
-      </div>
+    <div className="space-y-6">
+      <CabecalhoPagina titulo={t("reencaixe.titulo")} descricao={t("reencaixe.intro")} />
 
-      {confirmado ? (
-        <p className="rounded-lg border border-border bg-card px-3 py-2 text-sm" role="status">
-          {t("reencaixe.aplicado")}
-        </p>
-      ) : null}
+      {confirmado ? <Alerta tom="sucesso">{t("reencaixe.aplicado")}</Alerta> : null}
 
-      <form action="/otimizador" className="space-y-4">
+      <form action="/otimizador" className="superficie space-y-4 p-4">
         <input type="hidden" name="prever" value="1" />
         <div className="grid gap-3 md:grid-cols-2">
-          <label className="space-y-1.5 text-sm" htmlFor="data">
+          <label className="space-y-1.5 text-[13px]/5" htmlFor="data">
             <span className="font-medium">{t("comum.dia")}</span>
-            <input id="data" name="data" type="date" defaultValue={data} className={campo} />
+            <SeletorData id="data" name="data" defaultValue={data} />
           </label>
-          <label className="space-y-1.5 text-sm" htmlFor="modo">
+          <label className="space-y-1.5 text-[13px]/5" htmlFor="modo">
             <span className="font-medium">{t("reencaixe.pedido")}</span>
             <select id="modo" name="modo" defaultValue={modo} className={campo}>
               <option value="encaixar">{t("reencaixe.modoEncaixarFila")}</option>
@@ -114,7 +112,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
               {central ? <option value="falta">{t("reencaixe.modoFaltaEquipa")}</option> : null}
             </select>
           </label>
-          <label className="space-y-1.5 text-sm" htmlFor="ordemId">
+          <label className="space-y-1.5 text-[13px]/5" htmlFor="ordemId">
             <span className="font-medium">{t("reencaixe.ordem")}</span>
             <select id="ordemId" name="ordemId" defaultValue={ordemId} className={campo}>
               {espera.length === 0 && agendadas.length === 0 ? <option value="">{t("comum.nadaNesteDia")}</option> : null}
@@ -140,7 +138,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
             </select>
           </label>
           {central ? (
-            <label className="space-y-1.5 text-sm" htmlFor="equipaId">
+            <label className="space-y-1.5 text-[13px]/5" htmlFor="equipaId">
               <span className="font-medium">{t("reencaixe.equipaFalta")}</span>
               <select id="equipaId" name="equipaId" defaultValue={equipaId} className={campo}>
                 {equipas.map((equipa) => (
@@ -153,16 +151,16 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
           ) : null}
         </div>
         {central ? (
-          <label className="flex items-center gap-2 text-sm" htmlFor="troca">
+          <label className="flex items-center gap-2 text-[13px]/5" htmlFor="troca">
             <input id="troca" name="troca" type="checkbox" value="1" defaultChecked={trocaMarcada} />
             {t("reencaixe.permitirTroca")}
           </label>
         ) : (
-          <p className="text-sm text-muted-foreground">{t("reencaixe.despachoSoProprio")}</p>
+          <p className="text-[13px]/5 text-muted-foreground">{t("reencaixe.despachoSoProprio")}</p>
         )}
-        <label className="block space-y-1.5 text-sm" htmlFor="motivo">
+        <label className="block space-y-1.5 text-[13px]/5" htmlFor="motivo">
           <span className="font-medium">{t("reencaixe.motivoCancelamento")}</span>
-          <textarea id="motivo" name="motivo" defaultValue={motivo} rows={3} className="w-full rounded-lg border border-input bg-card px-2.5 py-2 text-sm" />
+          <textarea id="motivo" name="motivo" defaultValue={motivo} rows={3} className="w-full rounded-lg border border-input bg-card px-2.5 py-2 text-[13px]/5" />
           <span className="block text-muted-foreground">{t("reencaixe.motivoObrigatorio")}</span>
         </label>
         <button type="submit" className={botao}>
@@ -171,7 +169,7 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
       </form>
 
       {aviso ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-[13px]/5 text-destructive">
           {aviso}
         </p>
       ) : null}

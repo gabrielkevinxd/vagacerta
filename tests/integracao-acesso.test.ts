@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-// B1 e B2: a consola /api/integracao/*, o webhook OFSC e os endpoints OFSC simulados exigem autenticação
-// e, no caso da consola, o perfil da central. Os route handlers são chamados diretamente, com as cookies simuladas.
+// Consola/vagas/agente/reserva: central + despachante (só o próprio operador). Hub-only: cenários/saúde/reconciliar.
+// Webhook e `/api/ofsc/*`: só `OFSC_WEBHOOK_SECRET` (PR#2) — sem sessão de browser.
 const { jar } = vi.hoisted(() => ({ jar: new Map<string, string>() }));
 
 vi.mock("server-only", () => ({}));
@@ -79,7 +79,7 @@ async function corpo(resposta: Response): Promise<{ codigo?: string; mensagem?: 
   return (await resposta.json()) as { codigo?: string; mensagem?: string };
 }
 
-describe("B2: a consola de integração é só da central", () => {
+describe("integração: hub-only vs despachante com scope D1", () => {
   beforeAll(() => {
     baseDados();
   });
@@ -87,17 +87,13 @@ describe("B2: a consola de integração é só da central", () => {
     jar.clear();
   });
 
-  const chamadas: [string, () => Promise<Response>][] = [
-    ["GET /api/integracao/consola", () => consolaGET(pedido("GET", "/api/integracao/consola?operador=vermelho"), contexto())],
-    ["GET /api/integracao/vagas", () => vagasGET(pedido("GET", "/api/integracao/vagas?operador=azul&data=2032-05-04&zona=zn-n01&tipo=instalacao"), contexto())],
+  const hubOnly: [string, () => Promise<Response>][] = [
     ["POST /api/integracao/cenarios", () => cenariosPOST(pedido("POST", "/api/integracao/cenarios", { id: "zona_fechada" }), contexto())],
     ["POST /api/integracao/reconciliar", () => reconciliarPOST(pedido("POST", "/api/integracao/reconciliar"), contexto())],
     ["POST /api/integracao/saude", () => saudePOST(pedido("POST", "/api/integracao/saude", { operadorId: "vermelho", emBaixo: false }), contexto())],
-    ["POST /api/integracao/agente", () => agentePOST(pedido("POST", "/api/integracao/agente", { operadorId: "azul", texto: "agenda uma instalação em Braga" }), contexto())],
-    ["POST /api/integracao/reserva", () => reservaPOST(pedido("POST", "/api/integracao/reserva", {}), contexto())],
   ];
 
-  for (const [nome, chamar] of chamadas) {
+  for (const [nome, chamar] of hubOnly) {
     it(`${nome}: sem sessão dá 401`, async () => {
       entrarComo(null);
       const resposta = await chamar();
@@ -106,7 +102,7 @@ describe("B2: a consola de integração é só da central", () => {
     });
 
     for (const perfil of ["azul", "vermelho", "verde", "tecnico"] as const) {
-      it(`${nome}: o perfil ${perfil} recebe 403 SEM_PERMISSAO`, async () => {
+      it(`${nome}: o perfil ${perfil} recebe 403`, async () => {
         entrarComo(perfil);
         const resposta = await chamar();
         expect(resposta.status).toBe(403);
@@ -115,18 +111,49 @@ describe("B2: a consola de integração é só da central", () => {
     }
   }
 
-  it("a consola devolve os registos à administradora e ao supervisor", async () => {
+  it("técnico bloqueado em consola/vagas/agente", async () => {
+    entrarComo("tecnico");
+    expect((await consolaGET(pedido("GET", "/api/integracao/consola?operador=azul"), contexto())).status).toBe(403);
+    expect(
+      (await vagasGET(pedido("GET", "/api/integracao/vagas?operador=azul&data=2032-05-04&zona=zn-n01&tipo=instalacao"), contexto()))
+        .status,
+    ).toBe(403);
+    expect(
+      (await agentePOST(pedido("POST", "/api/integracao/agente", { operadorId: "azul", texto: "agenda uma instalação em Braga" }), contexto()))
+        .status,
+    ).toBe(403);
+  });
+
+  it("despachante azul lê consola e vagas do próprio operador; 403 noutro", async () => {
+    entrarComo("azul");
+    expect((await consolaGET(pedido("GET", "/api/integracao/consola?operador=azul"), contexto())).status).toBe(200);
+    expect(
+      (await vagasGET(pedido("GET", "/api/integracao/vagas?operador=azul&data=2032-05-04&zona=zn-n01&tipo=instalacao"), contexto()))
+        .status,
+    ).toBe(200);
+    expect(
+      (await vagasGET(pedido("GET", "/api/integracao/vagas?operador=vermelho&data=2032-05-04&zona=zn-n01&tipo=instalacao"), contexto()))
+        .status,
+    ).toBe(403);
+    const logs = (await (await consolaGET(pedido("GET", "/api/integracao/consola"), contexto())).json()) as {
+      logs: { operador_id?: string; pedido?: unknown; resposta?: unknown }[];
+    };
+    for (const linha of logs.logs) {
+      if (linha.operador_id && linha.operador_id !== "azul" && linha.operador_id !== "*") {
+        expect.fail(`despachante viu log de ${linha.operador_id}`);
+      }
+      if (linha.operador_id === "*") {
+        expect(linha.pedido == null && linha.resposta == null).toBe(true);
+      }
+    }
+  });
+
+  it("central lê a consola; cenários hub-only não deixam rasto quando o despachante é recusado", async () => {
     for (const perfil of ["admin", "supervisor"] as const) {
       entrarComo(perfil);
       const resposta = await consolaGET(pedido("GET", "/api/integracao/consola?operador=azul"), contexto());
       expect(resposta.status).toBe(200);
-      const dados = (await resposta.json()) as { logs: unknown[]; atividades: unknown[] };
-      expect(Array.isArray(dados.logs)).toBe(true);
-      expect(Array.isArray(dados.atividades)).toBe(true);
     }
-  });
-
-  it("um despachante recusado não deixa rasto: nenhum cenário corre e nenhum log é escrito", async () => {
     entrarComo("azul");
     const antes = contar("integracao_logs");
     const resposta = await cenariosPOST(pedido("POST", "/api/integracao/cenarios", { id: "vaga_livre" }), contexto());
@@ -135,16 +162,16 @@ describe("B2: a consola de integração é só da central", () => {
   });
 });
 
-describe("B1: o webhook OFSC e os endpoints OFSC simulados exigem autenticação", () => {
-  const anteriorSegredo = process.env.VC_OFSC_SEGREDO;
+describe("B1: webhook OFSC e endpoints simulados — só segredo PR#2", () => {
+  const anteriorSegredo = process.env.OFSC_WEBHOOK_SECRET;
 
   beforeAll(() => {
     baseDados();
-    process.env.VC_OFSC_SEGREDO = SEGREDO;
+    process.env.OFSC_WEBHOOK_SECRET = SEGREDO;
   });
   afterAll(() => {
-    if (anteriorSegredo === undefined) delete process.env.VC_OFSC_SEGREDO;
-    else process.env.VC_OFSC_SEGREDO = anteriorSegredo;
+    if (anteriorSegredo === undefined) delete process.env.OFSC_WEBHOOK_SECRET;
+    else process.env.OFSC_WEBHOOK_SECRET = anteriorSegredo;
   });
   beforeEach(() => {
     jar.clear();
@@ -154,71 +181,72 @@ describe("B1: o webhook OFSC e os endpoints OFSC simulados exigem autenticação
     const evento = eventoValido();
     const ordens = contar("ordens");
     const atividades = contar("ofsc_atividades");
-    const resposta = await eventosPOST(pedido("POST", "/api/integracao/ofsc/eventos", evento), contexto());
+    const resposta = await eventosPOST(pedido("POST", "/api/integracao/ofsc/eventos", evento));
     expect(resposta.status).toBe(401);
     expect(contar("ordens")).toBe(ordens);
     expect(contar("ofsc_atividades")).toBe(atividades);
   });
 
-  it("webhook anónimo com corpo inválido também dá 401 (a autenticação vem antes da validação)", async () => {
-    const resposta = await eventosPOST(pedido("POST", "/api/integracao/ofsc/eventos", { eventType: "outro" }), contexto());
+  it("webhook anónimo com corpo inválido também dá 401 (auth antes da validação)", async () => {
+    const resposta = await eventosPOST(pedido("POST", "/api/integracao/ofsc/eventos", { eventType: "outro" }));
     expect(resposta.status).toBe(401);
   });
 
-  it("webhook com um segredo errado: 401", async () => {
+  it("webhook com segredo errado: 401", async () => {
     const resposta = await eventosPOST(
-      pedido("POST", "/api/integracao/ofsc/eventos", eventoValido(), { "x-vagacerta-segredo": "segredo-errado" }),
-      contexto(),
+      pedido("POST", "/api/integracao/ofsc/eventos", eventoValido(), { "x-vagacerta-ofsc-secret": "segredo-errado" }),
     );
     expect(resposta.status).toBe(401);
   });
 
-  it("webhook com despachante autenticado: 403", async () => {
+  it("webhook com despachante autenticado mas sem segredo: 401 (não há auth por sessão)", async () => {
     entrarComo("azul");
     const ordens = contar("ordens");
-    const resposta = await eventosPOST(pedido("POST", "/api/integracao/ofsc/eventos", eventoValido()), contexto());
-    expect(resposta.status).toBe(403);
+    const resposta = await eventosPOST(pedido("POST", "/api/integracao/ofsc/eventos", eventoValido()));
+    expect(resposta.status).toBe(401);
     expect(contar("ordens")).toBe(ordens);
   });
 
-  it("webhook com o segredo partilhado (cabeçalho x-vagacerta-segredo): reserva confirmada", async () => {
+  it("webhook com o segredo (x-vagacerta-ofsc-secret): reserva confirmada", async () => {
     const ordens = contar("ordens");
     const resposta = await eventosPOST(
-      pedido("POST", "/api/integracao/ofsc/eventos", eventoValido(), { "x-vagacerta-segredo": SEGREDO }),
-      contexto(),
+      pedido("POST", "/api/integracao/ofsc/eventos", eventoValido(), { "x-vagacerta-ofsc-secret": SEGREDO }),
     );
     expect(resposta.status).toBe(200);
     expect(((await resposta.json()) as { decisao: string }).decisao).toBe("Reserva Confirmada");
     expect(contar("ordens")).toBe(ordens + 1);
   });
 
-  it("webhook com o segredo partilhado (Authorization: Bearer): aceite", async () => {
+  it("webhook com Bearer: aceite", async () => {
     const resposta = await eventosPOST(
       pedido("POST", "/api/integracao/ofsc/eventos", eventoValido(), { authorization: `Bearer ${SEGREDO}` }),
-      contexto(),
     );
     expect(resposta.status).toBe(200);
   });
 
-  it("webhook com sessão da central: aceite", async () => {
+  it("webhook com sessão da central sem segredo: 401", async () => {
     entrarComo("admin");
-    const resposta = await eventosPOST(pedido("POST", "/api/integracao/ofsc/eventos", eventoValido()), contexto());
-    expect(resposta.status).toBe(200);
+    const resposta = await eventosPOST(pedido("POST", "/api/integracao/ofsc/eventos", eventoValido()));
+    expect(resposta.status).toBe(401);
   });
 
-  it("webhook autenticado mas com corpo inválido: 400 DADOS_INVALIDOS (e não 401)", async () => {
+  it("webhook autenticado mas com corpo inválido: 400 DADOS_INVALIDOS", async () => {
     const resposta = await eventosPOST(
-      pedido("POST", "/api/integracao/ofsc/eventos", { eventType: "outro", operator: "azul" }, { "x-vagacerta-segredo": SEGREDO }),
-      contexto(),
+      pedido("POST", "/api/integracao/ofsc/eventos", { eventType: "outro", operator: "azul" }, { "x-vagacerta-ofsc-secret": SEGREDO }),
     );
     expect(resposta.status).toBe(400);
     expect((await corpo(resposta)).codigo).toBe("DADOS_INVALIDOS");
   });
 
-  it("endpoints OFSC simulados anónimos: 401 e nada muda na base", async () => {
+  it("endpoints OFSC simulados anónimos: 401", async () => {
     const ausencias = contar("ofsc_ausencias");
     const criar = await ausenciaPOST(
-      pedido("POST", "/api/ofsc/azul/resources/AZ_RES_MINHO/absences", { date: "2032-06-01", startTime: "10:00", endTime: "12:00", name: "Ausência anónima" }),
+      pedido("POST", "/api/ofsc/azul/resources/AZ_RES_MINHO/absences", {
+        date: "2032-06-01",
+        startTime: "10:00",
+        endTime: "12:00",
+        name: "Ausência anónima",
+      }),
       contexto({ operador: "azul", resourceId: "AZ_RES_MINHO" }),
     );
     expect(criar.status).toBe(401);
@@ -240,32 +268,40 @@ describe("B1: o webhook OFSC e os endpoints OFSC simulados exigem autenticação
     expect(contar("ofsc_ausencias")).toBe(ausencias);
   });
 
-  it("endpoints OFSC simulados com despachante: 403", async () => {
+  it("endpoints OFSC simulados com despachante sem segredo: 401", async () => {
     entrarComo("verde");
     const resposta = await ausenciaPOST(
-      pedido("POST", "/api/ofsc/azul/resources/AZ_RES_MINHO/absences", { date: "2032-06-02", startTime: "10:00", endTime: "12:00", name: "Ausência" }),
+      pedido("POST", "/api/ofsc/azul/resources/AZ_RES_MINHO/absences", {
+        date: "2032-06-02",
+        startTime: "10:00",
+        endTime: "12:00",
+        name: "Ausência",
+      }),
       contexto({ operador: "azul", resourceId: "AZ_RES_MINHO" }),
     );
-    expect(resposta.status).toBe(403);
+    expect(resposta.status).toBe(401);
   });
 
-  it("endpoints OFSC simulados com segredo ou sessão da central cumprem o contrato (201, 200, 200, 200)", async () => {
-    const cabecalho = { "x-vagacerta-segredo": SEGREDO };
+  it("endpoints OFSC simulados com segredo cumprem o contrato", async () => {
+    const cabecalho = { "x-vagacerta-ofsc-secret": SEGREDO };
     const criada = await ausenciaPOST(
-      pedido("POST", "/api/ofsc/azul/resources/AZ_RES_MINHO/absences", { date: "2032-06-03", startTime: "10:00", endTime: "12:00", name: "Ausência de teste" }, cabecalho),
+      pedido(
+        "POST",
+        "/api/ofsc/azul/resources/AZ_RES_MINHO/absences",
+        { date: "2032-06-03", startTime: "10:00", endTime: "12:00", name: "Ausência de teste" },
+        cabecalho,
+      ),
       contexto({ operador: "azul", resourceId: "AZ_RES_MINHO" }),
     );
     expect(criada.status).toBe(201);
     const { id } = (await criada.json()) as { id: string };
 
-    entrarComo("supervisor");
     const alterada = await ausenciaPATCH(
-      pedido("PATCH", `/api/ofsc/azul/resources/AZ_RES_MINHO/absences/${id}`, { endTime: "13:00" }),
+      pedido("PATCH", `/api/ofsc/azul/resources/AZ_RES_MINHO/absences/${id}`, { endTime: "13:00" }, cabecalho),
       contexto({ operador: "azul", resourceId: "AZ_RES_MINHO", id }),
     );
     expect(alterada.status).toBe(200);
 
-    jar.clear();
     const apagada = await ausenciaDELETE(
       pedido("DELETE", `/api/ofsc/azul/resources/AZ_RES_MINHO/absences/${id}`, undefined, cabecalho),
       contexto({ operador: "azul", resourceId: "AZ_RES_MINHO", id }),

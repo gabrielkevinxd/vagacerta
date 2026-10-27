@@ -32,7 +32,7 @@ A base cria-se sozinha na primeira leitura. Ficheiros locais ignorados: `node_mo
 | Variável | Função |
 | --- | --- |
 | `VC_DEMO_DIA` | `AAAA-MM-DD`: fixa o «dia rico» da demonstração (fim de semana → segunda-feira seguinte). Sem ela é hoje em Lisboa. Só conta quando a base é semeada: `npm run demo:reset` para a semear de novo |
-| `VC_OFSC_SEGREDO` | Segredo partilhado do webhook OFSC e do OFSC simulado (cabeçalho `x-vagacerta-segredo` ou `Authorization: Bearer`). Sem ela há um segredo de desenvolvimento, gerado e guardado só na base local, nunca impresso |
+| `OFSC_WEBHOOK_SECRET` | Segredo partilhado do webhook OFSC e do OFSC simulado (cabeçalho `x-vagacerta-ofsc-secret` ou `Authorization: Bearer`). Sem ela há um segredo de desenvolvimento, gerado e guardado só na base local, nunca impresso |
 | `VC_DATA_DIR` | Pasta da base SQLite (omissão `data`); os testes usam uma pasta temporária |
 | `XAI_API_KEY`, `XAI_MODEL`, `LLM_*` | Ver [agente xAI](agente-xai.md) |
 

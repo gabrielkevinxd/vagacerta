@@ -1,58 +1,56 @@
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { segredoConfere, segredoDoPedido, segredoIntegracao } from "@/server/integracao-auth";
-import { baseDados } from "@/server/db";
+import { OFSC_SEGREDO_DEMO, respostaSeSegredoOfscInvalido, segredoOfsc } from "@/server/ofsc/segredo";
 
-describe("segredo partilhado da integração OFSC", () => {
-  const anterior = process.env.VC_OFSC_SEGREDO;
+describe("segredo OFSC (PR#2)", () => {
+  const anteriorSecret = process.env.OFSC_WEBHOOK_SECRET;
+  const anteriorEnv = process.env.NODE_ENV;
 
-  beforeAll(() => {
-    baseDados();
-  });
   afterEach(() => {
-    if (anterior === undefined) delete process.env.VC_OFSC_SEGREDO;
-    else process.env.VC_OFSC_SEGREDO = anterior;
-    vi.restoreAllMocks();
+    if (anteriorSecret === undefined) delete process.env.OFSC_WEBHOOK_SECRET;
+    else process.env.OFSC_WEBHOOK_SECRET = anteriorSecret;
+    if (anteriorEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = anteriorEnv;
   });
 
-  it("usa o segredo configurado por ambiente (VC_OFSC_SEGREDO)", () => {
-    process.env.VC_OFSC_SEGREDO = "  configurado-por-ambiente-0123456789  ";
-    expect(segredoIntegracao()).toBe("configurado-por-ambiente-0123456789");
-    expect(segredoConfere("configurado-por-ambiente-0123456789")).toBe(true);
-    expect(segredoConfere("outro-valor")).toBe(false);
+  it("usa OFSC_WEBHOOK_SECRET quando definido", () => {
+    process.env.OFSC_WEBHOOK_SECRET = "  configurado-por-ambiente-0123456789  ";
+    expect(segredoOfsc()).toBe("configurado-por-ambiente-0123456789");
   });
 
-  it("sem configuração gera um segredo de desenvolvimento, guarda-o na base e devolve sempre o mesmo", () => {
-    delete process.env.VC_OFSC_SEGREDO;
-    const primeiro = segredoIntegracao();
-    const segundo = segredoIntegracao();
-    expect(primeiro).toMatch(/^[0-9a-f]{64}$/);
-    expect(segundo).toBe(primeiro);
-    const guardado = baseDados().prepare("SELECT valor FROM definicoes WHERE chave = 'segredo_integracao'").get() as {
-      valor: string;
-    };
-    expect(guardado.valor).toBe(primeiro);
-    expect(segredoConfere(primeiro)).toBe(true);
-    expect(segredoConfere("")).toBe(false);
+  it("fora de produção, sem env, usa o segredo de demonstração", () => {
+    delete process.env.OFSC_WEBHOOK_SECRET;
+    process.env.NODE_ENV = "development";
+    expect(segredoOfsc()).toBe(OFSC_SEGREDO_DEMO);
   });
 
-  it("nunca imprime o segredo", () => {
-    delete process.env.VC_OFSC_SEGREDO;
-    const espioes = (["log", "info", "warn", "error", "debug"] as const).map((nivel) => vi.spyOn(console, nivel).mockImplementation(() => undefined));
-    const segredo = segredoIntegracao();
-    segredoConfere(segredo);
-    segredoConfere("errado");
-    for (const espiao of espioes) {
-      expect(JSON.stringify(espiao.mock.calls)).not.toContain(segredo);
-    }
+  it("em produção sem env devolve null (503 no handler)", () => {
+    delete process.env.OFSC_WEBHOOK_SECRET;
+    process.env.NODE_ENV = "production";
+    expect(segredoOfsc()).toBeNull();
+    const resposta = respostaSeSegredoOfscInvalido(new Request("http://x"));
+    expect(resposta?.status).toBe(503);
   });
 
-  it("lê o segredo do cabeçalho x-vagacerta-segredo ou de Authorization: Bearer", () => {
-    expect(segredoDoPedido(new Request("http://x/", { headers: { "x-vagacerta-segredo": "abc" } }))).toBe("abc");
-    expect(segredoDoPedido(new Request("http://x/", { headers: { authorization: "Bearer def" } }))).toBe("def");
-    expect(segredoDoPedido(new Request("http://x/", { headers: { authorization: "Basic ghi" } }))).toBeNull();
-    expect(segredoDoPedido(new Request("http://x/"))).toBeNull();
+  it("aceita x-vagacerta-ofsc-secret ou Bearer; rejeita errado", () => {
+    process.env.OFSC_WEBHOOK_SECRET = "segredo-teste-pr2";
+    process.env.NODE_ENV = "test";
+    expect(
+      respostaSeSegredoOfscInvalido(
+        new Request("http://x", { headers: { "x-vagacerta-ofsc-secret": "segredo-teste-pr2" } }),
+      ),
+    ).toBeNull();
+    expect(
+      respostaSeSegredoOfscInvalido(
+        new Request("http://x", { headers: { authorization: "Bearer segredo-teste-pr2" } }),
+      ),
+    ).toBeNull();
+    expect(
+      respostaSeSegredoOfscInvalido(
+        new Request("http://x", { headers: { "x-vagacerta-ofsc-secret": "errado" } }),
+      )?.status,
+    ).toBe(401);
   });
 });

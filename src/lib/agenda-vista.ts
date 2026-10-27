@@ -8,7 +8,7 @@ export interface Eixo {
 
 export function eixoDasLinhas(linhas: Pick<LinhaVista, "turno" | "blocos" | "indisponibilidades">[]): Eixo {
   let inicio = 8 * 60;
-  let fim = 18 * 60;
+  let fim = 22 * 60;
   for (const linha of linhas) {
     if (linha.turno) {
       const [horaInicio, minutoInicio] = linha.turno.inicio.split(":").map(Number);

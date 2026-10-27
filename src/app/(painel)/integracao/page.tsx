@@ -1,31 +1,33 @@
 import { Suspense } from "react";
 import { Carregamento } from "@/components/carregamento";
 import { ConsolaIntegracao } from "@/components/integracao/consola";
+import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
+import { SemAcesso } from "@/components/sem-acesso";
 import { XAI_MODELO_OMISSAO, modeloXai } from "@/lib/ofsc/xai";
-import { somarDiasUteis } from "@/lib/demonstracao-dia";
-import { eCentral } from "@/lib/rules";
-import { diaDemonstracaoAtual } from "@/server/db";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 
 async function Conteudo() {
   const { t } = await i18nPedido();
   const ator = await exigirAtorPagina();
-  // O proxy já responde 403 a quem não é da central; esta verificação protege a página mesmo sem o proxy.
-  if (!eCentral(ator)) {
+  if (ator.papel === "tecnico") {
     return (
-      <div className="max-w-2xl space-y-2">
-        <h1 className="font-heading text-3xl">{t("integracao.titulo")}</h1>
-        <p className="text-sm text-muted-foreground">{t("integracao.soCentral")}</p>
-      </div>
+      <SemAcesso
+        tituloPagina={t("integracao.titulo")}
+        titulo={t("acesso.semAcesso")}
+        detalhe={t("acesso.soNaoTecnico")}
+        accao={t("acesso.voltarPainel")}
+      />
     );
   }
   const modelo = modeloXai() || XAI_MODELO_OMISSAO;
   return (
     <div className="space-y-4">
-      <h1 className="font-heading text-3xl">{t("integracao.titulo")}</h1>
+      <CabecalhoPagina titulo={t("integracao.titulo")} />
       <ConsolaIntegracao
-        dataInicial={somarDiasUteis(diaDemonstracaoAtual(), 5)}
+        operadorFixo={ator.papel === "despachante" ? ator.operadorId : null}
+        esconderOutros={ator.papel === "despachante"}
+        mostrarCenarios={ator.papel !== "despachante"}
         textos={{
           corpo: t("integracao.corpo"),
           escolherOperador: t("integracao.escolherOperador"),
@@ -45,6 +47,11 @@ async function Conteudo() {
           cenarios: t("integracao.cenarios"),
           vazio: t("integracao.vazio"),
           retries: t("integracao.retries"),
+          quota: t("integracao.quota"),
+          repetir: t("integracao.repetir"),
+          esgotada: t("integracao.esgotada"),
+          verPedido: t("integracao.verPedido"),
+          verResposta: t("integracao.verResposta"),
           grelha: t("integracao.grelha"),
           grelhaVazia: t("integracao.grelhaVazia"),
           camposConfirmar: t("integracao.camposConfirmar"),

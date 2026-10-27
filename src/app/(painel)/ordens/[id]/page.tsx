@@ -1,57 +1,48 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { janelasDe } from "@/lib/rules/catalogo";
-import { eCentral, podeCancelar, podeMarcarOperador, podeReagendar } from "@/lib/rules";
+import { eCentral, podeCancelar, podeEditarFicha, podeMarcarOperador, podeReagendar } from "@/lib/rules";
 import { AcoesOrdem } from "@/components/acoes-ordem";
 import { Carregamento } from "@/components/carregamento";
 import { EtiquetaEstado, EtiquetaOperador } from "@/components/etiquetas";
+import { DefinirMigalha } from "@/components/migalhas-contexto";
 import { formatarDataLocale, formatarInstante } from "@/lib/i18n/formatacao";
-import { traduzirHistoria } from "@/lib/i18n/motor";
-import { ErroHttp } from "@/server/erros";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 import { listarEquipas, obterOrdem } from "@/server/servicos";
 
 async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { t, idioma, m } = await i18nPedido();
+  const { t, idioma } = await i18nPedido();
   const ator = await exigirAtorPagina();
-  let encontrada: ReturnType<typeof obterOrdem> | null = null;
-  try {
-    encontrada = obterOrdem(ator, id);
-  } catch (erro) {
-    // Ordem alheia ou inexistente: página «Ordem não encontrada» (not-found.tsx), nunca o erro cru do servidor.
-    if (erro instanceof ErroHttp && erro.status === 404) notFound();
-    throw erro;
-  }
-  const { ordem, historico } = encontrada;
+  const { ordem, historico } = obterOrdem(ator, id);
   const equipas = listarEquipas(ator).map((equipa) => ({ id: equipa.id, nome: equipa.nome }));
   const janelas = janelasDe(ordem.operadorId, ordem.categoria);
   const central = eCentral(ator);
 
   return (
     <div className="space-y-8">
+      <DefinirMigalha href={`/ordens/${ordem.id}`} rotulo={ordem.referencia} />
       <div className="space-y-2">
-        <Link href="/ordens" className="text-sm text-muted-foreground underline">
+        <Link href="/ordens" className="text-[13px]/5 text-muted-foreground underline">
           {t("nav.ordens")}
         </Link>
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="font-heading text-3xl">{ordem.referencia}</h1>
-          <EtiquetaOperador id={ordem.operadorId} />
+          <h1 className="text-2xl font-semibold tracking-tight md:text-[1.75rem]">{ordem.referencia}</h1>
+          <EtiquetaOperador id={ordem.operadorId} nome={ordem.operadorNome} />
           <EtiquetaEstado estado={ordem.estado} />
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-[13px]/5 text-muted-foreground">
           {t(`categoria.${ordem.categoria}`)}
           {ordem.tecnologia ? ` · ${t(`tecnologia.${ordem.tecnologia}`)}` : ""} · {t(`prioridade.${ordem.prioridade}`)} ·{" "}
           {ordem.duracaoMin} {t("comum.minutos")}
         </p>
-        <p className="max-w-2xl text-sm text-muted-foreground">{t("ordens.janelaAjuda")}</p>
-        <Link href={`/agenda?vista=dia&data=${ordem.data}`} className="inline-block text-sm underline">
+        <p className="max-w-2xl text-[13px]/5 text-muted-foreground">{t("ordens.janelaAjuda")}</p>
+        <Link href={`/agenda?vista=dia&data=${ordem.data}`} className="inline-block text-[13px]/5 underline">
           {t("ordens.verDiaAgenda")}
         </Link>
       </div>
-      <dl className="grid gap-3 rounded-xl border border-border bg-card p-4 text-sm md:grid-cols-2">
+      <dl className="grid gap-3 superficie p-4 text-[13px]/5 md:grid-cols-2">
         <div>
           <dt className="text-muted-foreground">{t("ordens.cliente")}</dt>
           <dd>
@@ -81,21 +72,21 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
         {ordem.nota ? (
           <div className="md:col-span-2">
             <dt className="text-muted-foreground">{t("ordens.nota")}</dt>
-            <dd>{traduzirHistoria(m, ordem.nota)}</dd>
+            <dd>{ordem.nota}</dd>
           </div>
         ) : null}
         {ordem.motivoCancelamento ? (
           <div className="md:col-span-2">
             <dt className="text-muted-foreground">{t("ordens.cancelamento")}</dt>
             <dd>
-              {traduzirHistoria(m, ordem.motivoCancelamento)}
+              {ordem.motivoCancelamento}
               {ordem.quemPediu ? ` · ${t(`quem.${ordem.quemPediu}`)}` : ""}
             </dd>
           </div>
         ) : null}
       </dl>
       {ator.papel !== "tecnico" ? (
-        <p className="flex flex-wrap gap-4 text-sm">
+        <p className="flex flex-wrap gap-4 text-[13px]/5">
           {ordem.estado === "em_espera" ? (
             <Link
               className="underline"
@@ -121,8 +112,9 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
         podeCancelar={podeCancelar(ator, ordem)}
         podeReagendar={podeReagendar(ator, ordem)}
         podeMarcar={(ordem.estado === "pendente" || ordem.estado === "em_espera") && podeMarcarOperador(ator, ordem.operadorId)}
-        podeEditarFicha={ator.papel !== "tecnico"}
+        podeEditarFicha={podeEditarFicha(ator, ordem)}
         central={central}
+        quemPediuPadrao={ator.papel === "despachante" ? "operador" : "central"}
         equipas={equipas}
         janelas={janelas}
         ficha={{
@@ -134,15 +126,15 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
         }}
       />
       <section className="space-y-2">
-        <h2 className="font-heading text-xl">{t("ordens.historico")}</h2>
-        {historico.length === 0 ? <p className="text-sm text-muted-foreground">{t("ordens.aindaSemMovimentos")}</p> : null}
+        <h2 className="text-base font-semibold tracking-tight">{t("ordens.historico")}</h2>
+        {historico.length === 0 ? <p className="text-[13px]/5 text-muted-foreground">{t("ordens.aindaSemMovimentos")}</p> : null}
         <ol className="space-y-2">
           {historico.map((linha) => (
-            <li key={linha.id} className="rounded-lg border border-border bg-card px-3 py-2 text-sm">
-              <p>{traduzirHistoria(m, linha.detalhe)}</p>
+            <li key={linha.id} className="rounded-lg border border-border bg-card px-3 py-2 text-[13px]/5">
+              <p>{linha.detalhe}</p>
               <p className="text-muted-foreground">
                 {formatarInstante(linha.quando, idioma)}
-                {linha.autor ? ` · ${traduzirHistoria(m, linha.autor)}` : ""}
+                {linha.autor ? ` · ${linha.autor}` : ""}
               </p>
             </li>
           ))}

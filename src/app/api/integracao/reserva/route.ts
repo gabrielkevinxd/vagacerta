@@ -1,7 +1,8 @@
 import { eOperadorOfsc, type ReservaEstruturada } from "@/lib/ofsc/tipos";
 import { eTipoIntervencao } from "@/lib/ofsc/quotas";
 import { apresentarResultado } from "@/lib/i18n/motor";
-import { apiCentral, lerJson } from "@/server/http";
+import { exigirIntegracao } from "@/server/autorizacao";
+import { api, lerJson } from "@/server/http";
 import { mensagensAtuais } from "@/server/idioma";
 import { ErroHttp } from "@/server/erros";
 import { criarAtividadeNoBucket } from "@/server/ofsc/criar";
@@ -26,8 +27,14 @@ const esquema = z.object({
   longitude: z.string().optional().default(""),
 });
 
-export const POST = apiCentral(async (_ator, pedido) => {
+export const POST = api(async (ator, pedido) => {
+  exigirIntegracao(ator);
   const corpo = await lerJson(esquema, pedido);
+  if (ator.papel === "despachante") {
+    if (!ator.operadorId || corpo.operadorId !== ator.operadorId) {
+      throw new ErroHttp(403, "SEM_PERMISSAO", "Só vê a capacidade do seu operador.");
+    }
+  }
   if (!eOperadorOfsc(corpo.operadorId) || !eTipoIntervencao(corpo.tipoIntervencao)) {
     throw new ErroHttp(400, "DADOS_INVALIDOS", "Reserva incompleta.");
   }
@@ -44,6 +51,6 @@ export const POST = apiCentral(async (_ator, pedido) => {
   const falta = camposEmFalta(reserva);
   if (falta.length) throw new ErroHttp(400, "DADOS_INVALIDOS", `Campos em falta: ${falta.join(", ")}.`);
   const criada = await criarAtividadeNoBucket(reserva);
-  // `resultado.decisao` e `resultado.motivo` são o contrato (Reserva Confirmada…); `apresentacao` é o texto para mostrar ao utilizador.
+  // contrato OFSC em PT; `apresentacao` para UI no idioma do pedido
   return { ...criada, apresentacao: apresentarResultado(mensagensAtuais(), criada.resultado) };
 });

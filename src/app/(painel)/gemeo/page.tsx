@@ -1,18 +1,19 @@
 import { Suspense } from "react";
 import { um } from "@/lib/consulta-pagina";
-import { correrSimulacao, inicioHorizonte, normalizarPedido, PEDIDO_OMISSAO } from "@/lib/gemeo";
+import { correrSimulacao, normalizarPedido, PEDIDO_OMISSAO } from "@/lib/gemeo";
 import { traduzirMensagem } from "@/lib/i18n/motor";
 import { eCentral } from "@/lib/rules";
 import { Carregamento } from "@/components/carregamento";
 import { BotaoApagarLote, BotaoInjetar } from "@/components/gemeo/controlos-injetar";
 import { ComparacaoPesos, BarrasPolitica, SerieDiaria, TabelaPoliticas } from "@/components/gemeo/graficos";
+import { CabecalhoPagina } from "@/components/layout/cabecalho-pagina";
 import { LegendaOperadores } from "@/components/legenda-operadores";
-import { diaDemonstracaoAtual } from "@/server/db";
+import { SemAcesso } from "@/components/sem-acesso";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
 import { listarLotes, relatorioDoLote } from "@/server/gemeo-injetar";
 
-const campo = "h-10 w-full rounded-lg border border-input bg-card px-2.5 text-sm";
+const campo = "h-8 w-full rounded-md border border-input bg-background px-2.5 text-[13px]/5";
 
 function numeroConsulta(valor: string, omissao: number): number {
   if (!valor) return omissao;
@@ -25,7 +26,7 @@ function ligacaoModo(href: string, rotulo: string, atual: boolean) {
     <a
       href={href}
       aria-current={atual ? "page" : undefined}
-      className={`inline-flex h-10 items-center rounded-lg px-4 text-sm ${atual ? "bg-primary text-primary-foreground" : "border border-border bg-card"}`}
+      className={`inline-flex h-8 items-center rounded-md border border-border px-3 text-[13px]/5 font-medium transition-colors ${atual ? "bg-muted text-foreground" : "bg-background text-muted-foreground hover:bg-muted hover:text-foreground"}`}
     >
       {rotulo}
     </a>
@@ -37,10 +38,12 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
   const ator = await exigirAtorPagina();
   if (!eCentral(ator)) {
     return (
-      <div className="max-w-2xl space-y-2">
-        <h1 className="font-heading text-3xl">{t("gemeo.titulo")}</h1>
-        <p className="text-sm text-muted-foreground">{t("gemeo.soCentral")}</p>
-      </div>
+      <SemAcesso
+        tituloPagina={t("gemeo.titulo")}
+        titulo={t("acesso.semAcesso")}
+        detalhe={t("acesso.soCentralArea")}
+        accao={t("acesso.voltarPainel")}
+      />
     );
   }
 
@@ -73,96 +76,102 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
         relatorio = null;
       }
     } else if (modo === "simular") {
-      relatorio = correrSimulacao(pedido, idioma, undefined, inicioHorizonte(diaDemonstracaoAtual()));
+      relatorio = correrSimulacao(pedido, idioma);
     }
   }
   const qs = `semente=${pedido.semente}&semanas=${pedido.semanas}&replicas=${pedido.replicas}&procura=${pedido.procura}&faltas=${pedido.probabilidadeFalta}&margem=${pedido.margemDeslocacaoMin}&azul=${pedido.pesos.azul}&vermelho=${pedido.pesos.vermelho}&verde=${pedido.pesos.verde}`;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-heading text-3xl">{t("gemeo.titulo")}</h1>
-        <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-          {modo === "injetar" ? t("gemeo.introInjetar", { semente: pedido.semente }) : t("gemeo.intro", { semente: pedido.semente })}
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {ligacaoModo(`/gemeo?modo=simular&${qs}`, t("gemeo.modoSimular"), modo === "simular")}
-          {ligacaoModo(`/gemeo?modo=injetar&${qs}`, t("gemeo.modoInjetar"), modo === "injetar")}
-        </div>
-        <div className="mt-3">
-          <LegendaOperadores compacta />
-        </div>
-      </div>
+    <div className="space-y-4">
+      <CabecalhoPagina
+        titulo={t("gemeo.titulo")}
+        descricao={
+          <>
+            <p>
+              {modo === "injetar" ? t("gemeo.introInjetar", { semente: pedido.semente }) : t("gemeo.intro", { semente: pedido.semente })}
+            </p>
+            <div className="mt-3">
+              <LegendaOperadores compacta />
+            </div>
+          </>
+        }
+        accoes={
+          <div className="flex flex-wrap gap-2">
+            {ligacaoModo(`/gemeo?modo=simular&${qs}`, t("gemeo.modoSimular"), modo === "simular")}
+            {ligacaoModo(`/gemeo?modo=injetar&${qs}`, t("gemeo.modoInjetar"), modo === "injetar")}
+          </div>
+        }
+      />
 
-      <form action="/gemeo" className="grid gap-3 rounded-xl border border-border bg-card p-4 md:grid-cols-3">
+      <form action="/gemeo" className="grid gap-3 superficie p-4 md:grid-cols-3">
         <input type="hidden" name="modo" value={modo} />
         {lotePedido && modo === "injetar" ? <input type="hidden" name="lote" value={lotePedido} /> : null}
-        <label className="space-y-1 text-sm">
+        <label className="space-y-1 text-[13px]/5">
           <span className="font-medium">{t("gemeo.semente")}</span>
           <input name="semente" type="number" min={1} defaultValue={pedido.semente} className={campo} />
         </label>
-        <label className="space-y-1 text-sm">
+        <label className="space-y-1 text-[13px]/5">
           <span className="font-medium">{t("gemeo.semanas")}</span>
           <input name="semanas" type="number" min={1} max={4} defaultValue={pedido.semanas} className={campo} />
         </label>
         {modo === "simular" ? (
-          <label className="space-y-1 text-sm">
+          <label className="space-y-1 text-[13px]/5">
             <span className="font-medium">{t("gemeo.replicas")}</span>
             <input name="replicas" type="number" min={1} max={8} defaultValue={pedido.replicas} className={campo} />
           </label>
         ) : (
-          <p className="text-sm text-muted-foreground">{t("gemeo.replicasInjetar")}</p>
+          <p className="text-[13px]/5 text-muted-foreground">{t("gemeo.replicasInjetar")}</p>
         )}
-        <label className="space-y-1 text-sm">
+        <label className="space-y-1 text-[13px]/5">
           <span className="font-medium">{t("gemeo.procura")}</span>
           <input name="procura" type="number" min={0.5} max={2} step={0.5} defaultValue={pedido.procura} className={campo} />
           <span className="block text-xs text-muted-foreground">{t("gemeo.procuraAjuda")}</span>
         </label>
-        <label className="space-y-1 text-sm">
+        <label className="space-y-1 text-[13px]/5">
           <span className="font-medium">{t("gemeo.faltas")}</span>
           <input name="faltas" type="number" min={0} max={0.5} step={0.01} defaultValue={pedido.probabilidadeFalta} className={campo} />
           <span className="block text-xs text-muted-foreground">{t("gemeo.faltasAjuda")}</span>
         </label>
-        <label className="space-y-1 text-sm">
+        <label className="space-y-1 text-[13px]/5">
           <span className="font-medium">{t("gemeo.margem")}</span>
           <input name="margem" type="number" min={0} max={90} defaultValue={pedido.margemDeslocacaoMin} className={campo} />
         </label>
-        <label className="space-y-1 text-sm">
+        <label className="space-y-1 text-[13px]/5">
           <span className="font-medium">{t("gemeo.pesoAzul")}</span>
           <input name="azul" type="number" min={0} step={0.05} defaultValue={pedido.pesos.azul} className={campo} />
         </label>
-        <label className="space-y-1 text-sm">
+        <label className="space-y-1 text-[13px]/5">
           <span className="font-medium">{t("gemeo.pesoVermelho")}</span>
           <input name="vermelho" type="number" min={0} step={0.05} defaultValue={pedido.pesos.vermelho} className={campo} />
         </label>
-        <label className="space-y-1 text-sm">
+        <label className="space-y-1 text-[13px]/5">
           <span className="font-medium">{t("gemeo.pesoVerde")}</span>
           <input name="verde" type="number" min={0} step={0.05} defaultValue={pedido.pesos.verde} className={campo} />
         </label>
         <div className="md:col-span-3 flex flex-wrap items-center gap-2">
           {modo === "simular" ? (
             <>
-              <button type="submit" className="inline-flex h-10 items-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground">
+              <button type="submit" className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-[13px]/5 font-medium text-primary-foreground">
                 {t("gemeo.correr")}
               </button>
-              <a href="/gemeo" className="inline-flex h-10 items-center rounded-lg border border-border px-4 text-sm">
+              <a href="/gemeo" className="inline-flex h-8 items-center rounded-md border border-border bg-background px-3 text-[13px]/5 font-medium hover:bg-muted">
                 {t("gemeo.semanaTipo")}
               </a>
               <a
                 href="/gemeo?procura=2&semente=20261027&semanas=1&replicas=3&faltas=0.08&margem=15&azul=0.4&vermelho=0.35&verde=0.25"
-                className="inline-flex h-10 items-center rounded-lg border border-border px-4 text-sm"
+                className="inline-flex h-8 items-center rounded-md border border-border px-3 text-[13px]/5 font-medium hover:bg-muted"
               >
                 {t("gemeo.procuraDobrar")}
               </a>
               <a
                 href="/gemeo?margem=30&semente=20261027&semanas=1&replicas=3&procura=1&faltas=0.08&azul=0.4&vermelho=0.35&verde=0.25"
-                className="inline-flex h-10 items-center rounded-lg border border-border px-4 text-sm"
+                className="inline-flex h-8 items-center rounded-md border border-border px-3 text-[13px]/5 font-medium hover:bg-muted"
               >
                 {t("gemeo.margem30")}
               </a>
               <a
                 href="/gemeo?faltas=0.25&semente=20261027&semanas=1&replicas=3&procura=1&margem=15&azul=0.4&vermelho=0.35&verde=0.25"
-                className="inline-flex h-10 items-center rounded-lg border border-border px-4 text-sm"
+                className="inline-flex h-8 items-center rounded-md border border-border px-3 text-[13px]/5 font-medium hover:bg-muted"
               >
                 {t("gemeo.muitasFaltas")}
               </a>
@@ -183,14 +192,14 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
       </form>
 
       {modo === "injetar" ? (
-        <section className="space-y-3 rounded-xl border border-border bg-card p-4">
-          <h2 className="font-heading text-xl">{t("gemeo.lotes")}</h2>
+        <section className="space-y-3 superficie p-4">
+          <h2 className="text-base font-semibold tracking-tight">{t("gemeo.lotes")}</h2>
           {lotes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("gemeo.semLotes")}</p>
+            <p className="text-[13px]/5 text-muted-foreground">{t("gemeo.semLotes")}</p>
           ) : (
             <ul className="space-y-2">
               {lotes.map((lote) => (
-                <li key={lote.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm">
+                <li key={lote.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-[13px]/5">
                   <a className="underline" href={`/gemeo?modo=injetar&lote=${encodeURIComponent(lote.id)}`}>
                     {t("gemeo.loteLinha", { id: lote.id, semente: lote.semente, inicio: lote.inicio })}
                   </a>
@@ -203,14 +212,14 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
       ) : null}
 
       {erro ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-[13px]/5 text-destructive">
           {erro}
         </p>
       ) : null}
 
       {relatorio ? (
-        <div className="space-y-6">
-          <p className="rounded-xl border border-border bg-card p-4 text-sm">{relatorio.nota}</p>
+        <div className="space-y-4">
+          <p className="superficie p-4 text-[13px]/5">{relatorio.nota}</p>
           <TabelaPoliticas politicas={relatorio.politicas} />
           <div className="grid gap-4 lg:grid-cols-2">
             <BarrasPolitica
@@ -242,8 +251,8 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
           <SerieDiaria serie={relatorio.serieDiaria} />
           <ComparacaoPesos relatorio={relatorio} />
           {modo === "simular" ? (
-            <section className="space-y-2 rounded-xl border border-border bg-card p-4 text-sm">
-              <h2 className="font-heading text-xl">{t("gemeo.comoLer")}</h2>
+            <section className="space-y-2 superficie p-4 text-[13px]/5">
+              <h2 className="text-base font-semibold tracking-tight">{t("gemeo.comoLer")}</h2>
               <ol className="list-decimal space-y-2 pl-5 text-muted-foreground">
                 <li>
                   <span className="font-medium text-foreground">{t("gemeo.polIndependente")}</span> {t("gemeo.polIndependenteTexto")}

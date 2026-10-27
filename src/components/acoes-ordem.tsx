@@ -7,12 +7,13 @@ import { useT } from "@/components/idioma/provedor";
 import type { EstadoOrdem } from "@/lib/rules/tipos";
 import { enviar } from "@/lib/cliente";
 import { PainelReencaixe } from "@/components/painel-reencaixe";
+import { SeletorData } from "@/components/seletor-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-const campo = "h-9 w-full rounded-lg border border-input bg-card px-2.5 text-sm";
+const campo = "h-8 w-full rounded-lg border border-input bg-card px-2.5 text-[13px]/5";
 
 export function AcoesOrdem({
   ordemId,
@@ -26,6 +27,7 @@ export function AcoesOrdem({
   equipas,
   janelas,
   ficha,
+  quemPediuPadrao = "operador",
 }: {
   ordemId: string;
   estado: EstadoOrdem;
@@ -38,12 +40,15 @@ export function AcoesOrdem({
   equipas: { id: string; nome: string }[];
   janelas: { codigo: string; inicio: string; fim: string }[];
   ficha: { clienteNome: string; clienteContacto: string; morada: string; nota: string; prioridade: string };
+  quemPediuPadrao?: (typeof QUEM_PEDIU)[number];
 }) {
   const { t } = useT();
   const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [aTrabalhar, setATrabalhar] = useState(false);
+  const [motivoCancelamento, setMotivoCancelamento] = useState("");
+  const [quemPediu, setQuemPediu] = useState<(typeof QUEM_PEDIU)[number]>(quemPediuPadrao);
 
   async function executar(trabalho: () => Promise<void>) {
     setErro(null);
@@ -63,11 +68,11 @@ export function AcoesOrdem({
   return (
     <div className="space-y-6">
       {erro ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-[13px]/5 text-destructive">
           {erro}
         </p>
       ) : null}
-      {aviso ? <p className="text-sm">{aviso}</p> : null}
+      {aviso ? <p className="text-[13px]/5">{aviso}</p> : null}
 
       {tecnico && estado === "agendada" ? (
         <Button disabled={aTrabalhar} onClick={() => executar(() => enviar(`/api/ordens/${ordemId}/estado`, { estado: "em_curso" }).then(() => undefined))}>
@@ -78,6 +83,10 @@ export function AcoesOrdem({
         <Button disabled={aTrabalhar} onClick={() => executar(() => enviar(`/api/ordens/${ordemId}/estado`, { estado: "concluida" }).then(() => undefined))}>
           {t("ordens.marcarConcluida")}
         </Button>
+      ) : null}
+
+      {!podeEditarFicha && (estado === "concluida" || estado === "cancelada") ? (
+        <p className="text-[13px]/5 text-muted-foreground">{t("ordens.soLeitura")}</p>
       ) : null}
 
       {podeEditarFicha ? (
@@ -97,7 +106,7 @@ export function AcoesOrdem({
             );
           }}
         >
-          <h2 className="font-heading text-xl md:col-span-2">{t("ordens.ficha")}</h2>
+          <h2 className="text-base font-semibold tracking-tight md:col-span-2">{t("ordens.ficha")}</h2>
           <div className="space-y-1.5">
             <Label htmlFor="clienteNome">{t("ordens.cliente")}</Label>
             <Input id="clienteNome" name="clienteNome" required minLength={3} defaultValue={ficha.clienteNome} />
@@ -140,7 +149,7 @@ export function AcoesOrdem({
             void executar(() => enviar(`/api/ordens/${ordemId}/marcar`, equipaId ? { equipaId } : {}).then(() => undefined));
           }}
         >
-          <h2 className="font-heading text-xl">{t("ordens.marcar")}</h2>
+          <h2 className="text-base font-semibold tracking-tight">{t("ordens.marcar")}</h2>
           <div className="space-y-1.5">
             <Label htmlFor="equipa-marcar">{t("comum.equipa")}</Label>
             <select id="equipa-marcar" name="equipaId" className={campo} defaultValue="">
@@ -180,7 +189,7 @@ export function AcoesOrdem({
             void executar(() => enviar(`/api/ordens/${ordemId}/reagendar`, corpo).then(() => undefined));
           }}
         >
-          <h2 className="font-heading text-xl md:col-span-2">{t("ordens.reagendar")}</h2>
+          <h2 className="text-base font-semibold tracking-tight md:col-span-2">{t("ordens.reagendar")}</h2>
           <div className="space-y-1.5">
             <Label htmlFor="equipa-reagendar">{t("comum.equipa")}</Label>
             <select id="equipa-reagendar" name="equipaId" className={campo} defaultValue="">
@@ -194,7 +203,7 @@ export function AcoesOrdem({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="data-reagendar">{t("comum.data")}</Label>
-            <Input id="data-reagendar" name="data" type="date" />
+            <SeletorData id="data-reagendar" name="data" />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="janela-reagendar">{t("ordens.janela")}</Label>
@@ -221,7 +230,7 @@ export function AcoesOrdem({
 
       {estado === "em_espera" && !tecnico ? (
         <div className="space-y-2">
-          <h2 className="font-heading text-xl">{t("ordens.encaixeFila")}</h2>
+          <h2 className="text-base font-semibold tracking-tight">{t("ordens.encaixeFila")}</h2>
           <PainelReencaixe
             pedido={{ encaixarId: ordemId, permitirTroca: central }}
             rotulo={t("ordens.previsEncaixe")}
@@ -231,39 +240,54 @@ export function AcoesOrdem({
 
       {podeCancelar ? (
         <div className="space-y-4">
-          <h2 className="font-heading text-xl">{t("ordens.cancelarTitulo")}</h2>
+          <h2 className="text-base font-semibold tracking-tight">{t("ordens.cancelarTitulo")}</h2>
+          <div className="space-y-1.5">
+            <Label htmlFor="motivo-direto">{t("ordens.motivoSimples")}</Label>
+            <Textarea
+              id="motivo-direto"
+              value={motivoCancelamento}
+              onChange={(evento) => setMotivoCancelamento(evento.target.value)}
+            />
+            {motivoCancelamento.trim().length > 0 && motivoCancelamento.trim().length < 3 ? (
+              <p className="text-xs text-muted-foreground">{t("ordens.motivoMinimo")}</p>
+            ) : null}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="quem">{t("ordens.quemPediu")}</Label>
+            <select
+              id="quem"
+              name="quemPediu"
+              className={campo}
+              value={quemPediu}
+              onChange={(evento) => setQuemPediu(evento.target.value as (typeof QUEM_PEDIU)[number])}
+            >
+              {QUEM_PEDIU.map((item) => (
+                <option key={item} value={item}>
+                  {t(`quem.${item}`)}
+                </option>
+              ))}
+            </select>
+          </div>
           <form
             className="space-y-3"
             onSubmit={(evento) => {
               evento.preventDefault();
-              const dados = new FormData(evento.currentTarget);
               void executar(() =>
                 enviar(`/api/ordens/${ordemId}/cancelar`, {
-                  motivo: String(dados.get("motivo") ?? ""),
-                  quemPediu: String(dados.get("quemPediu") ?? "central"),
+                  motivo: motivoCancelamento,
+                  quemPediu,
                 }).then(() => undefined),
               );
             }}
           >
-            <div className="space-y-1.5">
-              <Label htmlFor="motivo-direto">{t("ordens.motivoSimples")}</Label>
-              <Textarea id="motivo-direto" name="motivo" required minLength={3} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="quem">{t("ordens.quemPediu")}</Label>
-              <select id="quem" name="quemPediu" className={campo} defaultValue="operador">
-                {QUEM_PEDIU.map((item) => (
-                  <option key={item} value={item}>
-                    {t(`quem.${item}`)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <Button type="submit" variant="destructive" disabled={aTrabalhar}>
+            <Button type="submit" variant="destructive" disabled={aTrabalhar || motivoCancelamento.trim().length < 3}>
               {t("ordens.cancelarSemReencaixe")}
             </Button>
           </form>
-          <PainelReencaixe pedido={{ cancelarId: ordemId }} rotulo={t("ordens.previsCancelar")} pedirMotivo />
+          <PainelReencaixe
+            pedido={{ cancelarId: ordemId, motivo: motivoCancelamento, quemPediu }}
+            rotulo={t("ordens.previsCancelar")}
+          />
         </div>
       ) : null}
     </div>

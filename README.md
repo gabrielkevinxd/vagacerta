@@ -56,7 +56,7 @@ Variáveis de ambiente (todas opcionais; ver `.env.example`):
 | Variável | Para quê |
 | --- | --- |
 | `VC_DEMO_DIA` | `AAAA-MM-DD`. Fixa o «dia rico» da demonstração (ver «Contas de demonstração»). Sem ela, é hoje em Lisboa |
-| `VC_OFSC_SEGREDO` | Segredo partilhado do webhook OFSC e do OFSC simulado (ver «Autenticação da integração»). Sem ela, usa-se um segredo de desenvolvimento, gerado e guardado só na base local |
+| `OFSC_WEBHOOK_SECRET` | Segredo partilhado do webhook OFSC e do OFSC simulado (ver «Autenticação da integração»). Fora de produção, sem valor, usa o segredo de demonstração; em produção sem valor → 503 |
 | `VC_DATA_DIR` | Pasta da base SQLite (por omissão `data`) |
 | `XAI_API_KEY`, `XAI_MODEL` | Agente do operador em `/integracao` |
 | `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` | Assistente (ainda não ligado) |
@@ -413,6 +413,8 @@ Contrato OFSC (não há outros endpoints OFSC):
   - `PATCH /api/ofsc/{operador}/resources/{resourceId}/absences/{id}`
   - `DELETE /api/ofsc/{operador}/resources/{resourceId}/absences/{id}`
 
+Estas rotas exigem o segredo partilhado `OFSC_WEBHOOK_SECRET` (cabeçalho `x-vagacerta-ofsc-secret` ou `Authorization: Bearer …`). Fora de `NODE_ENV=production`, se a variável não estiver definida, usa-se o valor de demonstração `vagacerta-demo-ofsc` (ver `.env.example`). Em produção sem variável, as rotas respondem 503. As chamadas internas do motor usam `aplicarChamadaOfsc` e não passam pelo HTTP.
+
 Cada equipa partilhada tem um `resourceId` distinto em cada operador (`AZ_RES_MINHO`, `VR_RES_MINHO`, `VD_RES_MINHO`, …).
 
 Em `/integracao` escolhe-se primeiro a vaga na grelha (tempo real: `GET /api/integracao/vagas`) e depois confirma-se (`POST /api/integracao/reserva`). O texto em linguagem natural (`POST /api/integracao/agente`) só preenche campos; não inventa data, zona, janela nem técnico.
@@ -426,8 +428,8 @@ Nada na integração OFSC é público.
 | `POST /api/integracao/ofsc/eventos` (webhook) e `/api/ofsc/{operador}/…` (OFSC simulado) | Quem apresenta o **segredo da integração**, ou uma **sessão da central** |
 | `GET/POST /api/integracao/{vagas,reserva,agente,consola,cenarios,reconciliar,saude}` e a página `/integracao` | Só uma **sessão da central** |
 
-- O segredo vai no cabeçalho `x-vagacerta-segredo: <segredo>` ou em `Authorization: Bearer <segredo>`. A comparação é em tempo constante.
-- O segredo é `VC_OFSC_SEGREDO`. Sem essa variável, a aplicação gera um segredo de desenvolvimento na primeira utilização e guarda-o só na base local (`definicoes.segredo_integracao`). Não é escrito em nenhum registo nem devolvido por nenhuma rota. Em produção defina `VC_OFSC_SEGREDO`.
+- O segredo vai no cabeçalho `x-vagacerta-ofsc-secret: <segredo>` ou em `Authorization: Bearer <segredo>`. A comparação é em tempo constante.
+- O segredo é `OFSC_WEBHOOK_SECRET`. Cabeçalho `x-vagacerta-ofsc-secret` ou Bearer. Fora de produção, sem variável, usa o valor de demonstração. Em produção defina `OFSC_WEBHOOK_SECRET` (senão 503).
 - Sem credenciais, ou com um segredo errado: 401 `NAO_AUTENTICADO`. Com a sessão de um despachante ou de um técnico: 403 `SEM_PERMISSAO` («Só a central usa a integração OFSC.»). Um segredo certo **não** dá acesso às rotas só da central: o OFSC fala com o webhook, não com a consola.
 - A consola é da central porque é «cross-operador»: mostra as três colunas (o OFSC do operador, a VagaCerta e o OFSC dos outros), corre os onze cenários e reconcilia os três operadores ao mesmo tempo. Um despachante vê apenas o seu operador; o técnico, a sua equipa.
 - Os onze cenários e a consola continuam a funcionar com a sessão da central: criam a atividade e disparam o evento dentro do servidor (o `POST` ao webhook que aparece na coluna do meio é o contrato, registado na consola). Um OFSC real ou um script externo é que precisa do segredo.

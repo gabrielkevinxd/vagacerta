@@ -1,5 +1,5 @@
 import { Carregamento } from "@/components/carregamento";
 
 export default function ACarregar() {
-  return <Carregamento />;
+  return <Carregamento variante="painel" />;
 }

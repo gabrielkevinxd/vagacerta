@@ -11,8 +11,8 @@ Nenhum ponto da integração é público.
 | `POST /api/integracao/ofsc/eventos` (webhook) e `/api/ofsc/{operador}/…` (OFSC simulado) | Quem apresenta o **segredo da integração**, ou uma **sessão da central** |
 | `GET/POST /api/integracao/{vagas,reserva,agente,consola,cenarios,reconciliar,saude}` e a página `/integracao` | Só uma **sessão da central** |
 
-- Segredo: cabeçalho `x-vagacerta-segredo: <segredo>` ou `Authorization: Bearer <segredo>`; comparação em tempo constante.
-- O segredo é `VC_OFSC_SEGREDO`. Sem a variável, gera-se um segredo de desenvolvimento na primeira utilização, guardado só na base local (`definicoes.segredo_integracao`) e nunca impresso nem devolvido. Em produção, defina `VC_OFSC_SEGREDO`.
+- Segredo: cabeçalho `x-vagacerta-ofsc-secret: <segredo>` ou `Authorization: Bearer <segredo>`; comparação em tempo constante.
+- O segredo é `OFSC_WEBHOOK_SECRET`. Sem a variável, gera-se um segredo de desenvolvimento na primeira utilização, guardado só na base local (`definicoes.segredo_integracao`) e nunca impresso nem devolvido. Em produção, defina `OFSC_WEBHOOK_SECRET`.
 - Sem credenciais, ou segredo errado: 401 `NAO_AUTENTICADO`. Sessão de despachante ou de técnico: 403 `SEM_PERMISSAO`. O segredo certo não abre as rotas só da central.
 - A consola é só da central porque é «cross-operador»: três colunas (o OFSC do operador, a VagaCerta, o OFSC dos outros), os onze cenários e a reconciliação mexem nos três operadores ao mesmo tempo.
 - Os cenários e a reserva da consola correm dentro do servidor com a sessão da central; só um OFSC real ou um script externo precisa do segredo.
