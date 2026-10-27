@@ -109,7 +109,7 @@ function prever(ator: Ator, pedido: PedidoRealocacao, prefixo: string, modo: "ia
 
 function registarTurno(sessaoToken: string, pergunta: string, resposta: RespostaAssistente): RespostaAssistente {
   acrescentarHistoricoAssistente(sessaoToken, "utilizador", pergunta);
-  acrescentarHistoricoAssistente(sessaoToken, "assistente", resposta.mensagem.texto);
+  acrescentarHistoricoAssistente(sessaoToken, "assistente", resposta.mensagem.texto, resposta.origem);
   return resposta;
 }
 

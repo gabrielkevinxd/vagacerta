@@ -45,8 +45,8 @@ export interface PainelAssistente {
   podePropor: boolean;
   resumo: string;
   alertas: AlertaAssistente[];
-  /** Histórico da sessão no servidor — a UI mostra o mesmo contexto que o LLM. */
-  historico: { papel: "utilizador" | "assistente"; texto: string }[];
+  /** Histórico da sessão no servidor — a UI mostra o mesmo contexto que o LLM (com legenda IA/regras). */
+  historico: { papel: "utilizador" | "assistente"; texto: string; origem?: string }[];
 }
 
 export interface RespostaAssistente {
