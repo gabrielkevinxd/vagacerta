@@ -18,12 +18,12 @@ import { exigirAtorPagina } from "@/server/sessao";
 import { painel } from "@/server/servicos";
 
 async function Painel({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const { t, idioma } = await i18nPedido();
   const parametros = await searchParams;
+  const ator = await exigirAtorPagina();
+  const { t, idioma } = await i18nPedido();
   const pedido = um(parametros.data);
   const diaRico = diaDemonstracaoAtual();
   const data = eDataIso(pedido) ? pedido : diaRico;
-  const ator = await exigirAtorPagina();
   const vista = painel(ator, data);
   const hoje = hojeLisboa();
   const cartoes = [
