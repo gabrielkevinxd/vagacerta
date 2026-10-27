@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { um } from "@/lib/consulta-pagina";
 import { fundirAgenda } from "@/lib/agenda-vista";
 import type { Agenda, BlocoVista, LinhaVista } from "@/lib/rules/agenda";
+import { distritosComCobertura, municipiosDoDistrito, nomesAreasCobertura } from "@/lib/zonas/catalogo";
 import { GanttAgenda } from "@/components/agenda/gantt-agenda";
 import { Carregamento } from "@/components/carregamento";
 import { EstadoVazio } from "@/components/estado-vazio";
@@ -16,8 +17,10 @@ import { ErroHttp } from "@/server/erros";
 import { diaDemonstracaoAtual } from "@/server/db";
 import { i18nPedido } from "@/server/idioma";
 import { exigirAtorPagina } from "@/server/sessao";
-import { obterAgenda, preverReagendamento } from "@/server/servicos";
+import { listarEquipas, obterAgenda, preverReagendamento } from "@/server/servicos";
 import { confirmarArrasto } from "./accoes";
+
+const campo = "h-8 rounded-md border border-input bg-card px-2.5 text-[13px]/5";
 
 function encontrar(agenda: Agenda, id: string): { bloco: BlocoVista; equipa: LinhaVista; data: string } | null {
   for (const dia of agenda.dias) {
@@ -40,6 +43,17 @@ function ligacao(href: string, rotulo: string) {
   );
 }
 
+function filtrarAgenda(agenda: Agenda, ids: Set<string> | null): Agenda {
+  if (!ids) return agenda;
+  return {
+    ...agenda,
+    dias: agenda.dias.map((dia) => ({
+      ...dia,
+      equipas: dia.equipas.filter((equipa) => ids.has(equipa.equipaId)),
+    })),
+  };
+}
+
 async function Conteudo({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { t, idioma, m } = await i18nPedido();
   const ator = await exigirAtorPagina();
@@ -48,8 +62,28 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
   const diaRico = diaDemonstracaoAtual();
   const data = eDataIso(pedida) ? pedida : diaRico;
   const vista = um(consulta.vista) === "semana" ? "semana" : "dia";
+  const distrito = um(consulta.distrito) ?? "";
+  const municipio = um(consulta.municipio) ?? "";
+  const distritos = distritosComCobertura();
+  const municipios = distrito ? municipiosDoDistrito(distrito).map((item) => item.nome) : nomesAreasCobertura();
   const intervalo = vista === "semana" ? semanaIso(data) : { inicio: data, fim: data };
-  const agenda = obterAgenda(ator, intervalo.inicio, intervalo.fim);
+  const agendaBruta = obterAgenda(ator, intervalo.inicio, intervalo.fim);
+  const filtroActivo = Boolean(distrito || municipio);
+  const idsFiltro = filtroActivo
+    ? new Set(
+        listarEquipas(ator)
+          .filter((equipa) => {
+            if (distrito && equipa.distrito !== distrito) return false;
+            if (municipio) {
+              const cobre = equipa.base === municipio || equipa.areas.includes(municipio) || equipa.zona?.nome === municipio;
+              if (!cobre) return false;
+            }
+            return true;
+          })
+          .map((equipa) => equipa.id),
+      )
+    : null;
+  const agenda = filtrarAgenda(agendaBruta, idsFiltro);
   const perfil = ator.papel === "tecnico" ? "tecnico" : eCentral(ator) ? "central" : "despachante";
   const hoje = hojeLisboa();
   const anterior = somarDias(data, vista === "semana" ? -7 : -1);
@@ -76,7 +110,12 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
   }
   const agendaDesenhada = previsao ? fundirAgenda(agenda, previsao.depois) : agenda;
   const gravado = um(consulta.gravado) === "1";
-  const base = `/agenda?vista=${vista}&data=${data}`;
+  const zonaQuery = [distrito ? `distrito=${encodeURIComponent(distrito)}` : "", municipio ? `municipio=${encodeURIComponent(municipio)}` : ""]
+    .filter(Boolean)
+    .join("&");
+  const comZona = (href: string) => (zonaQuery ? `${href}&${zonaQuery}` : href);
+  const base = comZona(`/agenda?vista=${vista}&data=${data}`);
+  const linhasVisiveis = agenda.dias[0]?.equipas.length ?? 0;
 
   return (
     <div className="space-y-6">
@@ -93,26 +132,62 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
         accoes={
           <div className="flex flex-wrap items-center gap-2">
             <Segmentos etiqueta={t("agenda.titulo")}>
-              <SegmentoLigacao href={`/agenda?vista=dia&data=${data}`} ativo={vista === "dia"}>
+              <SegmentoLigacao href={comZona(`/agenda?vista=dia&data=${data}`)} ativo={vista === "dia"}>
                 {t("comum.dia")}
               </SegmentoLigacao>
-              <SegmentoLigacao href={`/agenda?vista=semana&data=${data}`} ativo={vista === "semana"}>
+              <SegmentoLigacao href={comZona(`/agenda?vista=semana&data=${data}`)} ativo={vista === "semana"}>
                 {t("comum.semana")}
               </SegmentoLigacao>
             </Segmentos>
             {ligacao(
-              `/agenda?vista=${vista}&data=${anterior}`,
+              comZona(`/agenda?vista=${vista}&data=${anterior}`),
               vista === "semana" ? t("agenda.semanaAnterior") : t("agenda.diaAnterior"),
             )}
             {ligacao(
-              `/agenda?vista=${vista}&data=${seguinte}`,
+              comZona(`/agenda?vista=${vista}&data=${seguinte}`),
               vista === "semana" ? t("agenda.semanaSeguinte") : t("agenda.diaSeguinte"),
             )}
-            {ligacao(`/agenda?vista=${vista}&data=${hoje}`, t("comum.hoje"))}
-            {ligacao(`/agenda?vista=${vista}&data=${diaRico}`, t("agenda.demonstracao"))}
+            {ligacao(comZona(`/agenda?vista=${vista}&data=${hoje}`), t("comum.hoje"))}
+            {ligacao(comZona(`/agenda?vista=${vista}&data=${diaRico}`), t("agenda.demonstracao"))}
           </div>
         }
       />
+      <form className="flex flex-wrap items-end gap-3" action="/agenda" method="get">
+        <input type="hidden" name="vista" value={vista} />
+        <input type="hidden" name="data" value={data} />
+        <div className="space-y-1.5">
+          <label htmlFor="distrito" className="text-[13px]/5 text-muted-foreground">
+            {t("agenda.filtrarDistrito")}
+          </label>
+          <select id="distrito" name="distrito" defaultValue={distrito} className={campo}>
+            <option value="">{t("agenda.filtrarTodos")}</option>
+            {distritos.map((nome) => (
+              <option key={nome} value={nome}>
+                {nome}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-1.5">
+          <label htmlFor="municipio" className="text-[13px]/5 text-muted-foreground">
+            {t("agenda.filtrarMunicipio")}
+          </label>
+          <select id="municipio" name="municipio" defaultValue={municipio} className={campo}>
+            <option value="">{t("agenda.filtrarTodos")}</option>
+            {municipios.map((nome) => (
+              <option key={nome} value={nome}>
+                {nome}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" className="inline-flex h-8 items-center rounded-md border border-border bg-card px-3 text-[13px]/5 font-medium hover:bg-muted">
+          {t("agenda.filtrarAplicar")}
+        </button>
+      </form>
+      {filtroActivo && !vazio ? (
+        <p className="text-[13px]/5 text-muted-foreground">{t("agenda.filtroActivo", { n: linhasVisiveis })}</p>
+      ) : null}
       {gravado ? <Alerta tom="sucesso">{t("agenda.gravado")}</Alerta> : null}
       {erroPrevisao ? (
         <Alerta tom="erro" role="alert" className="sticky top-2 z-30">
@@ -139,6 +214,8 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
               <input type="hidden" name="inicio" value={um(consulta.inicio)} />
               <input type="hidden" name="vista" value={vista} />
               <input type="hidden" name="data" value={data} />
+              {distrito ? <input type="hidden" name="distrito" value={distrito} /> : null}
+              {municipio ? <input type="hidden" name="municipio" value={municipio} /> : null}
               <button type="submit" className="inline-flex h-8 items-center rounded-lg bg-primary px-4 text-[13px]/5 font-medium text-primary-foreground">
                 {t("agenda.guardarLugar")}
               </button>
@@ -153,6 +230,8 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
         <form id="mover" action="/agenda" className="grid gap-3 superficie p-4 md:grid-cols-[1fr_1fr_8rem_auto] md:items-end">
           <input type="hidden" name="vista" value={vista} />
           <input type="hidden" name="data" value={data} />
+          {distrito ? <input type="hidden" name="distrito" value={distrito} /> : null}
+          {municipio ? <input type="hidden" name="municipio" value={municipio} /> : null}
           <input type="hidden" name="ordem" value={escolhida.bloco.id} />
           <input type="hidden" name="prever" value="1" />
           <label className="space-y-1 text-[13px]/5">
@@ -189,12 +268,12 @@ async function Conteudo({ searchParams }: { searchParams: Promise<Record<string,
       ) : null}
       {vazio ? (
         <EstadoVazio
-          titulo={t("agenda.semEquipasTitulo")}
-          detalhe={t("agenda.semEquipasDetalhe")}
+          titulo={filtroActivo ? t("agenda.semFiltroResultados") : t("agenda.semEquipasTitulo")}
+          detalhe={filtroActivo ? t("agenda.semFiltroResultados") : t("agenda.semEquipasDetalhe")}
         />
       ) : (
         <GanttAgenda
-          key={`${vista}-${agenda.de}-${agenda.ate}-${previsao ? "prever" : "base"}`}
+          key={`${vista}-${agenda.de}-${agenda.ate}-${distrito}-${municipio}-${previsao ? "prever" : "base"}`}
           agendaInicial={agendaDesenhada}
           perfil={perfil}
           vista={vista}

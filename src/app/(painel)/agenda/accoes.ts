@@ -13,7 +13,15 @@ export async function confirmarArrasto(formulario: FormData) {
   const inicio = String(formulario.get("inicio") ?? "");
   const vista = String(formulario.get("vista") ?? "dia");
   const ancora = String(formulario.get("data") ?? dia);
-  const voltar = `/agenda?vista=${encodeURIComponent(vista)}&data=${encodeURIComponent(ancora)}`;
+  const distrito = String(formulario.get("distrito") ?? "").trim();
+  const municipio = String(formulario.get("municipio") ?? "").trim();
+  const zona = [
+    distrito ? `distrito=${encodeURIComponent(distrito)}` : "",
+    municipio ? `municipio=${encodeURIComponent(municipio)}` : "",
+  ]
+    .filter(Boolean)
+    .join("&");
+  const voltar = `/agenda?vista=${encodeURIComponent(vista)}&data=${encodeURIComponent(ancora)}${zona ? `&${zona}` : ""}`;
   try {
     await reagendar(ator, ordemId, { equipaId, data: dia, inicioPlaneado: inicio });
   } catch (erro) {

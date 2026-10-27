@@ -52,8 +52,9 @@ export interface EquipaSeedExtra {
 }
 
 /**
- * 193 equipas extra (além das 7 de demonstração) sobre os 92 municípios com cobertura.
- * Áreas sempre conexas na adjacência CAOP. Sem operador «dono» — só `operadoresServidos`.
+ * 193 equipas extra (além das 7 de demonstração) sobre os municípios com cobertura catalogada
+ * (mapa DST público + RNG + demo-seed). Áreas sempre conexas na adjacência CAOP.
+ * Sem operador «dono» — só `operadoresServidos`.
  */
 export function gerarEquipasExtra(total = 193): EquipaSeedExtra[] {
   const rng = mulberry32(SEMENTE_FROTA);

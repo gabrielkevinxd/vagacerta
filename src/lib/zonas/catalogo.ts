@@ -85,11 +85,25 @@ export function ccoParaDistrito(distrito: string): string {
   return `cco-${chave}`;
 }
 
-/** Nomes oficiais das 92 áreas com cobertura — válidos em ordens/equipas. */
+/** Nomes oficiais das áreas com cobertura catalogada — válidos em ordens/equipas. */
 export function nomesAreasCobertura(): string[] {
   return municipiosComCobertura()
     .map((m) => m.nome)
     .sort((a, b) => a.localeCompare(b, "pt"));
+}
+
+export function distritoDoMunicipio(nome: string): string | undefined {
+  return porNome.get(nome)?.distrito;
+}
+
+export function distritosComCobertura(): string[] {
+  return [...new Set(municipiosComCobertura().map((m) => m.distrito))].sort((a, b) => a.localeCompare(b, "pt"));
+}
+
+export function municipiosDoDistrito(distrito: string): MunicipioCatalogo[] {
+  return municipiosComCobertura()
+    .filter((m) => m.distrito === distrito)
+    .sort((a, b) => a.nome.localeCompare(b.nome, "pt"));
 }
 
 export { demoAreas as DEMO_AREA_PARA_DICOFRE };

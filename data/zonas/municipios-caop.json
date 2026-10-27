@@ -4,7 +4,9 @@
     "urlAtributos": "https://infogeo.dgterritorio.gov.pt/arcgis/rest/services/Hosted/caop2025_municipios/FeatureServer/1005",
     "urlOgc": "https://ogcapi.dgterritorio.gov.pt/collections/municipios",
     "licenca": "Dados geográficos oficiais DGT / CAOP; ver condições de utilização na DGT (reutilização com atribuição). TerraAPI indica CC BY 4.0 para CAOP 2025.",
-    "extraidoEm": "2026-10-27"
+    "extraidoEm": "2026-10-27",
+    "coberturaAtualizadaEm": "2026-10-27",
+    "mapaRedeApi": "https://www.dstelecom.pt/wp-json/mapa-rede/v1/concelhos"
   },
   "municipios": [
     {
@@ -14,8 +16,9 @@
       "nuts3": "Região de Aveiro",
       "nuts3Codigo": "191",
       "nuts2": "Centro",
-      "cobertura": "demo-seed",
-      "fonteCobertura": "demo-seed-vagacerta"
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0102",
@@ -24,8 +27,9 @@
       "nuts3": "Região de Aveiro",
       "nuts3Codigo": "191",
       "nuts2": "Centro",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0103",
@@ -34,8 +38,9 @@
       "nuts3": "Região de Aveiro",
       "nuts3Codigo": "191",
       "nuts2": "Centro",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0104",
@@ -45,7 +50,8 @@
       "nuts3Codigo": "11A",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0105",
@@ -55,7 +61,8 @@
       "nuts3Codigo": "191",
       "nuts2": "Centro",
       "cobertura": "demo-seed",
-      "fonteCobertura": "demo-seed-vagacerta"
+      "fonteCobertura": "demo-seed-vagacerta",
+      "estadoCobertura": "demo"
     },
     {
       "dicofre": "0106",
@@ -65,7 +72,8 @@
       "nuts3Codigo": "11C",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0107",
@@ -75,7 +83,8 @@
       "nuts3Codigo": "11A",
       "nuts2": "Norte",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0108",
@@ -85,7 +94,8 @@
       "nuts3Codigo": "191",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0109",
@@ -95,7 +105,8 @@
       "nuts3Codigo": "11A",
       "nuts2": "Norte",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0110",
@@ -105,7 +116,8 @@
       "nuts3Codigo": "191",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0111",
@@ -115,7 +127,8 @@
       "nuts3Codigo": "192",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0112",
@@ -125,7 +138,8 @@
       "nuts3Codigo": "191",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0113",
@@ -135,7 +149,8 @@
       "nuts3Codigo": "11A",
       "nuts2": "Norte",
       "cobertura": "demo-seed",
-      "fonteCobertura": "demo-seed-vagacerta"
+      "fonteCobertura": "demo-seed-vagacerta",
+      "estadoCobertura": "demo"
     },
     {
       "dicofre": "0114",
@@ -145,7 +160,8 @@
       "nuts3Codigo": "191",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0115",
@@ -155,7 +171,8 @@
       "nuts3Codigo": "191",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0116",
@@ -165,7 +182,8 @@
       "nuts3Codigo": "11A",
       "nuts2": "Norte",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0117",
@@ -175,7 +193,8 @@
       "nuts3Codigo": "191",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0118",
@@ -185,7 +204,8 @@
       "nuts3Codigo": "191",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0119",
@@ -194,8 +214,9 @@
       "nuts3": "Área Metropolitana do Porto",
       "nuts3Codigo": "11A",
       "nuts2": "Norte",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0201",
@@ -205,7 +226,8 @@
       "nuts3Codigo": "1C2",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0202",
@@ -215,7 +237,8 @@
       "nuts3Codigo": "1C2",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0203",
@@ -225,7 +248,8 @@
       "nuts3Codigo": "1C2",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0204",
@@ -235,7 +259,8 @@
       "nuts3Codigo": "1C2",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0205",
@@ -245,7 +270,8 @@
       "nuts3Codigo": "1C2",
       "nuts2": "Alentejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0206",
@@ -254,8 +280,9 @@
       "nuts3": "Baixo Alentejo",
       "nuts3Codigo": "1C2",
       "nuts2": "Alentejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0207",
@@ -264,8 +291,9 @@
       "nuts3": "Baixo Alentejo",
       "nuts3Codigo": "1C2",
       "nuts2": "Alentejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0208",
@@ -274,8 +302,9 @@
       "nuts3": "Baixo Alentejo",
       "nuts3Codigo": "1C2",
       "nuts2": "Alentejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0209",
@@ -285,7 +314,8 @@
       "nuts3Codigo": "1C2",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0210",
@@ -295,7 +325,8 @@
       "nuts3Codigo": "1C2",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0211",
@@ -304,8 +335,9 @@
       "nuts3": "Alentejo Litoral",
       "nuts3Codigo": "1C1",
       "nuts2": "Alentejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0212",
@@ -315,7 +347,8 @@
       "nuts3Codigo": "1C2",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0213",
@@ -325,7 +358,8 @@
       "nuts3Codigo": "1C2",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0214",
@@ -334,8 +368,9 @@
       "nuts3": "Baixo Alentejo",
       "nuts3Codigo": "1C2",
       "nuts2": "Alentejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0301",
@@ -344,8 +379,9 @@
       "nuts3": "Cávado",
       "nuts3Codigo": "112",
       "nuts2": "Norte",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0302",
@@ -355,7 +391,8 @@
       "nuts3Codigo": "112",
       "nuts2": "Norte",
       "cobertura": "demo-seed",
-      "fonteCobertura": "demo-seed-vagacerta"
+      "fonteCobertura": "demo-seed-vagacerta",
+      "estadoCobertura": "demo"
     },
     {
       "dicofre": "0303",
@@ -364,8 +401,9 @@
       "nuts3": "Cávado",
       "nuts3Codigo": "112",
       "nuts2": "Norte",
-      "cobertura": "demo-seed",
-      "fonteCobertura": "demo-seed-vagacerta"
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0304",
@@ -375,7 +413,8 @@
       "nuts3Codigo": "119",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0305",
@@ -385,7 +424,8 @@
       "nuts3Codigo": "11C",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0306",
@@ -394,8 +434,9 @@
       "nuts3": "Cávado",
       "nuts3Codigo": "112",
       "nuts2": "Norte",
-      "cobertura": "demo-seed",
-      "fonteCobertura": "demo-seed-vagacerta"
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0307",
@@ -404,8 +445,9 @@
       "nuts3": "Ave",
       "nuts3Codigo": "119",
       "nuts2": "Norte",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0308",
@@ -414,8 +456,9 @@
       "nuts3": "Ave",
       "nuts3Codigo": "119",
       "nuts2": "Norte",
-      "cobertura": "demo-seed",
-      "fonteCobertura": "demo-seed-vagacerta"
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0309",
@@ -425,7 +468,8 @@
       "nuts3Codigo": "119",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0310",
@@ -435,7 +479,8 @@
       "nuts3Codigo": "112",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0311",
@@ -445,7 +490,8 @@
       "nuts3Codigo": "119",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0312",
@@ -455,7 +501,8 @@
       "nuts3Codigo": "119",
       "nuts2": "Norte",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0313",
@@ -464,8 +511,9 @@
       "nuts3": "Cávado",
       "nuts3Codigo": "112",
       "nuts2": "Norte",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0314",
@@ -475,7 +523,8 @@
       "nuts3Codigo": "119",
       "nuts2": "Norte",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0401",
@@ -485,7 +534,8 @@
       "nuts3Codigo": "11E",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0402",
@@ -494,8 +544,9 @@
       "nuts3": "Terras de Trás-os-Montes",
       "nuts3Codigo": "11E",
       "nuts2": "Norte",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0403",
@@ -505,7 +556,12 @@
       "nuts3Codigo": "11D",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado",
+      "mapaBuckets": [
+        "a",
+        "b"
+      ]
     },
     {
       "dicofre": "0404",
@@ -515,7 +571,12 @@
       "nuts3Codigo": "11D",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado",
+      "mapaBuckets": [
+        "a",
+        "b"
+      ]
     },
     {
       "dicofre": "0405",
@@ -525,7 +586,12 @@
       "nuts3Codigo": "11E",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado",
+      "mapaBuckets": [
+        "a",
+        "c"
+      ]
     },
     {
       "dicofre": "0406",
@@ -535,7 +601,8 @@
       "nuts3Codigo": "11E",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0407",
@@ -544,8 +611,14 @@
       "nuts3": "Terras de Trás-os-Montes",
       "nuts3Codigo": "11E",
       "nuts2": "Norte",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado",
+      "mapaBuckets": [
+        "a",
+        "b",
+        "c"
+      ]
     },
     {
       "dicofre": "0408",
@@ -555,7 +628,12 @@
       "nuts3Codigo": "11E",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado",
+      "mapaBuckets": [
+        "a",
+        "b"
+      ]
     },
     {
       "dicofre": "0409",
@@ -565,7 +643,8 @@
       "nuts3Codigo": "11D",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0410",
@@ -575,7 +654,12 @@
       "nuts3Codigo": "11E",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado",
+      "mapaBuckets": [
+        "a",
+        "b"
+      ]
     },
     {
       "dicofre": "0411",
@@ -585,7 +669,8 @@
       "nuts3Codigo": "11E",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0412",
@@ -595,7 +680,8 @@
       "nuts3Codigo": "11E",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0501",
@@ -604,8 +690,9 @@
       "nuts3": "Beiras e Serra da Estrela",
       "nuts3Codigo": "196",
       "nuts2": "Centro",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0502",
@@ -614,8 +701,9 @@
       "nuts3": "Beira Baixa",
       "nuts3Codigo": "195",
       "nuts2": "Centro",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0503",
@@ -624,8 +712,9 @@
       "nuts3": "Beiras e Serra da Estrela",
       "nuts3Codigo": "196",
       "nuts2": "Centro",
-      "cobertura": "demo-seed",
-      "fonteCobertura": "demo-seed-vagacerta"
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0504",
@@ -634,8 +723,9 @@
       "nuts3": "Beiras e Serra da Estrela",
       "nuts3Codigo": "196",
       "nuts2": "Centro",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0505",
@@ -645,7 +735,8 @@
       "nuts3Codigo": "195",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0506",
@@ -655,7 +746,8 @@
       "nuts3Codigo": "195",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0507",
@@ -665,7 +757,8 @@
       "nuts3Codigo": "195",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0508",
@@ -675,7 +768,8 @@
       "nuts3Codigo": "195",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0509",
@@ -685,7 +779,8 @@
       "nuts3Codigo": "195",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0510",
@@ -695,7 +790,8 @@
       "nuts3Codigo": "195",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0511",
@@ -705,7 +801,8 @@
       "nuts3Codigo": "195",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0601",
@@ -715,7 +812,8 @@
       "nuts3Codigo": "192",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0602",
@@ -724,8 +822,9 @@
       "nuts3": "Região de Coimbra",
       "nuts3Codigo": "192",
       "nuts2": "Centro",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0603",
@@ -734,8 +833,9 @@
       "nuts3": "Região de Coimbra",
       "nuts3Codigo": "192",
       "nuts2": "Centro",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0604",
@@ -744,8 +844,9 @@
       "nuts3": "Região de Coimbra",
       "nuts3Codigo": "192",
       "nuts2": "Centro",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0605",
@@ -754,8 +855,9 @@
       "nuts3": "Região de Coimbra",
       "nuts3Codigo": "192",
       "nuts2": "Centro",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0606",
@@ -765,7 +867,8 @@
       "nuts3Codigo": "192",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0607",
@@ -775,7 +878,8 @@
       "nuts3Codigo": "192",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0608",
@@ -785,7 +889,8 @@
       "nuts3Codigo": "192",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0609",
@@ -795,7 +900,8 @@
       "nuts3Codigo": "192",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0610",
@@ -804,8 +910,9 @@
       "nuts3": "Região de Coimbra",
       "nuts3Codigo": "192",
       "nuts2": "Centro",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0611",
@@ -815,7 +922,8 @@
       "nuts3Codigo": "192",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0612",
@@ -825,7 +933,8 @@
       "nuts3Codigo": "192",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0613",
@@ -835,7 +944,8 @@
       "nuts3Codigo": "192",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0614",
@@ -845,7 +955,8 @@
       "nuts3Codigo": "192",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0615",
@@ -854,8 +965,9 @@
       "nuts3": "Região de Coimbra",
       "nuts3Codigo": "192",
       "nuts2": "Centro",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0616",
@@ -865,7 +977,8 @@
       "nuts3Codigo": "192",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0617",
@@ -875,7 +988,8 @@
       "nuts3Codigo": "192",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0701",
@@ -885,7 +999,8 @@
       "nuts3Codigo": "1C4",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0702",
@@ -895,7 +1010,8 @@
       "nuts3Codigo": "1C4",
       "nuts2": "Alentejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0703",
@@ -904,8 +1020,9 @@
       "nuts3": "Alentejo Central",
       "nuts3Codigo": "1C4",
       "nuts2": "Alentejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0704",
@@ -915,7 +1032,8 @@
       "nuts3Codigo": "1C4",
       "nuts2": "Alentejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0705",
@@ -925,7 +1043,8 @@
       "nuts3Codigo": "1C4",
       "nuts2": "Alentejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0706",
@@ -934,8 +1053,9 @@
       "nuts3": "Alentejo Central",
       "nuts3Codigo": "1C4",
       "nuts2": "Alentejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0707",
@@ -945,7 +1065,8 @@
       "nuts3Codigo": "1C4",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0708",
@@ -955,7 +1076,8 @@
       "nuts3Codigo": "1C4",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0709",
@@ -964,8 +1086,9 @@
       "nuts3": "Alentejo Central",
       "nuts3Codigo": "1C4",
       "nuts2": "Alentejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0710",
@@ -975,7 +1098,8 @@
       "nuts3Codigo": "1C4",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0711",
@@ -985,7 +1109,8 @@
       "nuts3Codigo": "1C4",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0712",
@@ -995,7 +1120,8 @@
       "nuts3Codigo": "1C4",
       "nuts2": "Alentejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0713",
@@ -1005,7 +1131,8 @@
       "nuts3Codigo": "1C4",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0714",
@@ -1015,7 +1142,8 @@
       "nuts3Codigo": "1C4",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0801",
@@ -1024,8 +1152,9 @@
       "nuts3": "Algarve",
       "nuts3Codigo": "150",
       "nuts2": "Algarve",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0802",
@@ -1035,7 +1164,8 @@
       "nuts3Codigo": "150",
       "nuts2": "Algarve",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0803",
@@ -1045,7 +1175,8 @@
       "nuts3Codigo": "150",
       "nuts2": "Algarve",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0804",
@@ -1055,7 +1186,12 @@
       "nuts3Codigo": "150",
       "nuts2": "Algarve",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado",
+      "mapaBuckets": [
+        "a",
+        "b"
+      ]
     },
     {
       "dicofre": "0805",
@@ -1065,7 +1201,8 @@
       "nuts3Codigo": "150",
       "nuts2": "Algarve",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0806",
@@ -1075,7 +1212,8 @@
       "nuts3Codigo": "150",
       "nuts2": "Algarve",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0807",
@@ -1084,8 +1222,9 @@
       "nuts3": "Algarve",
       "nuts3Codigo": "150",
       "nuts2": "Algarve",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0808",
@@ -1094,8 +1233,9 @@
       "nuts3": "Algarve",
       "nuts3Codigo": "150",
       "nuts2": "Algarve",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0809",
@@ -1105,7 +1245,8 @@
       "nuts3Codigo": "150",
       "nuts2": "Algarve",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0810",
@@ -1115,7 +1256,8 @@
       "nuts3Codigo": "150",
       "nuts2": "Algarve",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0811",
@@ -1125,7 +1267,8 @@
       "nuts3Codigo": "150",
       "nuts2": "Algarve",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0812",
@@ -1135,7 +1278,8 @@
       "nuts3Codigo": "150",
       "nuts2": "Algarve",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0813",
@@ -1144,8 +1288,9 @@
       "nuts3": "Algarve",
       "nuts3Codigo": "150",
       "nuts2": "Algarve",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0814",
@@ -1154,8 +1299,9 @@
       "nuts3": "Algarve",
       "nuts3Codigo": "150",
       "nuts2": "Algarve",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0815",
@@ -1165,7 +1311,12 @@
       "nuts3Codigo": "150",
       "nuts2": "Algarve",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado",
+      "mapaBuckets": [
+        "a",
+        "c"
+      ]
     },
     {
       "dicofre": "0816",
@@ -1174,8 +1325,9 @@
       "nuts3": "Algarve",
       "nuts3Codigo": "150",
       "nuts2": "Algarve",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0901",
@@ -1185,7 +1337,8 @@
       "nuts3Codigo": "194",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0902",
@@ -1195,7 +1348,8 @@
       "nuts3Codigo": "196",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0903",
@@ -1204,8 +1358,9 @@
       "nuts3": "Beiras e Serra da Estrela",
       "nuts3Codigo": "196",
       "nuts2": "Centro",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0904",
@@ -1215,7 +1370,8 @@
       "nuts3Codigo": "196",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0905",
@@ -1225,7 +1381,8 @@
       "nuts3Codigo": "196",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0906",
@@ -1234,8 +1391,9 @@
       "nuts3": "Beiras e Serra da Estrela",
       "nuts3Codigo": "196",
       "nuts2": "Centro",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0907",
@@ -1244,8 +1402,9 @@
       "nuts3": "Beiras e Serra da Estrela",
       "nuts3Codigo": "196",
       "nuts2": "Centro",
-      "cobertura": "demo-seed",
-      "fonteCobertura": "demo-seed-vagacerta"
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "0908",
@@ -1255,7 +1414,8 @@
       "nuts3Codigo": "196",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0909",
@@ -1265,7 +1425,8 @@
       "nuts3Codigo": "196",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0910",
@@ -1275,7 +1436,8 @@
       "nuts3Codigo": "196",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0911",
@@ -1285,7 +1447,8 @@
       "nuts3Codigo": "196",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0912",
@@ -1295,7 +1458,8 @@
       "nuts3Codigo": "196",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0913",
@@ -1305,7 +1469,8 @@
       "nuts3Codigo": "196",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "0914",
@@ -1315,7 +1480,8 @@
       "nuts3Codigo": "11D",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1001",
@@ -1324,8 +1490,9 @@
       "nuts3": "Oeste",
       "nuts3Codigo": "1D1",
       "nuts2": "Oeste e Vale do Tejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1002",
@@ -1335,7 +1502,8 @@
       "nuts3Codigo": "193",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1003",
@@ -1345,7 +1513,8 @@
       "nuts3Codigo": "193",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1004",
@@ -1355,7 +1524,8 @@
       "nuts3Codigo": "193",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1005",
@@ -1365,7 +1535,8 @@
       "nuts3Codigo": "1D1",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1006",
@@ -1374,8 +1545,9 @@
       "nuts3": "Oeste",
       "nuts3Codigo": "1D1",
       "nuts2": "Oeste e Vale do Tejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1007",
@@ -1385,7 +1557,8 @@
       "nuts3Codigo": "193",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1008",
@@ -1395,7 +1568,8 @@
       "nuts3Codigo": "193",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1009",
@@ -1404,8 +1578,9 @@
       "nuts3": "Região de Leiria",
       "nuts3Codigo": "193",
       "nuts2": "Centro",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1010",
@@ -1415,7 +1590,8 @@
       "nuts3Codigo": "193",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1011",
@@ -1425,7 +1601,8 @@
       "nuts3Codigo": "1D1",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1012",
@@ -1435,7 +1612,8 @@
       "nuts3Codigo": "1D1",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1013",
@@ -1445,7 +1623,8 @@
       "nuts3Codigo": "193",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1014",
@@ -1455,7 +1634,8 @@
       "nuts3Codigo": "1D1",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1015",
@@ -1464,8 +1644,9 @@
       "nuts3": "Região de Leiria",
       "nuts3Codigo": "193",
       "nuts2": "Centro",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1016",
@@ -1474,8 +1655,9 @@
       "nuts3": "Região de Leiria",
       "nuts3Codigo": "193",
       "nuts2": "Centro",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1101",
@@ -1485,7 +1667,8 @@
       "nuts3Codigo": "1D1",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1102",
@@ -1495,7 +1678,8 @@
       "nuts3Codigo": "1D1",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1103",
@@ -1504,8 +1688,9 @@
       "nuts3": "Lezíria do Tejo",
       "nuts3Codigo": "1D3",
       "nuts2": "Oeste e Vale do Tejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1104",
@@ -1514,8 +1699,9 @@
       "nuts3": "Oeste",
       "nuts3Codigo": "1D1",
       "nuts2": "Oeste e Vale do Tejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1105",
@@ -1525,7 +1711,8 @@
       "nuts3Codigo": "1A0",
       "nuts2": "Grande Lisboa",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1106",
@@ -1535,7 +1722,8 @@
       "nuts3Codigo": "1A0",
       "nuts2": "Grande Lisboa",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1107",
@@ -1545,7 +1733,8 @@
       "nuts3Codigo": "1A0",
       "nuts2": "Grande Lisboa",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1108",
@@ -1555,7 +1744,8 @@
       "nuts3Codigo": "1D1",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1109",
@@ -1565,7 +1755,8 @@
       "nuts3Codigo": "1A0",
       "nuts2": "Grande Lisboa",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1110",
@@ -1575,7 +1766,8 @@
       "nuts3Codigo": "1A0",
       "nuts2": "Grande Lisboa",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1111",
@@ -1585,7 +1777,8 @@
       "nuts3Codigo": "1A0",
       "nuts2": "Grande Lisboa",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1112",
@@ -1595,7 +1788,8 @@
       "nuts3Codigo": "1D1",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1113",
@@ -1605,7 +1799,8 @@
       "nuts3Codigo": "1D1",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1114",
@@ -1615,7 +1810,8 @@
       "nuts3Codigo": "1A0",
       "nuts2": "Grande Lisboa",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1115",
@@ -1625,7 +1821,8 @@
       "nuts3Codigo": "1A0",
       "nuts2": "Grande Lisboa",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1116",
@@ -1635,7 +1832,8 @@
       "nuts3Codigo": "1A0",
       "nuts2": "Grande Lisboa",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1201",
@@ -1645,7 +1843,8 @@
       "nuts3Codigo": "1C3",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1202",
@@ -1655,7 +1854,8 @@
       "nuts3Codigo": "1C3",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1203",
@@ -1665,7 +1865,8 @@
       "nuts3Codigo": "1C3",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1204",
@@ -1675,7 +1876,8 @@
       "nuts3Codigo": "1C3",
       "nuts2": "Alentejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1205",
@@ -1685,7 +1887,8 @@
       "nuts3Codigo": "1C3",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1206",
@@ -1695,7 +1898,8 @@
       "nuts3Codigo": "1C3",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1207",
@@ -1705,7 +1909,8 @@
       "nuts3Codigo": "1C3",
       "nuts2": "Alentejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1208",
@@ -1715,7 +1920,8 @@
       "nuts3Codigo": "1C3",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1209",
@@ -1725,7 +1931,8 @@
       "nuts3Codigo": "1C3",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1210",
@@ -1735,7 +1942,8 @@
       "nuts3Codigo": "1C3",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1211",
@@ -1744,8 +1952,9 @@
       "nuts3": "Alto Alentejo",
       "nuts3Codigo": "1C3",
       "nuts2": "Alentejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1212",
@@ -1755,7 +1964,8 @@
       "nuts3Codigo": "1C3",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1213",
@@ -1765,7 +1975,8 @@
       "nuts3Codigo": "1C3",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1214",
@@ -1775,7 +1986,8 @@
       "nuts3Codigo": "1C3",
       "nuts2": "Alentejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1215",
@@ -1785,7 +1997,8 @@
       "nuts3Codigo": "1C3",
       "nuts2": "Alentejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1301",
@@ -1794,8 +2007,13 @@
       "nuts3": "Tâmega e Sousa",
       "nuts3Codigo": "11C",
       "nuts2": "Norte",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado",
+      "mapaBuckets": [
+        "a",
+        "c"
+      ]
     },
     {
       "dicofre": "1302",
@@ -1805,7 +2023,8 @@
       "nuts3Codigo": "11C",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1303",
@@ -1815,7 +2034,8 @@
       "nuts3Codigo": "11C",
       "nuts2": "Norte",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1304",
@@ -1824,8 +2044,9 @@
       "nuts3": "Área Metropolitana do Porto",
       "nuts3Codigo": "11A",
       "nuts2": "Norte",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1305",
@@ -1834,8 +2055,9 @@
       "nuts3": "Tâmega e Sousa",
       "nuts3Codigo": "11C",
       "nuts2": "Norte",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1306",
@@ -1845,7 +2067,8 @@
       "nuts3Codigo": "11A",
       "nuts2": "Norte",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1307",
@@ -1854,8 +2077,9 @@
       "nuts3": "Tâmega e Sousa",
       "nuts3Codigo": "11C",
       "nuts2": "Norte",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1308",
@@ -1865,7 +2089,8 @@
       "nuts3Codigo": "11A",
       "nuts2": "Norte",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1309",
@@ -1875,7 +2100,8 @@
       "nuts3Codigo": "11C",
       "nuts2": "Norte",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1310",
@@ -1884,8 +2110,9 @@
       "nuts3": "Área Metropolitana do Porto",
       "nuts3Codigo": "11A",
       "nuts2": "Norte",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1311",
@@ -1894,8 +2121,9 @@
       "nuts3": "Tâmega e Sousa",
       "nuts3Codigo": "11C",
       "nuts2": "Norte",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1312",
@@ -1905,7 +2133,8 @@
       "nuts3Codigo": "11A",
       "nuts2": "Norte",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1313",
@@ -1915,7 +2144,8 @@
       "nuts3Codigo": "11A",
       "nuts2": "Norte",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1314",
@@ -1925,7 +2155,8 @@
       "nuts3Codigo": "11A",
       "nuts2": "Norte",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1315",
@@ -1935,7 +2166,8 @@
       "nuts3Codigo": "11A",
       "nuts2": "Norte",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1316",
@@ -1945,7 +2177,8 @@
       "nuts3Codigo": "11A",
       "nuts2": "Norte",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1317",
@@ -1955,7 +2188,8 @@
       "nuts3Codigo": "11A",
       "nuts2": "Norte",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1318",
@@ -1965,7 +2199,8 @@
       "nuts3Codigo": "11A",
       "nuts2": "Norte",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1401",
@@ -1974,8 +2209,9 @@
       "nuts3": "Médio Tejo",
       "nuts3Codigo": "1D2",
       "nuts2": "Oeste e Vale do Tejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1402",
@@ -1984,8 +2220,9 @@
       "nuts3": "Médio Tejo",
       "nuts3Codigo": "1D2",
       "nuts2": "Oeste e Vale do Tejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1403",
@@ -1995,7 +2232,8 @@
       "nuts3Codigo": "1D3",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1404",
@@ -2005,7 +2243,8 @@
       "nuts3Codigo": "1D3",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1405",
@@ -2015,7 +2254,8 @@
       "nuts3Codigo": "1D3",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1406",
@@ -2025,7 +2265,8 @@
       "nuts3Codigo": "1D3",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1407",
@@ -2035,7 +2276,8 @@
       "nuts3Codigo": "1D3",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1408",
@@ -2045,7 +2287,8 @@
       "nuts3Codigo": "1D2",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1409",
@@ -2055,7 +2298,8 @@
       "nuts3Codigo": "1D3",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1410",
@@ -2065,7 +2309,8 @@
       "nuts3Codigo": "1D2",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1411",
@@ -2074,8 +2319,9 @@
       "nuts3": "Médio Tejo",
       "nuts3Codigo": "1D2",
       "nuts2": "Oeste e Vale do Tejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1412",
@@ -2085,7 +2331,8 @@
       "nuts3Codigo": "1D3",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1413",
@@ -2095,7 +2342,8 @@
       "nuts3Codigo": "1D2",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1414",
@@ -2104,8 +2352,9 @@
       "nuts3": "Lezíria do Tejo",
       "nuts3Codigo": "1D3",
       "nuts2": "Oeste e Vale do Tejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1415",
@@ -2115,7 +2364,8 @@
       "nuts3Codigo": "1D3",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": "rng-alentejo-algarve",
-      "fonteCobertura": "https://alentejoealgarve.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-alentejo-algarve",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1416",
@@ -2124,8 +2374,9 @@
       "nuts3": "Lezíria do Tejo",
       "nuts3Codigo": "1D3",
       "nuts2": "Oeste e Vale do Tejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1417",
@@ -2135,7 +2386,8 @@
       "nuts3Codigo": "1D2",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1418",
@@ -2144,8 +2396,9 @@
       "nuts3": "Médio Tejo",
       "nuts3Codigo": "1D2",
       "nuts2": "Oeste e Vale do Tejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1419",
@@ -2155,7 +2408,8 @@
       "nuts3Codigo": "1D2",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1420",
@@ -2165,7 +2419,8 @@
       "nuts3Codigo": "1D2",
       "nuts2": "Oeste e Vale do Tejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1421",
@@ -2174,8 +2429,9 @@
       "nuts3": "Médio Tejo",
       "nuts3Codigo": "1D2",
       "nuts2": "Oeste e Vale do Tejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1501",
@@ -2184,8 +2440,9 @@
       "nuts3": "Alentejo Litoral",
       "nuts3Codigo": "1C1",
       "nuts2": "Alentejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1502",
@@ -2195,7 +2452,8 @@
       "nuts3Codigo": "1B0",
       "nuts2": "Península de Setúbal",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1503",
@@ -2205,7 +2463,8 @@
       "nuts3Codigo": "1B0",
       "nuts2": "Península de Setúbal",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1504",
@@ -2215,7 +2474,8 @@
       "nuts3Codigo": "1B0",
       "nuts2": "Península de Setúbal",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1505",
@@ -2224,8 +2484,9 @@
       "nuts3": "Alentejo Litoral",
       "nuts3Codigo": "1C1",
       "nuts2": "Alentejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1506",
@@ -2235,7 +2496,8 @@
       "nuts3Codigo": "1B0",
       "nuts2": "Península de Setúbal",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1507",
@@ -2245,7 +2507,8 @@
       "nuts3Codigo": "1B0",
       "nuts2": "Península de Setúbal",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1508",
@@ -2255,7 +2518,8 @@
       "nuts3Codigo": "1B0",
       "nuts2": "Península de Setúbal",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1509",
@@ -2264,8 +2528,9 @@
       "nuts3": "Alentejo Litoral",
       "nuts3Codigo": "1C1",
       "nuts2": "Alentejo",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1510",
@@ -2275,7 +2540,8 @@
       "nuts3Codigo": "1B0",
       "nuts2": "Península de Setúbal",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1511",
@@ -2285,7 +2551,8 @@
       "nuts3Codigo": "1B0",
       "nuts2": "Península de Setúbal",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1512",
@@ -2295,7 +2562,8 @@
       "nuts3Codigo": "1B0",
       "nuts2": "Península de Setúbal",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1513",
@@ -2305,7 +2573,8 @@
       "nuts3Codigo": "1C1",
       "nuts2": "Alentejo",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1601",
@@ -2315,7 +2584,8 @@
       "nuts3Codigo": "111",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1602",
@@ -2324,8 +2594,9 @@
       "nuts3": "Alto Minho",
       "nuts3Codigo": "111",
       "nuts2": "Norte",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1603",
@@ -2335,7 +2606,8 @@
       "nuts3Codigo": "111",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1604",
@@ -2345,7 +2617,8 @@
       "nuts3Codigo": "111",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1605",
@@ -2355,7 +2628,8 @@
       "nuts3Codigo": "111",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1606",
@@ -2365,7 +2639,8 @@
       "nuts3Codigo": "111",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1607",
@@ -2374,8 +2649,9 @@
       "nuts3": "Alto Minho",
       "nuts3Codigo": "111",
       "nuts2": "Norte",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1608",
@@ -2384,8 +2660,9 @@
       "nuts3": "Alto Minho",
       "nuts3Codigo": "111",
       "nuts2": "Norte",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1609",
@@ -2394,8 +2671,9 @@
       "nuts3": "Alto Minho",
       "nuts3Codigo": "111",
       "nuts2": "Norte",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1610",
@@ -2405,7 +2683,8 @@
       "nuts3Codigo": "111",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1701",
@@ -2415,7 +2694,12 @@
       "nuts3Codigo": "11D",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado",
+      "mapaBuckets": [
+        "a",
+        "c"
+      ]
     },
     {
       "dicofre": "1702",
@@ -2425,7 +2709,8 @@
       "nuts3Codigo": "11B",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1703",
@@ -2434,8 +2719,9 @@
       "nuts3": "Alto Tâmega e Barroso",
       "nuts3Codigo": "11B",
       "nuts2": "Norte",
-      "cobertura": "demo-seed",
-      "fonteCobertura": "demo-seed-vagacerta"
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1704",
@@ -2445,7 +2731,8 @@
       "nuts3Codigo": "11D",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1705",
@@ -2455,7 +2742,12 @@
       "nuts3Codigo": "119",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado",
+      "mapaBuckets": [
+        "a",
+        "b"
+      ]
     },
     {
       "dicofre": "1706",
@@ -2465,7 +2757,8 @@
       "nuts3Codigo": "11B",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1707",
@@ -2475,7 +2768,8 @@
       "nuts3Codigo": "11D",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1708",
@@ -2484,8 +2778,9 @@
       "nuts3": "Douro",
       "nuts3Codigo": "11D",
       "nuts2": "Norte",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1709",
@@ -2495,7 +2790,8 @@
       "nuts3Codigo": "11B",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1710",
@@ -2505,7 +2801,12 @@
       "nuts3Codigo": "11D",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado",
+      "mapaBuckets": [
+        "a",
+        "c"
+      ]
     },
     {
       "dicofre": "1711",
@@ -2515,7 +2816,8 @@
       "nuts3Codigo": "11D",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1712",
@@ -2525,7 +2827,13 @@
       "nuts3Codigo": "11B",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado",
+      "mapaBuckets": [
+        "a",
+        "b",
+        "c"
+      ]
     },
     {
       "dicofre": "1713",
@@ -2534,8 +2842,13 @@
       "nuts3": "Alto Tâmega e Barroso",
       "nuts3Codigo": "11B",
       "nuts2": "Norte",
-      "cobertura": "demo-seed",
-      "fonteCobertura": "demo-seed-vagacerta"
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado",
+      "mapaBuckets": [
+        "a",
+        "b"
+      ]
     },
     {
       "dicofre": "1714",
@@ -2544,8 +2857,9 @@
       "nuts3": "Douro",
       "nuts3Codigo": "11D",
       "nuts2": "Norte",
-      "cobertura": "demo-seed",
-      "fonteCobertura": "demo-seed-vagacerta"
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1801",
@@ -2555,7 +2869,8 @@
       "nuts3Codigo": "11D",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1802",
@@ -2565,7 +2880,8 @@
       "nuts3Codigo": "194",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1803",
@@ -2575,7 +2891,8 @@
       "nuts3Codigo": "194",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1804",
@@ -2585,7 +2902,8 @@
       "nuts3Codigo": "11C",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1805",
@@ -2594,8 +2912,9 @@
       "nuts3": "Douro",
       "nuts3Codigo": "11D",
       "nuts2": "Norte",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1806",
@@ -2604,8 +2923,9 @@
       "nuts3": "Viseu Dão Lafões",
       "nuts3Codigo": "194",
       "nuts2": "Centro",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1807",
@@ -2615,7 +2935,8 @@
       "nuts3Codigo": "11D",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1808",
@@ -2625,7 +2946,8 @@
       "nuts3Codigo": "192",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1809",
@@ -2635,7 +2957,8 @@
       "nuts3Codigo": "194",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1810",
@@ -2644,8 +2967,9 @@
       "nuts3": "Viseu Dão Lafões",
       "nuts3Codigo": "194",
       "nuts2": "Centro",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1811",
@@ -2655,7 +2979,8 @@
       "nuts3Codigo": "194",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1812",
@@ -2665,7 +2990,8 @@
       "nuts3Codigo": "11D",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1813",
@@ -2675,7 +3001,8 @@
       "nuts3Codigo": "11C",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1814",
@@ -2685,7 +3012,8 @@
       "nuts3Codigo": "194",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1815",
@@ -2695,7 +3023,8 @@
       "nuts3Codigo": "11D",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1816",
@@ -2705,7 +3034,8 @@
       "nuts3Codigo": "194",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1817",
@@ -2715,7 +3045,8 @@
       "nuts3Codigo": "194",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1818",
@@ -2725,7 +3056,8 @@
       "nuts3Codigo": "11D",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1819",
@@ -2735,7 +3067,8 @@
       "nuts3Codigo": "11D",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1820",
@@ -2745,7 +3078,8 @@
       "nuts3Codigo": "11D",
       "nuts2": "Norte",
       "cobertura": "rng-norte",
-      "fonteCobertura": "https://norte.dstelecom.pt/rede/ambito/"
+      "fonteCobertura": "rng-norte",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1821",
@@ -2754,8 +3088,9 @@
       "nuts3": "Viseu Dão Lafões",
       "nuts3Codigo": "194",
       "nuts2": "Centro",
-      "cobertura": null,
-      "fonteCobertura": null
+      "cobertura": "mapa-rede",
+      "fonteCobertura": "mapa-rede-api",
+      "estadoCobertura": "confirmado"
     },
     {
       "dicofre": "1822",
@@ -2765,7 +3100,8 @@
       "nuts3Codigo": "194",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     },
     {
       "dicofre": "1823",
@@ -2775,7 +3111,8 @@
       "nuts3Codigo": "194",
       "nuts2": "Centro",
       "cobertura": "demo-seed",
-      "fonteCobertura": "demo-seed-vagacerta"
+      "fonteCobertura": "demo-seed-vagacerta",
+      "estadoCobertura": "demo"
     },
     {
       "dicofre": "1824",
@@ -2785,7 +3122,8 @@
       "nuts3Codigo": "194",
       "nuts2": "Centro",
       "cobertura": null,
-      "fonteCobertura": null
+      "fonteCobertura": null,
+      "estadoCobertura": null
     }
   ]
 }

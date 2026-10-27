@@ -3,6 +3,7 @@ import "server-only";
 import { indicadoresDoDia } from "@/lib/gemeo/indicadores";
 import { zonaDaArea } from "@/lib/ofsc/zonas";
 import { AREAS } from "@/lib/rules/areas";
+import { distritoDoMunicipio } from "@/lib/zonas/catalogo";
 import { recalcularDia } from "@/lib/rules/dia";
 import {
   agendarExistente,
@@ -107,6 +108,7 @@ export interface EquipaVista {
   codigo: string;
   nome: string;
   base: string;
+  distrito: string | null;
   cco: string;
   ativa: boolean;
   areas: string[];
@@ -743,11 +745,13 @@ export function listarEquipas(ator: Ator): Omit<EquipaVista, "membros" | "ocupac
       const zona = zonaLinha
         ? { id: String(zonaLinha.id), codigo: String(zonaLinha.codigo), nome: String(zonaLinha.nome) }
         : null;
+      const base = String(linha.base);
       return {
         id: String(linha.id),
         codigo: String(linha.codigo),
         nome: String(linha.nome),
-        base: String(linha.base),
+        base,
+        distrito: distritoDoMunicipio(base) ?? null,
         cco: String(linha.cco),
         ativa: Number(linha.ativa) === 1,
         areas: JSON.parse(String(linha.areas)) as string[],
