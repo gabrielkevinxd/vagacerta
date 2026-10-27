@@ -90,7 +90,15 @@ function gruposDe(ator: Ator, traduzir: (chave: Chave) => string) {
   }
 
   const grupos = [{ id: "operacao", rotulo: traduzir("nav.grupoOperacao"), itens: operacao }];
-  if (central.length) grupos.push({ id: "central", rotulo: traduzir("nav.grupoCentral"), itens: central });
+  if (central.length) {
+    // Despachante: Integração/Assistente sem o rótulo «Central» (só a central vê esse grupo).
+    const soCentral = eCentral(ator);
+    grupos.push({
+      id: soCentral ? "central" : "ferramentas",
+      rotulo: traduzir(soCentral ? "nav.grupoCentral" : "nav.grupoFerramentas"),
+      itens: central,
+    });
+  }
   return grupos;
 }
 

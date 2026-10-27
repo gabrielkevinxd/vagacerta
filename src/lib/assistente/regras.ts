@@ -105,7 +105,7 @@ export function responderPorRegras(texto: string, ctx: ContextoRegras): Leitura 
 
   if (/(alerta|conflito|conflict|sobrelot|overlap|sobrepor)/.test(n)) {
     if (ctx.factos.length === 0) return esclarecer("assistente.alertasNenhum", pergunta, { data: ctx.data });
-    return esclarecer("assistente.verAlertas", pergunta, { n: ctx.factos.length, data: ctx.data });
+    return esclarecer("assistente.verAlertas" as Chave, pergunta, { n: ctx.factos.length, data: ctx.data });
   }
 
   if (/(quota|vaga|slot|capacidade|capacity)/.test(n)) {
