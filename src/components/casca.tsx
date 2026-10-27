@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { SeletorIdioma } from "@/components/idioma/seletor";
 import type { Chave } from "@/lib/i18n";
-import { eCentral, type Ator } from "@/lib/rules";
+import { eCentral, podeLerOrdem, podeVerEquipa, type Ator } from "@/lib/rules";
 import { i18nPedido } from "@/server/idioma";
 import { baseDados } from "@/server/db";
 import { exigirAtorPagina } from "@/server/sessao";
@@ -29,7 +29,7 @@ async function Sessao({ children }: { children: React.ReactNode }) {
   const { t } = await i18nPedido();
   const grupos = gruposDe(ator, t);
   const destinos = grupos.flatMap((g) => g.itens.map((i) => ({ href: i.href, rotulo: chaveDeHref(i.href), icone: i.icone })));
-  const migalhas = migalhasDe(caminho, t);
+  const migalhas = migalhasDe(caminho, t, ator);
 
   const rodape = (
     <div className="space-y-2 group-data-[collapsible=icon]:hidden">
@@ -102,14 +102,19 @@ function chaveDeHref(href: string): Chave {
   return "nav.painel";
 }
 
-function rotuloEntidade(acc: string, segmento: string): string {
+function rotuloEntidade(acc: string, segmento: string, ator: Ator, traduzir: (chave: Chave) => string): string {
   if (acc.startsWith("/ordens/") && segmento !== "nova") {
-    const linha = baseDados().prepare("SELECT referencia FROM ordens WHERE id = ?").get(segmento) as
-      | { referencia: string }
-      | undefined;
-    if (linha?.referencia) return linha.referencia;
+    const linha = baseDados()
+      .prepare("SELECT referencia, operador_id, equipa_id FROM ordens WHERE id = ?")
+      .get(segmento) as { referencia: string; operador_id: string; equipa_id: string | null } | undefined;
+    if (!linha) return traduzir("reencaixe.ordem");
+    if (!podeLerOrdem(ator, { operadorId: linha.operador_id, equipaId: linha.equipa_id })) {
+      return traduzir("reencaixe.ordem");
+    }
+    return linha.referencia;
   }
   if (acc.startsWith("/equipas/")) {
+    if (!podeVerEquipa(ator, segmento)) return traduzir("nav.equipas");
     const linha = baseDados().prepare("SELECT nome FROM equipas WHERE id = ?").get(segmento) as
       | { nome: string }
       | undefined;
@@ -118,7 +123,7 @@ function rotuloEntidade(acc: string, segmento: string): string {
   return segmento.toUpperCase();
 }
 
-function migalhasDe(caminho: string, traduzir: (chave: Chave) => string) {
+function migalhasDe(caminho: string, traduzir: (chave: Chave) => string, ator: Ator) {
   const partes = [{ href: "/", rotulo: traduzir("nav.painel") }];
   if (caminho === "/" || caminho === "") {
     return [{ href: "/", rotulo: traduzir("nav.painel") }];
@@ -132,7 +137,7 @@ function migalhasDe(caminho: string, traduzir: (chave: Chave) => string) {
     } else if (["ordens", "equipas", "agenda", "otimizador", "assistente", "integracao", "gemeo", "definicoes"].includes(segmento)) {
       partes.push({ href: acc, rotulo: traduzir(chaveDeHref(acc)) });
     } else {
-      partes.push({ href: acc, rotulo: rotuloEntidade(acc, segmento) });
+      partes.push({ href: acc, rotulo: rotuloEntidade(acc, segmento, ator, traduzir) });
     }
   }
   return partes;

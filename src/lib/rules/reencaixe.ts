@@ -1,7 +1,18 @@
 import { parseHHMM } from "./tempo";
-import { diaAceita, equipaCobre, ordensDoDia, recalcularDia, validarCatalogo } from "./dia";
+import { cancelarOrdem, diaAceita, equipaCobre, ordensDoDia, recalcularDia, validarCatalogo } from "./dia";
+import { estadoCancelavel } from "./permissoes";
 import { diaSemanaIso } from "./tempo";
-import { falha, ocupaCapacidade, type Equipa, type Mundo, type OperadorId, type Ordem, type Resultado, type Trabalho } from "./tipos";
+import {
+  falha,
+  ocupaCapacidade,
+  type Equipa,
+  type Mundo,
+  type OperadorId,
+  type Ordem,
+  type QuemPediu,
+  type Resultado,
+  type Trabalho,
+} from "./tipos";
 
 /**
  * Heurística por cima do resolvedor de sequências. Cada movimento é uma
@@ -67,6 +78,7 @@ export interface PedidoRealocacao {
   /** Quando presente, a fila e as trocas só mexem em ordens deste operador. */
   apenasDoOperador?: OperadorId;
   motivo?: string;
+  quemPediu?: QuemPediu;
   data?: string;
 }
 
@@ -415,13 +427,18 @@ export function reencaixar(mundo: Mundo, pedido: PedidoRealocacao): PlanoReencai
 
   if (pedido.cancelarId) {
     const ordem = mundo.ordens.find((linha) => linha.id === pedido.cancelarId);
-    if (!ordem || !ocupaCapacidade(ordem.estado)) {
+    if (!ordem || !estadoCancelavel(ordem.estado)) {
       return fechar(false, mundo, mundo, [], pedido.data ?? ordem?.data ?? "", "Não encontrámos essa visita marcada.");
     }
     if (pedido.apenasDoOperador && ordem.operadorId !== pedido.apenasDoOperador) {
       return fechar(false, mundo, mundo, [], ordem.data, "Essa ordem é de outro operador.");
     }
-    const resultado = cancelarNoMundo(mundo, ordem.id, pedido.motivo ?? "Libertar capacidade para a fila de espera.");
+    const resultado = cancelarNoMundo(
+      mundo,
+      ordem.id,
+      pedido.motivo ?? "Libertar capacidade para a fila de espera.",
+      pedido.quemPediu ?? "central",
+    );
     if (!resultado.ok) return fechar(false, mundo, mundo, [], ordem.data, resultado.mensagem);
     let seguinte = resultado.mundo;
     const movimentos = [movimentoCancelar(ordem, pedido.motivo ?? `${ordem.referencia} deixa de ocupar a equipa.`)];
@@ -480,20 +497,8 @@ export function reencaixar(mundo: Mundo, pedido: PedidoRealocacao): PlanoReencai
   return fechar(false, mundo, mundo, [], pedido.data ?? "", "Nada a reorganizar.");
 }
 
-function cancelarNoMundo(mundo: Mundo, id: string, motivo: string): Resultado<Ordem> {
-  const seguinte = structuredClone(mundo);
-  const ordem = seguinte.ordens.find((linha) => linha.id === id);
-  if (!ordem) return falha("NAO_ENCONTRADO", "Não encontrámos a ordem.");
-  const equipaId = ordem.equipaId;
-  const data = ordem.data;
-  ordem.estado = "cancelada";
-  ordem.inicioPlaneado = null;
-  ordem.fimPlaneado = null;
-  ordem.inicioFixado = false;
-  ordem.motivoCancelamento = motivo;
-  ordem.quemPediu = "central";
-  const recalculado = equipaId ? recalcularDia(seguinte, equipaId, data) : seguinte;
-  return { ok: true, mundo: recalculado, resultado: recalculado.ordens.find((linha) => linha.id === id)! };
+function cancelarNoMundo(mundo: Mundo, id: string, motivo: string, quemPediu: QuemPediu = "central"): Resultado<Ordem> {
+  return cancelarOrdem(mundo, id, motivo, quemPediu);
 }
 
 export function aplicarPlano(mundo: Mundo, plano: PlanoReencaixe & { mundo?: Mundo }): Resultado<Mundo> {

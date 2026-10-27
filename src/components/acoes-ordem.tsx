@@ -48,6 +48,7 @@ export function AcoesOrdem({
   const [aviso, setAviso] = useState<string | null>(null);
   const [aTrabalhar, setATrabalhar] = useState(false);
   const [motivoCancelamento, setMotivoCancelamento] = useState("");
+  const [quemPediu, setQuemPediu] = useState<(typeof QUEM_PEDIU)[number]>(quemPediuPadrao);
 
   async function executar(trabalho: () => Promise<void>) {
     setErro(null);
@@ -82,6 +83,10 @@ export function AcoesOrdem({
         <Button disabled={aTrabalhar} onClick={() => executar(() => enviar(`/api/ordens/${ordemId}/estado`, { estado: "concluida" }).then(() => undefined))}>
           {t("ordens.marcarConcluida")}
         </Button>
+      ) : null}
+
+      {!podeEditarFicha && (estado === "concluida" || estado === "cancelada") ? (
+        <p className="text-[13px]/5 text-muted-foreground">{t("ordens.soLeitura")}</p>
       ) : null}
 
       {podeEditarFicha ? (
@@ -240,41 +245,47 @@ export function AcoesOrdem({
             <Label htmlFor="motivo-direto">{t("ordens.motivoSimples")}</Label>
             <Textarea
               id="motivo-direto"
-              required
-              minLength={3}
               value={motivoCancelamento}
               onChange={(evento) => setMotivoCancelamento(evento.target.value)}
             />
+            {motivoCancelamento.trim().length > 0 && motivoCancelamento.trim().length < 3 ? (
+              <p className="text-xs text-muted-foreground">{t("ordens.motivoMinimo")}</p>
+            ) : null}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="quem">{t("ordens.quemPediu")}</Label>
+            <select
+              id="quem"
+              name="quemPediu"
+              className={campo}
+              value={quemPediu}
+              onChange={(evento) => setQuemPediu(evento.target.value as (typeof QUEM_PEDIU)[number])}
+            >
+              {QUEM_PEDIU.map((item) => (
+                <option key={item} value={item}>
+                  {t(`quem.${item}`)}
+                </option>
+              ))}
+            </select>
           </div>
           <form
             className="space-y-3"
             onSubmit={(evento) => {
               evento.preventDefault();
-              const dados = new FormData(evento.currentTarget);
               void executar(() =>
                 enviar(`/api/ordens/${ordemId}/cancelar`, {
                   motivo: motivoCancelamento,
-                  quemPediu: String(dados.get("quemPediu") ?? quemPediuPadrao),
+                  quemPediu,
                 }).then(() => undefined),
               );
             }}
           >
-            <div className="space-y-1.5">
-              <Label htmlFor="quem">{t("ordens.quemPediu")}</Label>
-              <select id="quem" name="quemPediu" className={campo} defaultValue={quemPediuPadrao}>
-                {QUEM_PEDIU.map((item) => (
-                  <option key={item} value={item}>
-                    {t(`quem.${item}`)}
-                  </option>
-                ))}
-              </select>
-            </div>
             <Button type="submit" variant="destructive" disabled={aTrabalhar || motivoCancelamento.trim().length < 3}>
               {t("ordens.cancelarSemReencaixe")}
             </Button>
           </form>
           <PainelReencaixe
-            pedido={{ cancelarId: ordemId, motivo: motivoCancelamento }}
+            pedido={{ cancelarId: ordemId, motivo: motivoCancelamento, quemPediu }}
             rotulo={t("ordens.previsCancelar")}
           />
         </div>

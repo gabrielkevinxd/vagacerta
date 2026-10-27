@@ -27,6 +27,7 @@ async function Conteudo() {
       <ConsolaIntegracao
         operadorFixo={ator.papel === "despachante" ? ator.operadorId : null}
         esconderOutros={ator.papel === "despachante"}
+        mostrarCenarios={ator.papel !== "despachante"}
         textos={{
           corpo: t("integracao.corpo"),
           escolherOperador: t("integracao.escolherOperador"),

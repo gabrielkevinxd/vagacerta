@@ -126,6 +126,7 @@ export const ptPT = {
     vermelho: "Operador Vermelho",
     verde: "Operador Verde",
     cores: "Cores dos operadores",
+    outrosOcupado: "Outros operadores (ocupado)",
   },
   estado: {
     pendente: "Pendente",
@@ -360,6 +361,8 @@ export const ptPT = {
     previsEncaixe: "Pré-visualizar o encaixe",
     cancelarTitulo: "Cancelar",
     motivoSimples: "Motivo do cancelamento",
+    motivoMinimo: "Mínimo 3 caracteres.",
+    soLeitura: "Esta ordem está concluída ou cancelada e fica só de leitura.",
     cancelarSemReencaixe: "Cancelar sem reencaixe",
     previsCancelar: "Pré-visualizar cancelamento e reencaixe",
     janelaAjuda:
@@ -631,6 +634,11 @@ export const ptPT = {
     INVIAVEL: "O plano não cabe no dia.",
     DESATUALIZADO: "O plano ficou desatualizado. Peça uma nova pré-visualização.",
     CONFLITO: "Há um conflito neste dia.",
+    naoCancelavel: "Esta ordem já não pode ser cancelada.",
+    fichaSoLeitura: "Uma ordem concluída ou cancelada não pode ser alterada.",
+    horaOcupada: "O horário original já está ocupado.",
+    soCentralCenarios: "Só a central corre cenários de integração.",
+    soCentralSaude: "Só a central altera a saúde OFSC.",
     JA_CANCELADA: "Esta ordem já está cancelada.",
     naoRepor: "Só uma ordem cancelada pode ser reposta.",
     PASSADO: "Corrigir um período que já começou exige confirmação.",

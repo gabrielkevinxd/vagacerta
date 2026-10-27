@@ -128,6 +128,7 @@ export const en = {
     vermelho: "Red operator",
     verde: "Green operator",
     cores: "Operator colours",
+    outrosOcupado: "Other operators (busy)",
   },
   estado: {
     pendente: "Pending",
@@ -362,6 +363,8 @@ export const en = {
     previsEncaixe: "Preview the fit",
     cancelarTitulo: "Cancel",
     motivoSimples: "Cancellation reason",
+    motivoMinimo: "At least 3 characters.",
+    soLeitura: "This order is completed or cancelled and is read-only.",
     cancelarSemReencaixe: "Cancel without refit",
     previsCancelar: "Preview cancellation and refit",
     janelaAjuda:
@@ -633,6 +636,11 @@ export const en = {
     INVIAVEL: "The plan does not fit the day.",
     DESATUALIZADO: "The plan is out of date. Request a new preview.",
     CONFLITO: "There is a conflict on this day.",
+    naoCancelavel: "This order can no longer be cancelled.",
+    fichaSoLeitura: "A completed or cancelled order cannot be changed.",
+    horaOcupada: "The original time slot is already taken.",
+    soCentralCenarios: "Only the control room can run integration scenarios.",
+    soCentralSaude: "Only the control room can change OFSC health.",
     JA_CANCELADA: "This order is already cancelled.",
     naoRepor: "Only a cancelled order can be restored.",
     PASSADO: "Correcting a period that has already started requires confirmation.",

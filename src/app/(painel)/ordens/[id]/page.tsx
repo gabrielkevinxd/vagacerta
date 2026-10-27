@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { janelasDe } from "@/lib/rules/catalogo";
-import { eCentral, podeCancelar, podeMarcarOperador, podeReagendar } from "@/lib/rules";
+import { eCentral, podeCancelar, podeEditarFicha, podeMarcarOperador, podeReagendar } from "@/lib/rules";
 import { AcoesOrdem } from "@/components/acoes-ordem";
 import { Carregamento } from "@/components/carregamento";
 import { EtiquetaEstado, EtiquetaOperador } from "@/components/etiquetas";
@@ -110,7 +110,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
         podeCancelar={podeCancelar(ator, ordem)}
         podeReagendar={podeReagendar(ator, ordem)}
         podeMarcar={(ordem.estado === "pendente" || ordem.estado === "em_espera") && podeMarcarOperador(ator, ordem.operadorId)}
-        podeEditarFicha={ator.papel !== "tecnico"}
+        podeEditarFicha={podeEditarFicha(ator, ordem)}
         central={central}
         quemPediuPadrao={ator.papel === "despachante" ? "operador" : "central"}
         equipas={equipas}

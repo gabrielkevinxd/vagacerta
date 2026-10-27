@@ -295,17 +295,19 @@ export function cancelarOrdem(
   const ordem = seguinte.ordens.find((linha) => linha.id === id)!;
   const equipaId = ordem.equipaId;
   const data = ordem.data;
+  // Mantém a hora planeada para o Anular (/restaurar) a poder repô-la.
   ordem.estado = "cancelada";
-  ordem.inicioPlaneado = null;
-  ordem.fimPlaneado = null;
-  ordem.inicioFixado = false;
   ordem.motivoCancelamento = motivo.trim() || "Sem motivo indicado.";
   ordem.quemPediu = quemPediu;
   if (equipaId) seguinte = recalcularDia(seguinte, equipaId, data);
   return { ok: true, mundo: seguinte, resultado: seguinte.ordens.find((linha) => linha.id === id)! };
 }
 
-/** Reposição imediata após um cancelamento (Anular no toast). */
+function sobrepoeHora(aInicio: string, aFim: string, bInicio: string, bFim: string): boolean {
+  return parseHHMM(aInicio) < parseHHMM(bFim) && parseHHMM(bInicio) < parseHHMM(aFim);
+}
+
+/** Reposição imediata após um cancelamento (Anular no toast). Mantém a hora original. */
 export function restaurarCancelamento(mundo: Mundo, id: string): Resultado<Ordem> {
   const existente = mundo.ordens.find((ordem) => ordem.id === id);
   if (!existente) return falha("NAO_ENCONTRADO", "Não encontrámos a ordem.");
@@ -314,17 +316,48 @@ export function restaurarCancelamento(mundo: Mundo, id: string): Resultado<Ordem
   }
   let seguinte = structuredClone(mundo);
   const ordem = seguinte.ordens.find((linha) => linha.id === id)!;
+  const inicioGuardado = ordem.inicioPlaneado;
+  const fimGuardado = ordem.fimPlaneado;
+  const tinhaHora = Boolean(inicioGuardado && fimGuardado);
   ordem.motivoCancelamento = null;
   ordem.quemPediu = null;
+  if (!ordem.equipaId) {
+    ordem.estado = "em_espera";
+    ordem.inicioPlaneado = null;
+    ordem.fimPlaneado = null;
+    ordem.inicioFixado = false;
+    return { ok: true, mundo: seguinte, resultado: seguinte.ordens.find((linha) => linha.id === id)! };
+  }
+  if (tinhaHora) {
+    const ocupadas = seguinte.ordens.filter(
+      (linha) =>
+        linha.id !== id &&
+        linha.equipaId === ordem.equipaId &&
+        linha.data === ordem.data &&
+        ocupaCapacidade(linha.estado) &&
+        linha.inicioPlaneado &&
+        linha.fimPlaneado &&
+        sobrepoeHora(inicioGuardado!, fimGuardado!, linha.inicioPlaneado, linha.fimPlaneado),
+    );
+    if (ocupadas.length > 0) {
+      return falha("CONFLITO", "O horário original já está ocupado.");
+    }
+    ordem.estado = "agendada";
+    ordem.inicioPlaneado = inicioGuardado;
+    ordem.fimPlaneado = fimGuardado;
+    ordem.inicioFixado = true;
+    seguinte = recalcularDia(seguinte, ordem.equipaId, ordem.data);
+    const restaurada = seguinte.ordens.find((linha) => linha.id === id)!;
+    if (restaurada.inicioPlaneado !== inicioGuardado) {
+      return falha("CONFLITO", "O horário original já está ocupado.");
+    }
+    return { ok: true, mundo: seguinte, resultado: restaurada };
+  }
+  ordem.estado = "agendada";
   ordem.inicioFixado = false;
   ordem.inicioPlaneado = null;
   ordem.fimPlaneado = null;
-  if (ordem.equipaId) {
-    ordem.estado = "agendada";
-    seguinte = recalcularDia(seguinte, ordem.equipaId, ordem.data);
-  } else {
-    ordem.estado = "em_espera";
-  }
+  seguinte = recalcularDia(seguinte, ordem.equipaId, ordem.data);
   return { ok: true, mundo: seguinte, resultado: seguinte.ordens.find((linha) => linha.id === id)! };
 }
 

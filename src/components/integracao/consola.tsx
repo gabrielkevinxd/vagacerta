@@ -90,6 +90,7 @@ export function ConsolaIntegracao({
   textos,
   operadorFixo = null,
   esconderOutros = false,
+  mostrarCenarios = true,
 }: {
   textos: {
     corpo: string;
@@ -126,6 +127,7 @@ export function ConsolaIntegracao({
   };
   operadorFixo?: OperadorId | null;
   esconderOutros?: boolean;
+  mostrarCenarios?: boolean;
 }) {
   const [operador, setOperador] = useState<OperadorId>(operadorFixo ?? "azul");
   const [texto, setTexto] = useState(textos.exemplo);
@@ -435,16 +437,18 @@ export function ConsolaIntegracao({
       </form>
       {erro ? <p className="text-[13px]/5 text-destructive">{erro}</p> : null}
 
-      <section className="space-y-2">
-        <h2 className="text-base font-semibold tracking-tight">{textos.cenarios}</h2>
-        <div className="flex flex-wrap gap-2">
-          {CENARIOS.map((id) => (
-            <Button key={id} type="button" variant="outline" size="sm" onClick={() => void cenario(id)}>
-              {textos.cenariosRotulo[id]}
-            </Button>
-          ))}
-        </div>
-      </section>
+      {mostrarCenarios ? (
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold tracking-tight">{textos.cenarios}</h2>
+          <div className="flex flex-wrap gap-2">
+            {CENARIOS.map((id) => (
+              <Button key={id} type="button" variant="outline" size="sm" onClick={() => void cenario(id)}>
+                {textos.cenariosRotulo[id]}
+              </Button>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="space-y-2">
         <div className="flex flex-wrap items-baseline justify-between gap-2">

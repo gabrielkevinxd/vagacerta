@@ -355,6 +355,12 @@ export function atualizarOrdem(
   const ordem = antes.ordens.find((linha) => linha.id === id);
   exigir(Boolean(ordem) && podeLerOrdem(ator, ordem!), 404, "NAO_ENCONTRADO", "Não encontrámos esta ordem.");
   exigir(ator.papel !== "tecnico", 403, "SEM_PERMISSAO", "O técnico não altera a ficha do cliente.");
+  exigir(
+    ordem!.estado !== "concluida" && ordem!.estado !== "cancelada",
+    409,
+    "CONFLITO",
+    "Uma ordem concluída ou cancelada não pode ser alterada.",
+  );
   const depois = structuredClone(antes);
   const alvo = depois.ordens.find((linha) => linha.id === id)!;
   if (campos.clienteNome) alvo.clienteNome = campos.clienteNome.trim();
@@ -373,8 +379,11 @@ export function restaurarCancelamento(ator: Ator, id: string): OrdemVista {
   exigir(Boolean(ordem), 404, "NAO_ENCONTRADO", "Não encontrámos esta ordem.");
   exigir(podeLerOrdem(ator, ordem!), 403, "SEM_PERMISSAO", "Sem acesso a esta ordem.");
   const resultado = restaurarCancelamentoNoMundo(antes, id);
-  if (!resultado.ok) throw new ErroHttp(400, resultado.codigo, resultado.mensagem);
-  gravarDiferença(ator, antes, resultado.mundo, `${ordem!.referencia} reposta.`);
+  if (!resultado.ok) {
+    const status = resultado.codigo === "CONFLITO" ? 409 : 400;
+    throw new ErroHttp(status, resultado.codigo, resultado.mensagem);
+  }
+  gravarDiferença(ator, antes, resultado.mundo, `${ordem!.referencia} reposta por ${ator.nome}.`);
   return verOrdem(resultado.resultado);
 }
 
@@ -394,6 +403,9 @@ export function mudarEstado(ator: Ator, id: string, estado: EstadoOrdem, motivo?
     }
     gravarDiferença(ator, antes, resultado.mundo, `${ordem!.referencia} cancelada.`);
     return verOrdem(resultado.resultado);
+  }
+  if (ordem!.estado === "concluida" || ordem!.estado === "cancelada") {
+    throw new ErroHttp(409, "CONFLITO", "Uma ordem concluída ou cancelada não pode ser alterada.");
   }
   exigir(podeMudarEstado(ator, ordem!, estado), 403, "SEM_PERMISSAO", "Não pode mudar esta ordem para esse estado.");
   if (estado === "agendada") {
@@ -533,6 +545,7 @@ export function painel(ator: Ator, data: string) {
   const ordens = mundo.ordens.filter((ordem) => ordem.data === data && podeLerOrdem(ator, ordem));
   const contar = (estado: EstadoOrdem) => ordens.filter((ordem) => ordem.estado === estado).length;
   const central = ator.papel === "administrador" || ator.papel === "supervisor";
+  const despachoId = ator.papel === "despachante" ? ator.operadorId : null;
   return {
     data,
     contagens: {
@@ -543,14 +556,32 @@ export function painel(ator: Ator, data: string) {
       pendente: mundo.ordens.filter((ordem) => ordem.estado === "pendente" && podeLerOrdem(ator, ordem)).length,
     },
     margemDeslocacaoMin: mundo.margemDeslocacaoMin,
-    equipas: utilizacao.map((linha) => ({
-      equipaId: linha.equipaId,
-      nome: linha.nome,
-      ocupadoMin: linha.ocupadoMin,
-      turnoMin: linha.turnoMin,
-      percentagem: linha.percentagem,
-      porOperador: central ? linha.porOperador : undefined,
-    })),
+    equipas: utilizacao.map((linha) => {
+      if (despachoId) {
+        const proprios = linha.porOperador.find((p) => p.operadorId === despachoId)?.minutos ?? 0;
+        const minutosOutros = linha.porOperador
+          .filter((p) => p.operadorId !== despachoId)
+          .reduce((soma, p) => soma + p.minutos, 0);
+        return {
+          equipaId: linha.equipaId,
+          nome: linha.nome,
+          ocupadoMin: linha.ocupadoMin,
+          turnoMin: linha.turnoMin,
+          percentagem: linha.percentagem,
+          porOperador: proprios > 0 ? [{ operadorId: despachoId, minutos: proprios }] : [],
+          minutosOutros,
+        };
+      }
+      return {
+        equipaId: linha.equipaId,
+        nome: linha.nome,
+        ocupadoMin: linha.ocupadoMin,
+        turnoMin: linha.turnoMin,
+        percentagem: linha.percentagem,
+        porOperador: central ? linha.porOperador : undefined,
+        minutosOutros: 0,
+      };
+    }),
     visitas: ordens
       .filter((ordem) => ordem.estado === "agendada" || ordem.estado === "em_curso" || ordem.estado === "concluida")
       .map((ordem) => verOrdem(ordem))

@@ -74,6 +74,7 @@ export function chamarOfsc(
       pedido: corpo,
       resposta: { codigo: "OFSC_EM_BAIXO" },
       codigo: 503,
+      operadorId: destino,
     });
     return { ok: false, codigo: 503, corpo: { codigo: "OFSC_EM_BAIXO" }, emFila: true };
   }
@@ -84,6 +85,7 @@ export function chamarOfsc(
     pedido: corpo,
     resposta: resultado.corpo,
     codigo: resultado.codigo,
+    operadorId: destino,
   });
   return { ok: resultado.codigo < 400, codigo: resultado.codigo, corpo: resultado.corpo };
 }
@@ -106,6 +108,7 @@ export function reconciliarOfsc(): { reprocessados: number; falhas: number } {
         pedido: JSON.parse(item.corpo),
         resposta: resultado.corpo,
         codigo: resultado.codigo,
+        operadorId: item.operador_id,
       });
     } else {
       incrementarRetry(item.id, JSON.stringify(resultado.corpo));

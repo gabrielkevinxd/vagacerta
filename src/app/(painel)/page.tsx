@@ -115,7 +115,13 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
       <Seccao
         titulo={t("painel.ocupacao")}
         descricao={t("painel.ocupacaoIntro")}
-        accoes={<LegendaOperadores compacta apenas={ator.papel === "despachante" ? ator.operadorId : null} />}
+        accoes={
+          <LegendaOperadores
+            compacta
+            apenas={ator.papel === "despachante" ? ator.operadorId : null}
+            comOutros={ator.papel === "despachante"}
+          />
+        }
       >
         {vista.equipas.length === 0 ? (
           <EstadoVazio titulo={t("painel.semEquipasTitulo")} detalhe={t("painel.semEquipasDetalhe")} />
@@ -130,7 +136,9 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
                 </tr>
               </thead>
               <tbody>
-                {vista.equipas.map((equipa) => (
+                {vista.equipas.map((equipa) => {
+                  const temPartes = Boolean(equipa.porOperador?.length) || (equipa.minutosOutros ?? 0) > 0;
+                  return (
                   <tr key={equipa.equipaId} className="h-9 border-b border-border last:border-0 hover:bg-muted">
                     <td className="px-3">
                       <Link href={`/equipas/${equipa.equipaId}?data=${data}`} className="font-medium hover:text-primary">
@@ -140,17 +148,27 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
                     <td className="px-3">
                       <div className="flex items-center gap-2">
                         <div className="flex h-1.5 min-w-[8rem] flex-1 overflow-hidden rounded-sm bg-muted">
-                          {equipa.porOperador && equipa.porOperador.length > 0 ? (
-                            equipa.porOperador.map((parte) => (
-                              <div
-                                key={parte.operadorId}
-                                className="h-full"
-                                style={{
-                                  width: `${equipa.turnoMin ? Math.min((parte.minutos / equipa.turnoMin) * 100, 100) : 0}%`,
-                                  backgroundColor: COR_OPERADOR[parte.operadorId],
-                                }}
-                              />
-                            ))
+                          {temPartes ? (
+                            <>
+                              {(equipa.porOperador ?? []).map((parte) => (
+                                <div
+                                  key={parte.operadorId}
+                                  className="h-full"
+                                  style={{
+                                    width: `${equipa.turnoMin ? Math.min((parte.minutos / equipa.turnoMin) * 100, 100) : 0}%`,
+                                    backgroundColor: COR_OPERADOR[parte.operadorId],
+                                  }}
+                                />
+                              ))}
+                              {(equipa.minutosOutros ?? 0) > 0 ? (
+                                <div
+                                  className="h-full bg-muted-foreground/40"
+                                  style={{
+                                    width: `${equipa.turnoMin ? Math.min((equipa.minutosOutros / equipa.turnoMin) * 100, 100) : 0}%`,
+                                  }}
+                                />
+                              ) : null}
+                            </>
                           ) : (
                             <div
                               className="h-full bg-foreground/60"
@@ -162,20 +180,27 @@ async function Painel({ searchParams }: { searchParams: Promise<Record<string, s
                           {equipa.ocupadoMin}/{equipa.turnoMin} {t("comum.minutos")}
                         </span>
                       </div>
-                      {equipa.porOperador && equipa.porOperador.length > 0 ? (
+                      {temPartes ? (
                         <ul className="mt-1 flex flex-wrap gap-2 text-[11px]/4 text-muted-foreground">
-                          {equipa.porOperador.map((parte) => (
+                          {(equipa.porOperador ?? []).map((parte) => (
                             <li key={parte.operadorId} className="inline-flex items-center gap-1">
                               <span className="size-1.5 rounded-full" style={{ backgroundColor: COR_OPERADOR[parte.operadorId] }} />
                               {t(`operador.${parte.operadorId}`)} {parte.minutos}
                             </li>
                           ))}
+                          {(equipa.minutosOutros ?? 0) > 0 ? (
+                            <li className="inline-flex items-center gap-1">
+                              <span className="size-1.5 rounded-full bg-muted-foreground/40" />
+                              {t("operador.outrosOcupado")} {equipa.minutosOutros}
+                            </li>
+                          ) : null}
                         </ul>
                       ) : null}
                     </td>
                     <td className="px-3 text-right tabular-nums">{equipa.percentagem}%</td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

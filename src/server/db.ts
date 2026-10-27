@@ -263,7 +263,8 @@ function criarEsquema(db: DatabaseSync): void {
       caminho TEXT,
       pedido TEXT,
       resposta TEXT,
-      codigo INTEGER
+      codigo INTEGER,
+      operador_id TEXT
     );
     CREATE INDEX IF NOT EXISTS idx_integracao_logs_quando ON integracao_logs (quando);
   `);
@@ -283,6 +284,7 @@ function migrar(db: DatabaseSync): void {
   garantirColuna(db, "ofsc_atividades", "lote_id", "ALTER TABLE ofsc_atividades ADD COLUMN lote_id TEXT");
   garantirColuna(db, "ofsc_ausencias", "lote_id", "ALTER TABLE ofsc_ausencias ADD COLUMN lote_id TEXT");
   garantirColuna(db, "indisponibilidades", "lote_id", "ALTER TABLE indisponibilidades ADD COLUMN lote_id TEXT");
+  garantirColuna(db, "integracao_logs", "operador_id", "ALTER TABLE integracao_logs ADD COLUMN operador_id TEXT");
   semearOfsc(db);
 }
 

@@ -7,10 +7,13 @@ import { OPERADORES, type OperadorId } from "@/lib/rules/tipos";
 export function LegendaOperadores({
   compacta = false,
   apenas = null,
+  comOutros = false,
 }: {
   compacta?: boolean;
   /** Quando definido (ex.: despachante), só esse operador aparece. */
   apenas?: OperadorId | null;
+  /** Mostra também a entrada neutra «Outros operadores (ocupado)». */
+  comOutros?: boolean;
 }) {
   const { t } = useT();
   const ids = apenas ? ([apenas] as const) : OPERADORES;
@@ -22,6 +25,12 @@ export function LegendaOperadores({
           <span>{t(`operador.${id}`)}</span>
         </li>
       ))}
+      {comOutros ? (
+        <li className="inline-flex items-center gap-1.5">
+          <span className="size-3 rounded-sm bg-muted-foreground/40" aria-hidden />
+          <span>{t("operador.outrosOcupado")}</span>
+        </li>
+      ) : null}
     </ul>
   );
 }
